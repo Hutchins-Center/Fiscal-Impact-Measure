@@ -1,0 +1,448 @@
+---
+title: ""
+
+header-includes:
+- \usepackage{dcolumn}
+- \usepackage{rotating}
+- \usepackage{graphicx}
+
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 5, fig.height = 4, fig.align = "center")
+```
+
+## Training sample regressions
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+library(xtable)
+library(stargazer)
+library(dplyr)
+source("fim_taxestest.R")
+
+# # set forecast dates (arbitrary)
+last_date = "2014-01-01"
+stop_date = "2019-01-01"
+```
+Training sample begins in `r "1996-01-01"` (earliest data for purchase-only house price index) and ends in `r last_date`. We run regressions of state and local tax revenues (by revenue source) using annual data over the training sample, then predict annual data for the out of sample forecasts. Next we smooth those out of sample forecasts into quarterly levels (at an annual rate). 
+
+The tables below report the regression results for the given specification and then display the figures of the forecast alongside the realized values of the tax revenue components. The tax components are named as follows:
+
+- gsrpt = Personal income taxes
+- gsrpri = Production & Import taxes
+- gsrcp = corporate taxes
+- gsrs = Payroll taxes
+
+
+All values are in nominal billions of dollars, at seasonally-adjusted annual rates. 
+
+## Nominal level regressions (with linear time trend)
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+## Regressions for forecasts of state and local tax revenues
+# pull annual data for regressions for state and local tax revenues
+series3 = c("GDP", "C","CH","GDPH","JC", "JGDP", "JGF", "JGS", "PTGH","PTGSH","PTGFH", "YPTMR", "YPTMD", "GTFP", "YPOG", "YPTX", "YTPI", "YCTLG", "G", "GFRCF", "GRCSI", "GDPH", "DC",	"PTGFH", "PTGSH", "GF", "GS", "GFH", "GSH", "	GFRPT", "GFRPRI", "GFRCP", "GFRS","GFRPT","	GFRPRI","	GFRCP","	GFRS","	GFTFP","	GFEG","	GSRPT","	GSRPRI","	GSRCP","	GSRS","	GSTFP","	GSET", "YP")
+series4 = c("USPHPI", "CASUSXAM", "FNMFHFA", "GDPPOT", "GDPPOTH")
+data3 = pull_data(series3, "usna", start = as.Date("1970-01-01"), frequency = "annual")
+data4 = pull_data(series4, "usecon", start = as.Date("1970-01-01"), frequency = "annual")
+aa = merge(data3, data4, by = "date")
+aa$hpx = aa$usphpi #house price index of choice is the FHFA purchase only index, 1991 = 100, since that's what CBO forecasts
+
+# merge in projections for GDP and house prices
+econ_a = read.csv('cbo_econ_proj_annual.csv', stringsAsFactors = F)
+econ_a$date = as.Date(paste0(econ_a$calendar_date, "-12-31"), f="%Y-%m-%d")
+econ_a = econ_a[econ_a$date > Sys.Date(),] # keeping annuals for current calendar year
+aa <- rbind.fill(aa,econ_a)
+
+taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
+taxpieces_d = paste0(taxpieces, "_d")
+aa$gstx = rowSums(aa[,taxpieces], na.rm = T) # tax revenue total
+
+# linear time trend var
+aa$t = 1:nrow(aa)
+
+# create lagged and differenced variables
+comp = c("gdp", "gsrpri", "gsrcp" ,"gsrs","gsrpt","gstx", "hpx")
+aa[,paste0(comp, "_l1")] = sapply(aa[,comp], function(x) shift(x, n=1))
+aa[,paste0(comp, "_l2")] = sapply(aa[,comp], function(x) shift(x, n=2))
+aa[,paste0(comp, "_l3")] = sapply(aa[,comp], function(x) shift(x, n=3))
+aa[,paste0(comp, "_l5")] = sapply(aa[,comp], function(x) shift(x, n=5))
+
+diffs = paste0(comp, "_d")
+aa[,diffs] = sapply(aa[,comp], function(x) c(NA, diff(x)))
+aa[,paste0(diffs, "_l1")] = sapply(aa[,diffs], function(x) shift(x, n=1))
+aa[,paste0(diffs, "_l2")] = sapply(aa[,diffs], function(x) shift(x, n=2))
+aa[,paste0(diffs, "_l3")] = sapply(aa[,diffs], function(x) shift(x, n=3))
+aa[,paste0(diffs, "_l5")] = sapply(aa[,diffs], function(x) shift(x, n=5))
+
+aasave = aa
+
+# run regressions
+regs <- function(y,x,d){
+  spec = as.formula(paste0(y,"~",paste(x,collapse = "+")))
+  lm(spec,d)
+}
+
+# preferred specification includes GDP and house prices and lags. For now, excluding own lags to avoid dynamic forecasts (they don't add much to the fit anyhow)
+forward_dates = which(aa$date > last_date & aa$date <= stop_date)
+forward_alt = which(xx$date > last_date & xx$date <= stop_date)
+forward_aa = aa[forward_dates,]
+backward_a = aa[-c(forward_dates),]
+
+# try nominal levels first
+gstx_fit <- regs(y="gstx", x=c("t", "gdp", "gdp_l1", "gdp_l2","hpx", "hpx_l1", "hpx_l3", "hpx_l5"), d=backward_a)
+pieces_fit <- lapply(taxpieces, function(X){regs(y=X, x=c("t", "gdp", "gdp_l1", "gdp_l2","hpx", "hpx_l1", "hpx_l3", "hpx_l5"), d=backward_a)})
+stargazer(pieces_fit, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal levels") 
+```
+\pagebreak
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+
+aa[forward_dates,taxpieces] = lapply(pieces_fit, function(x) predict(x, forward_aa)) ## FIX THIS
+aa[forward_dates,taxpieces] = lapply(aa[forward_dates,taxpieces], function(x) sapply(x, function(y) max(y, 0))) ## FIX THIS
+
+# translate into quarterly SAAR levels by replicating over four quarters and smoothing
+aa = rbind(aa, aa, aa, aa) # we're going to use annual rates anyhow, so just replicate the annual levels over each q
+aa = aa[order(aa$date),]
+qtr_days = na.omit(unique(format(past$date, f = "%m-%d")))
+aa$date = as.Date(paste0(format(aa$date, f="%Y"),"-", rep(qtr_days, length(aa$date)/4)))
+
+# smooth them out
+aa[,taxpieces] = sapply(aa[,taxpieces], function(x){
+  x = na.locf(x) 
+  SMA(x, n=4)})
+
+# calculate growth rates
+aa[,paste0(taxpieces, "_g")] = lapply(aa[,taxpieces], function(x) q_g(x))
+
+# Merge and Generate projections of GDP components
+p = merge(budg[,c("date", grep("_g", colnames(budg), value = T))], econ[,c("date", grep("_g", colnames(econ), value = T))], by = "date", all = T)
+xx = Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = "date", all = TRUE),list(aa[,c("date",grep("_g", colnames(aa), value = T))], past, p))
+
+# forecasts of state and local tax revenues
+taxpieces_alt = paste0(taxpieces, "_alt")
+xx[,taxpieces_alt] = xx[,taxpieces]
+for(i in 1:length(taxpieces)){
+  for(j in 1:length(forward_alt)){
+    xx[forward_alt[j], taxpieces_alt[i]] = xx[forward_alt[j]-1, taxpieces_alt[i]]*(1+xx[forward_alt[j], paste0(taxpieces[i], "_g")])
+  }
+}
+
+lapply(taxpieces, function(x){
+    rmsd = round((mean((xx[forward_alt,paste0(x,"_alt")] - xx[forward_alt,x])^2, na.rm = T))^.5, 2)
+    lp(xx[,c("date", paste0(x,"_alt"), x)], labelz = c("Forecast", "Realized"), t = x, start.date = "2000-01-01", end.date = "2019-03-30", c = paste0("RMSD of forecast = ", rmsd))
+  })
+
+rmsds = sapply(taxpieces, function(x){round((mean((xx[forward_alt,paste0(x,"_alt")] - xx[forward_alt,x])^2, na.rm = T))^.5, 2)})
+```
+
+\pagebreak
+
+## Regressions of tax rates
+
+All variables taken as a share of nominal GDP, save the output gap (percent of potential GDP). 
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+aa = aasave
+# calculate output gaps
+aa$gdpgap = (aa$gdp-aa$gdppot)/aa$gdppot
+# calculate tax rates
+aa$taxes_gdp = aa$gstx / aa$gdp
+aa[,paste0(taxpieces, "_gdp")] = sapply(aa[,taxpieces], function(x) x/aa$gdp)
+# calculate shares of gdp
+aa$hpx_gdp = aa$hpx / aa$gdp
+comp2 = c("taxes_gdp", paste0(taxpieces, "_gdp"), "hpx_gdp", "gdpgap")
+aa[,paste0(comp2, "_l1")] = sapply(aa[,comp2], function(x) shift(x, n=1))
+aa[,paste0(comp2, "_l2")] = sapply(aa[,comp2], function(x) shift(x, n=2))
+aa[,paste0(comp2, "_l3")] = sapply(aa[,comp2], function(x) shift(x, n=3))
+aa[,paste0(comp2, "_l5")] = sapply(aa[,comp2], function(x) shift(x, n=5))
+forward_aa = aa[forward_dates,]
+backward_a = aa[-c(forward_dates),]
+
+taxpieces_gdp <- paste0(taxpieces, "_gdp")
+gdp_rates <- c("hpx_gdp", "hpx_gdp_l1","hpx_gdp_l3","hpx_gdp_l5", "gdpgap", "gdpgap_l1", "gdpgap_l2")
+gdp_rates_fits <- regs(y="taxes_gdp", x=gdp_rates, d=backward_a)
+pieces_fit <- lapply(taxpieces_gdp, function(X){regs(y=X, x=gdp_rates, d=backward_a)})
+stargazer(pieces_fit, omit.stat = c("f", "ser"), header = FALSE, title = "Shares of nominal GDP") 
+```
+\pagebreak
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+aa[forward_dates,taxpieces] = lapply(pieces_fit, function(x) predict(x, forward_aa) * forward_aa$gdp) ## FIX THIS
+aa[forward_dates,taxpieces] = lapply(aa[forward_dates,taxpieces], function(x) sapply(x, function(y) max(y, 0))) ## FIX THIS
+
+# translate into quarterly SAAR levels by replicating over four quarters and smoothing
+aa = rbind(aa, aa, aa, aa) # we're going to use annual rates anyhow, so just replicate the annual levels over each q
+aa = aa[order(aa$date),]
+qtr_days = na.omit(unique(format(past$date, f = "%m-%d")))
+aa$date = as.Date(paste0(format(aa$date, f="%Y"),"-", rep(qtr_days, length(aa$date)/4)))
+
+# smooth them out
+aa[,taxpieces] = sapply(aa[,taxpieces], function(x){
+  x = na.locf(x) 
+  SMA(x, n=4)})
+
+# calculate growth rates
+aa[,paste0(taxpieces, "_g")] = lapply(aa[,taxpieces], function(x) q_g(x))
+
+# Merge and Generate projections of GDP components
+p = merge(budg[,c("date", grep("_g", colnames(budg), value = T))], econ[,c("date", grep("_g", colnames(econ), value = T))], by = "date", all = T)
+xx = Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = "date", all = TRUE),list(aa[,c("date",grep("_g", colnames(aa), value = T))], past, p))
+
+# forecasts of state and local tax revenues
+taxpieces_alt = paste0(taxpieces, "_alt")
+xx[,taxpieces_alt] = xx[,taxpieces]
+for(i in 1:length(taxpieces)){
+  for(j in 1:length(forward_alt)){
+    xx[forward_alt[j], taxpieces_alt[i]] = xx[forward_alt[j]-1, taxpieces_alt[i]]*(1+xx[forward_alt[j], paste0(taxpieces[i], "_g")])
+  }
+}
+
+lapply(taxpieces, function(x){
+    rmsd = round((mean((xx[forward_alt,paste0(x,"_alt")] - xx[forward_alt,x])^2, na.rm = T))^.5, 2)
+    lp(xx[,c("date", paste0(x,"_alt"), x)], labelz = c("Forecast", "Realized"), t = x, start.date = "2000-01-01", end.date = "2019-03-30", c = paste0("RMSD of forecast = ", rmsd))
+  })
+
+rmsds = cbind(rmsds,sapply(taxpieces, function(x){round((mean((xx[forward_alt,paste0(x,"_alt")] - xx[forward_alt,x])^2, na.rm = T))^.5, 2)}))
+
+```
+
+
+<!-- ## Nominal levels with linear time trend regressions, plus own lags (dynamic forecasts) -->
+
+<!-- ```{r, echo=FALSE, message=F, warning=FALSE, results='asis'} -->
+<!-- aa = aasave -->
+<!-- # preferred specification includes GDP and house prices and lags. For now, excluding own lags to avoid dynamic forecasts (they don't add much to the fit anyhow) -->
+<!-- forward_aa = aa[forward_dates,] -->
+<!-- backward_a = aa[-c(forward_dates),] -->
+
+<!-- # try differences -->
+<!-- gstx_d_fit <- regs(y="gstx", x=c("gstx_l1", "gstx_l2", "gdp", "gdp_l1", "gdp_l2","hpx", "hpx_l1", "hpx_l3", "hpx_l5"), d=backward_a) -->
+<!-- pieces_fit <- lapply(taxpieces, function(X){regs(y=X, x=c(paste0(X, "_l1"), paste0(X, "_l2"),"gdp", "gdp_l1", "gdp_l2","hpx", "hpx_l1", "hpx_l3", "hpx_l5"), d=backward_a)}) -->
+<!-- aa[forward_dates,taxpieces] = lapply(taxpieces, function(x){ -->
+<!--   wich = which(x %in% taxpieces) -->
+<!--   coeff <<- c(coefficients(pieces_fit[[wich]])) -->
+<!--   j[1] = coeff[1] + coeff[2]*aa[forward_dates[1], paste0(x, "_l1")] + coeff[3]*aa[forward_dates[1], paste0(x, "_l2")] + coeff[4]*aa[forward_dates[1],"gdp"] + coeff[5]*aa[forward_dates[1],"gdp_l1"] + coeff[6]*aa[forward_dates[1],"gdp_l2"] + coeff[7]*aa[forward_dates[1],"hpx"] + coeff[8]*aa[forward_dates[1],"hpx_l1"]+ coeff[9]*aa[forward_dates[1],"hpx_l3"]+ coeff[10]*aa[forward_dates[1],"hpx_l5"] -->
+
+<!--   j[2] = coeff[1] + coeff[2]*j[1] + coeff[3]*aa[forward_dates[1], paste0(x, "_l2")] + coeff[4]*aa[forward_dates[1],"gdp"] + coeff[5]*aa[forward_dates[1],"gdp_l1"] + coeff[6]*aa[forward_dates[1],"gdp_l2"] + coeff[7]*aa[forward_dates[1],"hpx"] + coeff[8]*aa[forward_dates[1],"hpx_l1"]+ coeff[9]*aa[forward_dates[1],"hpx_l3"]+ coeff[10]*aa[forward_dates[1],"hpx_l5"] -->
+
+<!--   for(i in 3:length(forward_dates)){ -->
+<!--     j[i] = coeff[1] + coeff[2]*j[i-1] + coeff[3]*j[i-2] + coeff[4]*aa[forward_dates[i],"gdp"] + coeff[5]*aa[forward_dates[i],"gdp_l1"] + coeff[6]*aa[forward_dates[i],"gdp_l2"] + coeff[7]*aa[forward_dates[i],"hpx"] + coeff[8]*aa[forward_dates[i],"hpx_l1"]+ coeff[9]*aa[forward_dates[i],"hpx_l3"]+ coeff[10]*aa[forward_dates[i],"hpx_l5"] -->
+<!--   } -->
+
+<!--   j -->
+<!-- })  -->
+
+<!-- stargazer(pieces_fit, omit.stat = c("f", "ser"), header = FALSE, title = "Differenced levels")  -->
+<!-- ``` -->
+<!-- \pagebreak -->
+
+<!-- ```{r, echo=FALSE, message=F, warning=FALSE, results='asis'} -->
+<!-- # translate into quarterly SAAR levels by replicating over four quarters and smoothing -->
+<!-- aa = rbind(aa, aa, aa, aa) # we're going to use annual rates anyhow, so just replicate the annual levels over each q -->
+<!-- aa = aa[order(aa$date),] -->
+<!-- qtr_days = na.omit(unique(format(past$date, f = "%m-%d"))) -->
+<!-- aa$date = as.Date(paste0(format(aa$date, f="%Y"),"-", rep(qtr_days, length(aa$date)/4))) -->
+
+<!-- # smooth them out -->
+<!-- aa[,taxpieces] = sapply(aa[,taxpieces], function(x){ -->
+<!--   x = na.locf(x) -->
+<!--   SMA(x, n=4) -->
+<!-- } ) -->
+
+<!-- # calculate growth rates -->
+<!-- aa[,paste0(taxpieces, "_g")] = lapply(aa[,taxpieces], function(x) q_g(x)) -->
+
+<!-- # Merge and Generate projections of GDP components -->
+<!-- p = merge(budg[,c("date", grep("_g", colnames(budg), value = T))], econ[,c("date", grep("_g", colnames(econ), value = T))], by = "date", all = T) -->
+<!-- xx = Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = "date", all = TRUE),list(aa[,c("date",grep("_g", colnames(aa), value = T))], past, p)) -->
+
+<!-- # forecasts of state and local tax revenues -->
+<!-- taxpieces_alt = paste0(taxpieces, "_alt") -->
+<!-- xx[,taxpieces_alt] = xx[,taxpieces] -->
+<!-- for(i in 1:length(taxpieces)){ -->
+<!--   for(j in 1:length(forward_alt)){ -->
+<!--     xx[forward_alt[j], taxpieces_alt[i]] = xx[forward_alt[j]-1, taxpieces_alt[i]]*(1+xx[forward_alt[j], paste0(taxpieces[i], "_g")]) -->
+<!--   } -->
+<!-- } -->
+
+<!-- lapply(taxpieces, function(x){ -->
+<!--     rmsd = round((mean((xx[forward_alt,paste0(x,"_alt")] - xx[forward_alt,x])^2, na.rm = T))^.5, 2) -->
+<!--     lp(xx[,c("date", paste0(x,"_alt"), x)], labelz = c("Forecast", "Realized"), t = x, start.date = "2000-01-01", end.date = "2019-03-30", c = paste0("RMSD of forecast = ", rmsd)) -->
+<!--   }) -->
+<!-- ``` -->
+
+\pagebreak
+
+## Differenced levels regressions
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+aa = aasave
+# preferred specification includes GDP and house prices and lags. For now, excluding own lags to avoid dynamic forecasts (they don't add much to the fit anyhow)
+forward_dates = which(aa$date > last_date & aa$date <= stop_date)
+forward_aa = aa[forward_dates,]
+backward_a = aa[-c(forward_dates),]
+
+
+# try differences
+gstx_d_fit <- regs(y="gstx_d", x=c("gdp_d", "gdp_d_l1", "gdp_d_l2","hpx_d", "hpx_d_l1", "hpx_d_l3", "hpx_d_l5"), d=backward_a)
+pieces_d_fit <- lapply(taxpieces_d, function(X){regs(y=X, x=c("gdp_d", "gdp_d_l1", "gdp_d_l2","hpx_d", "hpx_d_l1", "hpx_d_l3", "hpx_d_l5"), d=backward_a)})
+aa[forward_dates,paste0(taxpieces, "_d")] = lapply(pieces_d_fit, function(x) predict(x, forward_aa)) 
+aa[forward_dates,taxpieces] = lapply(taxpieces, function(x){
+  callname = paste0(x, "_d")
+  first = forward_dates[1]-1
+  j[1] = aa[first,x] + aa[forward_dates[1],callname]
+  for(i in 2:length(forward_dates)){
+    j[i] = j[i-1] + aa[forward_dates[i],callname]
+  }
+  j
+}) 
+
+
+stargazer(pieces_d_fit, omit.stat = c("f", "ser"), header = FALSE, title = "Differenced levels") 
+```
+\pagebreak
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+# translate into quarterly SAAR levels by replicating over four quarters and smoothing
+aa = rbind(aa, aa, aa, aa) # we're going to use annual rates anyhow, so just replicate the annual levels over each q
+aa = aa[order(aa$date),]
+qtr_days = na.omit(unique(format(past$date, f = "%m-%d")))
+aa$date = as.Date(paste0(format(aa$date, f="%Y"),"-", rep(qtr_days, length(aa$date)/4)))
+
+# smooth them out
+aa[,taxpieces] = sapply(aa[,taxpieces], function(x){
+  x = na.locf(x)
+  SMA(x, n=4)
+} )
+
+# calculate growth rates
+aa[,paste0(taxpieces, "_g")] = lapply(aa[,taxpieces], function(x) q_g(x))
+
+# Merge and Generate projections of GDP components
+p = merge(budg[,c("date", grep("_g", colnames(budg), value = T))], econ[,c("date", grep("_g", colnames(econ), value = T))], by = "date", all = T)
+xx = Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = "date", all = TRUE),list(aa[,c("date",grep("_g", colnames(aa), value = T))], past, p))
+
+# forecasts of state and local tax revenues
+taxpieces_alt = paste0(taxpieces, "_alt")
+xx[,taxpieces_alt] = xx[,taxpieces]
+for(i in 1:length(taxpieces)){
+  for(j in 1:length(forward_alt)){
+    xx[forward_alt[j], taxpieces_alt[i]] = xx[forward_alt[j]-1, taxpieces_alt[i]]*(1+xx[forward_alt[j], paste0(taxpieces[i], "_g")])
+  }
+}
+
+lapply(taxpieces, function(x){
+    rmsd = round((mean((xx[forward_alt,paste0(x,"_alt")] - xx[forward_alt,x])^2, na.rm = T))^.5, 2)
+    lp(xx[,c("date", paste0(x,"_alt"), x)], labelz = c("Forecast", "Realized"), t = x, start.date = "2000-01-01", end.date = "2019-03-30", c = paste0("RMSD of forecast = ", rmsd))
+  })
+rmsds = cbind(rmsds,sapply(taxpieces, function(x){round((mean((xx[forward_alt,paste0(x,"_alt")] - xx[forward_alt,x])^2, na.rm = T))^.5, 2)}))
+
+```
+
+\pagebreak
+
+## Assuming constant tax rate 
+
+Personal income taxes grow with nominal private consumption. All other taxes grow with nominal GDP. 
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+aa = aasave
+
+# Merge and Generate projections of GDP components
+p = merge(budg[,c("date", grep("_g", colnames(budg), value = T))], econ[,c("date", grep("_g", colnames(econ), value = T))], by = "date", all = T)
+xx = Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = "date", all = TRUE),list(past, p))
+xx[,paste0(taxpieces, "_g")] = q_g(xx$gdp)
+xx$gsrpt_g = q_g(xx$c)
+
+# forecasts of state and local tax revenues
+taxpieces_alt = paste0(taxpieces, "_alt")
+xx[,taxpieces_alt] = xx[,taxpieces]
+for(i in 1:length(taxpieces)){
+  for(j in 1:length(forward_alt)){
+    xx[forward_alt[j], taxpieces_alt[i]] = xx[forward_alt[j]-1, taxpieces_alt[i]]*(1+xx[forward_alt[j], paste0(taxpieces[i], "_g")])
+  }
+}
+
+lapply(taxpieces, function(x){
+    rmsd = round((mean((xx[forward_alt,paste0(x,"_alt")] - xx[forward_alt,x])^2, na.rm = T))^.5, 2)
+    lp(xx[,c("date", paste0(x,"_alt"), x)], labelz = c("Forecast", "Realized"), t = x, start.date = "2000-01-01", end.date = "2019-03-30", c = paste0("RMSD of forecast = ", rmsd))
+  })
+rmsds = cbind(rmsds,sapply(taxpieces, function(x){round((mean((xx[forward_alt,paste0(x,"_alt")] - xx[forward_alt,x])^2, na.rm = T))^.5, 2)}))
+
+```
+\pagebreak
+
+
+## RMSD of forecasts by regression specifications
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+colnames(rmsds) = c("Nominal Levels", "Tax Rates & Output Gap", "Differenced Levels", "Constant tax rate")
+rownames(rmsds) = taxpieces
+xtable::xtable(rmsds)
+```
+
+<!-- ## Full sample regressions (1970-2018) -->
+
+<!-- ```{r, echo=FALSE, message=F, warning=FALSE, results='asis'} -->
+<!-- source("state and local forecasting annual script.R") -->
+
+<!-- stargazer(gdp_rates_fits, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of GDP - levels") -->
+<!-- stargazer(gdp_rates_fits_d, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of GDP - differences") -->
+
+<!-- stargazer(pieces_gdp_rates_fits, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of GDP - levels, by revenue source", dep.var.labels = c("Personal", "Production,Import", "Corporate", "Payroll")) -->
+<!-- stargazer(pieces_gdp_rates_fits_d, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of GDP - differences , by revenue source", dep.var.labels = c("Personal", "Production,Import", "Corporate", "Payroll")) -->
+
+<!-- # stargazer(gdp_rates_fits_h, omit.stat = c("f", "ser"), header = FALSE, title = "Real shares of GDP - levels") -->
+<!-- stargazer(yp_rates_fits, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of Personal Income - levels") -->
+<!-- stargazer(yp_rates_fits_d, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of Personal Income - differences") -->
+<!-- # stargazer(yp_rates_fits_h, omit.stat = c("f", "ser"), header = FALSE, title = "Real shares of Personal Income - levels") -->
+
+<!-- stargazer(nom_fits, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal levels") -->
+<!-- stargazer(real_fits, omit.stat = c("f", "ser"), header = FALSE, title = "Real levels") -->
+<!-- # stargazer(dt_fits, omit.stat = c("f", "ser"), header = FALSE, title = "Detrended levels") -->
+<!-- stargazer(d_fits, omit.stat = c("f", "ser"), header = FALSE, title = "Differenced levels") -->
+
+<!-- stargazer(nom_fits_gsrpt, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal levels") -->
+<!-- stargazer(real_fits_gsrpt, omit.stat = c("f", "ser"), header = FALSE, title = "Real levels (HPX levels in index values)") -->
+<!-- # stargazer(dt_fits_gsrpt, omit.stat = c("f", "ser"), header = FALSE, title = "Detrended levels (HPX levels in index values)") -->
+
+<!-- stargazer(nom_fits_gsrpri, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal levels") -->
+<!-- stargazer(real_fits_gsrpri, omit.stat = c("f", "ser"), header = FALSE, title = "Real levels (HPX levels in index values)") -->
+<!-- # stargazer(dt_fits_gsrpri, omit.stat = c("f", "ser"), header = FALSE, title = "Detrended levels (HPX levels in index values)") -->
+
+<!-- ``` -->
+
+<!-- \pagebreak -->
+
+<!-- ## Limited sample regressions (sample restricted to 1970-2012) -->
+
+
+<!-- ```{r, echo=FALSE, message=F, warning=FALSE, results='asis'} -->
+<!-- source("state and local forecasting annual script.R") -->
+
+<!-- stargazer(gdp_rates_fits0, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of GDP - levels") -->
+<!-- stargazer(gdp_rates_fits_d0, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of GDP - differences") -->
+
+<!-- stargazer(pieces_gdp_rates_fits0, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of GDP - levels, by revenue source", dep.var.labels = c("Personal", "Production,Import", "Corporate", "Payroll")) -->
+<!-- stargazer(pieces_gdp_rates_fits_d0, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of GDP - differences , by revenue source", dep.var.labels = c("Personal", "Production,Import", "Corporate", "Payroll")) -->
+
+<!-- # stargazer(gdp_rates_fits_h, omit.stat = c("f", "ser"), header = FALSE, title = "Real shares of GDP - levels") -->
+<!-- stargazer(yp_rates_fits0, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of Personal Income - levels") -->
+<!-- stargazer(yp_rates_fits_d0, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal shares of Personal Income - differences") -->
+<!-- # stargazer(yp_rates_fits_h, omit.stat = c("f", "ser"), header = FALSE, title = "Real shares of Personal Income - levels") -->
+
+<!-- stargazer(nom_fits0, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal levels") -->
+<!-- stargazer(real_fits0, omit.stat = c("f", "ser"), header = FALSE, title = "Real levels") -->
+<!-- # stargazer(dt_fits, omit.stat = c("f", "ser"), header = FALSE, title = "Detrended levels") -->
+<!-- stargazer(d_fits0, omit.stat = c("f", "ser"), header = FALSE, title = "Differenced levels") -->
+
+<!-- stargazer(nom_fits_gsrpt0, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal levels") -->
+<!-- stargazer(real_fits_gsrpt0, omit.stat = c("f", "ser"), header = FALSE, title = "Real levels (HPX levels in index values)") -->
+<!-- # stargazer(dt_fits_gsrpt, omit.stat = c("f", "ser"), header = FALSE, title = "Detrended levels (HPX levels in index values)") -->
+
+<!-- stargazer(nom_fits_gsrpri0, omit.stat = c("f", "ser"), header = FALSE, title = "Nominal levels") -->
+<!-- stargazer(real_fits_gsrpri0, omit.stat = c("f", "ser"), header = FALSE, title = "Real levels (HPX levels in index values)") -->
+<!-- # stargazer(dt_fits_gsrpri, omit.stat = c("f", "ser"), header = FALSE, title = "Detrended levels (HPX levels in index values)") -->
+
+<!-- ``` -->

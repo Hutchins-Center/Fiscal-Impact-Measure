@@ -1,0 +1,221 @@
+---
+title: ""
+
+header-includes:
+- \usepackage{dcolumn}
+- \usepackage{rotating}
+- \usepackage{graphicx}
+
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+CBO produces a quarterly forecast of state and local government purchases, which we use directly to estimate fiscal impact at that level of government. We currently do not have a robust method of forecasting taxes and transfers at the state and local level. This document begins to explore some possible methods. 
+
+
+
+## Forecasting state and local taxes & transfers
+
+
+One possibility would be to rely on CBO's forecasts of state and local purchases and back out an estimate for tax revenues and transfer outlays. State and local purchases and taxes are closely related. Figure 1 plots y/y growth in state and local tax revenues (all sources) against state and local purchases (net of federal transfers).  Clearly tax revenues are a leading indicator for state and local purchases. 
+
+Results from a regression of the change in tax revenues on leads of state and local purchases are reported in Table 1. The reason we regress time t revenues on leads of purchases (and not purchases on lags of revenues) is that we're interested in using forecasts of purchases to forecast revenues, although the revenues tend to lead purchases in the realized time series. *Levels are in billions of dollars, seasonally adjusted at annual rates. All levels are nominal unless otherwise stated.  Thus the coefficients on purchases can be interpreted as the 1B dollar impact on revenues from a $1B increase in purchases. The same is true for other level-on-level regression coefficient estimates throughout this document. All data are quarterly, and cover the 1970Q1-2019Q1 sample.* 
+
+
+<!-- To start, Figure 2. shows scatter plots of state and local tax revenues (levels, standardized) against four predictors we look at here: Personal income, personal consumption expenditures, total state and local purchases, net of federal transfers, and house prices.  -->
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+source("fim.R")
+library(stargazer)
+library(dplyr)
+
+hpx <- pull_data(c("usphpip", "casusxam", "fnmfhfa", "pcu", "yp"), "usecon", start.date = head(xx$date,1))
+# hpx$pcu = q_a(hpx$pcu)
+xx <- merge(hpx, xx, all.x = T)
+xx$hpx = xx$casusxam
+
+xxx = xx
+xx = xx[xx$date <= Sys.Date(),]
+
+#function to take log difference
+ln_d <- function(x){    
+  j=c()
+  for(i in 2:length(x)){
+    j[i] = log(x[i]/(x[i-1]))
+  }
+  j[1] = NA
+  j
+}
+
+#function to take y/y growth
+yy <- function(x){
+  j=c()
+  for(i in 5:length(x)){
+    j[i] = (-1 + (x[i]/(x[i-4])))*100
+  }
+  j[1:4] = NA
+  j
+}
+
+# #function to detrend
+# detrend <- function(x, data = xx){
+#   fit = lm(x~t,xx)
+#   j = c(NA, residuals(fit))
+#   length(j) = length(x)
+#   j
+# }
+# 
+
+
+taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
+xx$gstx = rowSums(xx[,taxpieces], na.rm = T) # tax revenue total
+xx$gsnet = xx$gssave - xx$gfeg # state and local purchases less federal grants
+xx$gstfpnet = xx$gstfp - xx$yfptmd # state and local transfers = state and local social benefits - medicaid grants from fed gov't
+# linear time trend var
+xx$t = 1:nrow(xx)
+
+comp = c("gdp", "c",   "ch",  "gdph","yptmr" ,"yptmd" ,"g", "gfrcf",  "gf", "gs","gsnet", "gfh", "gsh", "gfrpt", "gfrpri" ,"gfrcp" ,"gfrs", "gftfp", "gsrpt" ,"gsrpri", "gsrcp" ,"gsrs","gstx",  "gstfp","gstfpnet", "gdppothq", "dc", "gfeg", "hpx", "yp")
+
+xx[,paste0(comp, "_yy")] = sapply(xx[,comp], function(x) yy(x)) #fix
+# xx[,paste0(comp, "_ln")] = sapply(xx[,comp], function(x) ln_d(x))
+xx[,paste0(comp, "_dt")] = sapply(xx[,comp], function(x) scale(c(NA,diff(x)))) #pracma::detrend(x, tt = 'linear')
+
+# meltx = melt(xx[,c("date", "yp_dt", "c_dt","gsnet_dt", "hpx_dt", "gstx_dt")], id.vars = c("date", "gstx_dt"))
+# levels(meltx$variable) <- c("Personal Income", "PCE", "SL Purchases (net Fed)", "House Prices")
+# ggplot(meltx) + geom_point(aes(x=value, y=gstx_dt))+facet_wrap(~variable) + uni.theme + labs(x="St.Deviations", y="Tax Revenues (St.Deviations)")
+
+```
+
+
+
+\begin{center} Figure 2. State and local revenues and purchases \end{center}
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+
+lp(xx[,c("date", "gsnet_yy", "gstx_yy", "gstfpnet_yy")], labelz = c("Purchases (net federal grants)", "Tax revenues (all sources)", "Transfers (net Medicaid grants)"), t = "", end.date = Sys.Date())
+
+```
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+# dumbly switch back and forth so that the tables aren't obscenely long
+xx[,paste0(comp, "_use")] = sapply(xx[,comp], function(x) yy(x))
+lm1 <- lm(gstx_use~gsnet_use + lead(gsnet_use,1) + lead(gsnet_use,2) + lead(gsnet_use,4) , xx)
+lm3 <- lm(gstfpnet_use~gsnet_use + lead(gsnet_use,1) + lead(gsnet_use,2) + lead(gsnet_use,4) , xx)
+xx[,paste0(comp, "_use")] = xx[,comp]
+lm2 <- lm(gstx_use~ t + gsnet_use + lead(gsnet_use,1) + lead(gsnet_use,2) + lead(gsnet_use,4), xx)
+lm4 <- lm(gstfpnet_use~ t + gsnet_use + lead(gsnet_use,1) + lead(gsnet_use,2) + lead(gsnet_use,4) , xx)
+
+
+stargazer(lm1, lm2,lm3,lm4, covariate.labels = c("t","$Purchases_{t}$", "$Purchases_{t+1}$", "$Purchases_{t+2}$" , "$Purchases_{t+4}$"), dep.var.labels = c("$Revenues_{t}$", "$Transfers_{t}$"), column.labels = rep(c("YoY Growth","Level "),2), type = "latex", title = "Regression results of revenues and transfers on leading purchases", omit.stat = c("f", "ser"), header = FALSE)
+```
+
+
+Despite the seemingly strong visible correlation between revenues and purchases, the regression results don't suggest that purchases will provide a precise forecast of tax collections. Next, we consider another potential predictor of taxes and transfers: house prices. Table 2 reports regression results for total revenues and transfers on current and lagged values of these variables. The house price index used is the Case-Shiller national average index. 
+
+Table 2 reports the regression results  for total tax revenues and transfers (net of federal Medicaid grants) on current and lags 1, 4, 8, and 12 of the house price variable. Longer lags have significant predictive power for revenues (in levels) and transfers (in levels), indicating that current house prices may be used to forecast revenues at the projection horizons we compute for the FIM forecasts. Table 3 splits revenues into its two largest components--import and production taxes, and income taxes--and regresses them on the three longest lags of house prices. For levels, the lagged house price variables can explain between 70-80 percent of the variation in revenues. The first two columns report results for production and import taxes, which include property tax revenues and are directly tied to home values. 
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+# test out using house prices to forecast state and local revenue
+xx[,paste0(comp, "_use")] = sapply(xx[,comp], function(x) yy(x))
+hp1 <- lm(gstx_use~hpx_use + shift(hpx_use, 1) + shift(hpx_use, 4) + shift(hpx_use, 8) + shift(hpx_use, 12), xx)
+hp3 <- lm(gstfp_use~hpx_use + shift(hpx_use, 1) + shift(hpx_use, 4) + shift(hpx_use, 8) + shift(hpx_use, 12), xx)
+
+xx[,paste0(comp, "_use")] = xx[,comp]
+hp2 <- lm(gstx_use~ t + hpx_use + shift(hpx_use, 1) + shift(hpx_use, 4) + shift(hpx_use, 8) + shift(hpx_use, 12), xx)
+hp4 <- lm(gstfp_use~ t + hpx_use + shift(hpx_use, 1) + shift(hpx_use, 4) + shift(hpx_use, 8) + shift(hpx_use, 12), xx)
+
+stargazer(hp1, hp2, hp3, hp4, covariate.labels = c("t", "$HPX_{t}$", "$HPX_{t-1}$", "$HPX_{t-4}$", "$HPX_{t-8}$", "$HPX_{t-12}$"), dep.var.labels = c("$Revenues_{t}$", "$Transfers_{t}$"), column.labels = rep(c("YoY Growth","Levels "),4), type = "latex", title = "Regression results of revenues and transfers on house prices", omit.stat = c("f", "ser"), header = FALSE)
+
+
+```
+
+<!-- How well could we expect the fits to perform out of sample? As a quick test, lets shorten the sample period to end in 2015Q4, and project out of sample for 2016Q1-2019Q1. We could bootstrap this exercise over a number of samples to get a better idea, but we won't do that here.  -->
+
+<!-- ```{r, echo=FALSE, message=F, warning=FALSE, results='asis'} -->
+<!-- # function to get out of sample prediction -->
+<!-- outfit <- function(y="gstx_use", x="hpx_use + shift(hpx_use, 1) + shift(hpx_use, 4) + shift(hpx_use, 8) + shift(hpx_use, 12)", insamp = which(xx$date <= "2015-12-31"), data = xx){ -->
+<!--   formula = as.formula(paste0(y,"~",x)) -->
+<!--   fit = lm(formula,data[insamp,]) -->
+<!--   outpredict = c(rep(NA, length(insamp) + 1), q_a(predict(fit, data)[-insamp])) -->
+<!--   outpredict -->
+<!-- } -->
+
+<!-- xx$hp1_out = outfit() -->
+
+<!-- lp(xx[,c("date", "gstx", "hp1_out")], c("realized", "out of sample prediction")) -->
+
+<!-- ``` -->
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+# test out using house prices to forecast state and local revenue
+xx[,paste0(comp, "_use")] = sapply(xx[,comp], function(x) yy(x))
+hp1 <- lm(gsrpri_use~ shift(hpx_use, 4) + shift(hpx_use, 8) + shift(hpx_use, 12), xx)
+hp3 <- lm(gsrpt_use~ shift(hpx_use, 4) + shift(hpx_use, 8) + shift(hpx_use, 12), xx)
+
+xx[,paste0(comp, "_use")] = xx[,comp]
+hp2 <- lm(gsrpri_use~ t +  shift(hpx_use, 4) + shift(hpx_use, 8) + shift(hpx_use, 12), xx)
+hp4 <- lm(gsrpt_use~ t +  shift(hpx_use, 4) + shift(hpx_use, 8) + shift(hpx_use, 12), xx)
+
+stargazer(hp1, hp2, hp3, hp4, covariate.labels = c("t", "$HPX_{t-4}$", "$HPX_{t-8}$", "$HPX_{t-12}$"), dep.var.labels = c("$Production and ImportRevenues_{t}$", "$IncomeRevenues_{t}$"), column.labels = rep(c("YoY Growth","Levels "),4), type = "latex", title = "Regression results of production and import and income tax revenues on house prices", omit.stat = c("f", "ser"), header = FALSE)
+
+```
+
+\pagebreak 
+
+## Regressions of tax revenues on GDP components
+
+Table 4 reports results for regressions of total state and local tax revenues on current and two lagged values of GDP, personal consumption expenditures, and personal income. Note the coefficient estimates for the current values in levels are approximately state and local taxes as a share of each component (8 percent, 13 percent, and 10 percent, respectively). This implies that the projections we would construct using these regression estimates may not significantly improve upon just assuming that the state and local tax rate is constant and extrapolating its level forwards. We compare the two methods in Figure 4, which plots realized state and local tax revenues up through 2014Q1against projections for 2014Q1-2018Q4 as an example. The first projection method assumes the state and local tax rate ($\tau / Y$) is constant and grows with (realized) GDP ($Y$). The second projection method takes predicted values from the regression of revenues on GDP and two of its lags, plus a time trend, estimated using the sample up through 2013Q4.   
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+
+# test out using PCE or GDP to forecast state and local revenue
+xx[,paste0(comp, "_use")] = sapply(xx[,comp], function(x) yy(x))
+gdp1 <- lm(gstx_use~gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2), xx)
+pce1 <- lm(gstx_use~c_use + shift(c_use, 1) + shift(c_use, 2), xx)
+yp1 <- lm(gstx_use~yp_use + shift(yp_use, 1) + shift(yp_use, 2), xx)
+
+xx[,paste0(comp, "_use")] = xx[,comp]
+gdp2 <- lm(gstx_use~ t + gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2), xx)
+pce2 <- lm(gstx_use~ t + c_use + shift(c_use, 1) + shift(c_use, 2), xx)
+yp2 <- lm(gstx_use~ t + yp_use + shift(yp_use, 1) + shift(yp_use, 2), xx)
+
+stargazer(gdp1, gdp2,  pce1, pce2, yp1, yp2, covariate.labels = c("t", "$GDP_{t}$", "$GDP_{t-1}$", "$GDP_{t-2}$", "$PCE_{t}$", "$PCE_{t-1}$", "$PCE_{t-2}$", "$YP_{t}$", "$YP_{t-1}$", "$YP_{t-2}$"), dep.var.labels = "$Revenues_{t}$", column.labels = rep(c("YoY Growth","Levels"),3), type = "latex", title = "Regression results of revenues on GDP consumption (PCE), and personal income (YP)", omit.stat = c("f", "ser"), header = FALSE)
+```
+
+\begin{center} Figure 3. State and local tax revenues projected assuming $\tau /Y$ is constant and using regression (2) above \end{center}
+
+\begin{center} _Out-of-sample projection period is 2014Q1-2018Q4_ \end{center}
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+insamp = which(xx$date<"2014-01-01")
+outsamp = which(xx$date>="2014-01-01")
+xx[,paste0(comp, "_use")] = xx[,comp]
+gdp2 <- lm(gstx_use~t+gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2), xx[insamp,])
+xx$gdp_outpred = predict(gdp2, xx)
+xx$gdp_outpred = q_a(xx$gdp_outpred)
+xx$gdp_outpred_lev = NA
+xx$gdp_outpred_lev[outsamp[1]] = (1+xx$gdp_outpred[outsamp[1]]/400)*xx$gstx[outsamp[1]-1]
+for(i in 2:length(outsamp)){
+    xx$gdp_outpred_lev[outsamp[i]] = (1+xx$gdp_outpred[outsamp[i]]/400)*xx$gdp_outpred_lev[outsamp[i]-1]
+}
+
+# assume constant tau/Y
+xx$gstx_rate = xx$gstx/xx$gdp
+xx$rate_outpred_lev = NA
+for(i in 1:length(outsamp)){
+  xx$rate_outpred_lev[outsamp[i]] = xx$gstx_rate[outsamp[1]-1]*xx$gdp[outsamp[i]]
+}
+
+lp(xx[c("date", "gstx", "gdp_outpred_lev", "rate_outpred_lev")], c("Realized", "Predicted using regression (2)", "Predicted assuming constant tax rate"), end.date = "2018-12-31")
+```

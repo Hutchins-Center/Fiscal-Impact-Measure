@@ -1,0 +1,167 @@
+---
+title: "Deriving the Fiscal Impact Measure"
+header-includes:
+- \usepackage{dcolumn}
+- \usepackage{rotating}
+- \usepackage{graphicx}
+geometry: "top=2cm, bottom=0cm, left=2cm, right=2cm"
+output: pdf_document
+---
+
+\pagenumbering{gobble}
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+The FIM is defined as the actual contributions of real government purchases and real consumption to GDP less the contributions that would have prevailed if real purchases, real taxes, and real transfers were growing with potential GDP.
+
+
+Define $G$ as nominal government purchases, $\pi_{G}$ as the inflation rate for government purchases, $C$ as nominal consumption, $T$ as nominal tax or transfer payments, $\pi_{C}$  as the inflation rate for personal consumption expenditures (PCE), $Y$ as nominal GDP, and $\mu$ as real potential output growth. Then the FIM is calculated as follows.
+
+## Purchases
+
+
+The contribution of real purchases to GDP is the growth rate of real government purchases times the share of government in GDP: 
+
+\ 
+
+\begin{center} $(\frac{G_{t}}{G_{t-1}} - (1+\pi_{G})) \frac{G_{t-1}}{Y_{t-1}} = \frac{G_{t} - (1+\pi_{G})G_{t-1}}{Y_{t-1}}$ \end{center}
+
+\ 
+
+The counterfactual contribution of real government purchases under the assumption that real government spending rises with potential GDP is just
+
+
+\ 
+
+\begin{center} $\mu\frac{G_{t-1}}{Y_{t-1}}$ \end{center}
+
+
+\ 
+
+Thus, the FIM for purchases is defined as
+
+
+\  
+
+\begin{center} $FIM^{G}_{t} = \frac{G_{t} - (1+\pi_{G}+ \mu)G_{t-1} }{Y_{t-1}}$ \end{center}
+
+
+\  
+
+## Taxes and Transfers
+
+
+Calculating the contribution of taxes and transfers to GDP requires translating taxes and transfer payments into dollars of consumption as well as specifying the counterfactual path for consumption due to taxes and transfer payments, which we do in manner analogous to that for purchases. 
+
+
+We assume that households' consumption responses to changes in taxes and transfers are slow and vary by the kind of payment. Thus in order to translate taxes and transfers into dollars of consumption, we apply the respective marginal propensities to consume (MPC) over the appropriate lags to each of the tax and transfer pieces.  Let $j$ denote a kind of tax or transfer payment (for example, corporate taxes) and $i$ denote number of lags (in quarters). Then the consumption due to all tax or transfer payments $T$ in period $t$ is given by 
+
+\ 
+
+\begin{center} $\sum_{j=1}^{3} \sum_{i=1}^{12} MPC_{j,t-i} T_{j,t-i}$ \end{center}
+
+\ 
+
+
+Where $MPC_{j,t-i}$ is the appropriate MPC for tax or transfer payment $j$ at lag $i$. A table of assumed MPCs is provided in Table 1 below.   
+\ 
+\ 
+\ 
+\ 
+\  
+\  
+```{r, echo=FALSE, message=F, warning=FALSE, out.width = "25%", fig.align = "right"}
+
+knitr::include_graphics("HC_NEW_BROOKINGS_RGB.png")
+
+```
+
+\pagebreak
+
+Analogous to the purchases, the counterfactual level of a tax or transfer payment of kind $j$ in quarter $t$ is given by   
+
+
+\ 
+
+\begin{center} $\tilde{T}_{j,t} = T_{j,t}(1+\pi_{C}+ \mu)$ \end{center}
+
+\ 
+
+Thus the consumption due to taxes and transfer payments in excess of that which would be consistent with taxes and transfers growing with potential GDP can be   written as
+
+\ 
+
+\begin{center} $T^C_{t} = \sum_{j=1}^{3} \sum_{i=1}^{12} MPC_{j,t-i} (T_{j,t-i} -\tilde{T}_{j,t}) $ \end{center}
+
+\ 
+
+Stepping back, note that the contribution of real consumption to GDP is just the growth rate of real consumption times the share of consumption in GDP:  
+
+\ 
+
+\begin{center} $(\frac{C_{t}}{C_{t-1}} - (1+\pi_{C})) \frac{C_{t-1}}{Y_{t-1}} $ \end{center}
+
+\ 
+
+The fiscal impact of changes in taxes and transfers is measured as the difference between the realized contribution of consumption to real GDP growth and the contribution that would have occurred had the excess consumption $T^c_{t}$ not occurred. The FIM for taxes and transfers can then be written as  
+
+\ 
+
+\begin{center} $ FIM^T_{t} = (\frac{C_{t}}{C_{t-1}} - (1+\pi_{C})) \frac{C_{t-1}}{Y_{t-1}} - (\frac{C_{t} - T^C_{t}}{C_{t-1}} - (1+\pi_{C})) \frac{C_{t-1}}{Y_{t-1}} $ \end{center}
+
+\ 
+
+Which simplifies to   
+ 
+\ 
+
+\begin{center} $ FIM^T_{t} = \frac{T^C_{t}}{Y_{t-1}} $ \end{center} 
+
+\ 
+
+Summing together the impacts of taxes, transfers, and purchases, we define the total FIM as 
+
+\ 
+
+\begin{center} $FIM_{t} = \frac{G_{t} - (1+\pi_{G}+ \mu)G_{t-1} + T^C_{t}}{Y_{t-1}}$ \end{center}
+
+\ 
+\ 
+
+```{r , warning=FALSE, echo = FALSE, message = FALSE}
+
+tab = data.frame(
+  a = c(0.225,0.225,0,0,0.9),
+  b = c(-0.12,-0.06,-0.06,0,-0.6),
+  c = c(-0.033,-0.033,-0.033,-0.033,-0.4)
+)
+
+tab = data.frame(t(tab))
+rownames(tab) = c("Transfers", "Individual Taxes", "Corporate Taxes")
+library(knitr)
+library(kableExtra)
+
+knitr::kable(tab, "latex", caption = "Assumed MPCs", booktabs = T,col.names = c("t-1 thru t-2","t-3 thru t-4","t-5 thru t-8","t-9 thru t-12","Total MPC")) %>%
+add_header_above(c("Kind of Payment (j)", "Lag of MPC (i)" = 5), italic = T) %>%
+  kableExtra::kable_styling(latex_options = "hold_position")
+
+```
+\ 
+\ 
+\ 
+\  
+```{r, echo=FALSE, message=F, warning=FALSE, out.width = "25%", fig.align = "right"}
+
+knitr::include_graphics("HC_NEW_BROOKINGS_RGB.png")
+
+```
+
+
+
+
+
+

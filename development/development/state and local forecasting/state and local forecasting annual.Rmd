@@ -1,0 +1,316 @@
+---
+title: ""
+
+header-includes:
+- \usepackage{dcolumn}
+- \usepackage{rotating}
+- \usepackage{graphicx}
+
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 5, fig.height = 4, fig.align = "center")
+```
+
+## Projecting state and local taxes & transfers
+
+CBO produces a quarterly forecast of state and local government purchases, which we use directly to estimate fiscal impact at that level of government. We currently do not have a robust method of forecasting taxes and transfers at the state and local level. This document begins to explore some possible methods. 
+
+
+One possibility would be to rely on CBO's forecasts of state and local purchases and back out an estimate for tax revenues and transfer outlays. State and local purchases and taxes are closely related. Figure 1 plots y/y growth in state and local tax revenues (all sources) against state and local purchases (net of federal transfers).  Clearly tax revenues are a leading indicator for state and local purchases. 
+
+Results from a regression of the change in tax revenues on leads of state and local purchases are reported in Table 1. The reason we regress time t revenues on leads of purchases (and not purchases on lags of revenues) is that we're interested in using forecasts of purchases to forecast revenues, although the revenues tend to lead purchases in the realized time series. *Levels are in billions of dollars, seasonally adjusted at annual rates. All levels are nominal unless otherwise stated.  Thus the coefficients on purchases can be interpreted as the 1B dollar impact on revenues from a $1B increase in purchases. The same is true for other level-on-level regression coefficient estimates throughout this document. All data are annual, and cover the 1970-2018 sample.* 
+
+
+\begin{center} Figure 1. State and local revenues and purchases \end{center}
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+source("fim.R")
+library(stargazer)
+library(dplyr)
+
+xxx = xx[xx$date <= Sys.Date(),] # save quarterly data from fim script
+
+
+# annual data ?
+series1 = c("GDP", "C","CH","GDPH","JC", "JGDP", "JGF", "JGS", "PTGH","PTGSH","PTGFH", "YPTMR", "YPTMD", "GTFP", "YPOG", "YPTX", "YTPI", "YCTLG", "G", "GFRCF", "GRCSI", "GDPH", "DC",	"PTGFH", "PTGSH", "GF", "GS", "GFH", "GSH", "	GFRPT", "GFRPRI", "GFRCP", "GFRS","GFRPT","	GFRPRI","	GFRCP","	GFRS","	GFTFP","	GFEG","	GSRPT","	GSRPRI","	GSRCP","	GSRS","	GSTFP","	GSET", "YP")
+series2 = c("USPHPIP", "CASUSXAM", "FNMFHFA")
+data1 = haver.data(series1, "usna", start = as.Date("1970-01-01"), frequency = "annual")
+data2 = haver.data(series2, "usecon", start = as.Date("1970-01-01"), frequency = "annual")
+data1 <- data.frame(date = as.Date(rownames(data1), f="%Y"), data1)
+data2 <- data.frame(date = as.Date(rownames(data2), f="%Y"), data2)
+
+xx = merge(data1, data2, by = "date")
+
+#function to take log difference
+ln_d <- function(x){    
+  j=c()
+  for(i in 2:length(x)){
+    j[i] = log(x[i]/(x[i-1]))
+  }
+  j[1] = NA
+  j
+}
+
+#function to take y/y growth
+yy <- function(x){
+  j=c()
+  for(i in 5:length(x)){
+    j[i] = (-1 + (x[i]/(x[i-1])))*100
+  }
+  j[1:4] = NA
+  j
+}
+
+#function to take y/y growth for q data
+yyq <- function(x){
+  j=c()
+  for(i in 5:length(x)){
+    j[i] = (-1 + (x[i]/(x[i-4])))*100
+  }
+  j[1:4] = NA
+  j
+}
+taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
+xx$gstx = rowSums(xx[,taxpieces], na.rm = T) # tax revenue total
+xxx$gstx = rowSums(xxx[,taxpieces], na.rm = T) # tax revenue total
+
+xx$gsnet = xx$gs - xx$gfeg # state and local purchases less federal grants
+xxx$gsnet = xxx$gssave - xxx$gfeg # state and local purchases less federal grants
+
+xx$fshare = fmap$fshare[match(as.character(format(xx$date, f="%Y")),fmap$year )]
+xx$yfptmd = xx$yptmd*(xx$fshare) # federal medicaid expenditures
+xx$gstfpnet = xx$gstfp - xx$yfptmd # state and local transfers = state and local social benefits - medicaid grants from fed gov't
+xxx$gstfpnet = xxx$gstfp - xxx$yfptmd # state and local transfers = state and local social benefits - medicaid grants from fed gov't
+xx$hpx = xx$casusxam
+
+# linear time trend var
+xx$t = 1:nrow(xx)
+
+comp = c("gdp", "c",   "ch",  "gdph","yptmr" ,"yptmd" ,"g", "gfrcf",  "gf", "gs","gsnet", "gfh", "gsh", "gfrpt", "gfrpri" ,"gfrcp" ,"gfrs", "gftfp", "gsrpt" ,"gsrpri", "gsrcp" ,"gsrs","gstx",  "gstfp","gstfpnet", "gfeg")
+
+xx[,paste0(c(comp, "hpx", "yp"), "_yy")] = sapply(xx[,c(comp, "hpx", "yp")], function(x) yy(x))
+xxx[,paste0(comp, "_yy")] = sapply(xxx[,comp], function(x) yyq(x)) # quarterly
+xx[,paste0(c(comp, "hpx", "yp"), "_ln")] = sapply(xx[,c(comp, "hpx", "yp")], function(x) ln_d(x))
+
+lp(xxx[,c("date", "gsnet_yy", "gstx_yy", "gstfpnet_yy")], labelz = c("Purchases (net federal grants)", "Tax revenues (all sources)", "Transfers (net Medicaid grants)"), t = "", end.date = Sys.Date())
+
+comp = c(comp, "hpx", "yp")
+```
+
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+# dumbly switch back and forth so that the tables aren't obscenely long
+xx[,paste0(comp, "_use")] = sapply(xx[,comp], function(x) yy(x))
+lm1 <- lm(gstx_use~gsnet_use + lead(gsnet_use,1) + lead(gsnet_use,2) + lead(gsnet_use,3)  , xx)
+lm3 <- lm(gstfpnet_use~gsnet_use + lead(gsnet_use,1) + lead(gsnet_use,2) + lead(gsnet_use,3), xx)
+xx[,paste0(comp, "_use")] = xx[,comp]
+lm2 <- lm(gstx_use~gsnet_use + lead(gsnet_use,1) + lead(gsnet_use,2) + lead(gsnet_use,3)+ t, xx)
+lm4 <- lm(gstfpnet_use~gsnet_use + lead(gsnet_use,1) + lead(gsnet_use,2) + lead(gsnet_use,3) + t, xx)
+
+
+stargazer(lm1, lm2,lm3,lm4, covariate.labels = c("$Purchases_{t}$", "$Purchases_{t+1}$", "$Purchases_{t+2}$" , "$Purchases_{t+3}$", "t"), dep.var.labels = c("$Revenues_{t}$", "$Transfers_{t}$"), column.labels = rep(c("Growth","Level "),2), type = "latex", title = "Regression results of revenues and transfers on leading purchases", omit.stat = c("f", "ser"), header = FALSE)
+```
+
+
+Despite the seemingly strong visible correlation between revenues and purchases, the regression results don't suggest that purchases will provide a precise forecast of tax collections. Next, we consider another potential predictor of taxes and transfers: house prices. Table 2 reports regression results for total revenues and transfers on current and lagged values of these variables. The house price index used is the Case-Shiller national average index. 
+
+Table 2 reports the regression results  for total tax revenues and transfers (net of federal Medicaid grants) on lags 1, 2, and 3 (years) of the house price variable. The level-on-level regressions are house price index levels on nominal revenues, such that a coefficient reflects the $1B increase in revenues associated with a percentage increase in the level of house prices relative to their January 2000 level (i.e. Jan 2000 = 100). Longer lags have significant predictive power for revenues (in levels) and transfers (in levels), indicating that current house prices may be used to forecast revenues at the projection horizons we compute for the FIM forecasts. 
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+# hpx$pcu = q_a(hpx$pcu)
+
+# test out using house prices to forecast state and local revenue
+xx[,paste0(comp, "_use")] = sapply(xx[,comp], function(x) yy(x))
+hp1 <- lm(gstx_use~hpx_use + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5), xx)
+hp3 <- lm(gstfp_use~hpx_use + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5), xx)
+
+xx[,paste0(comp, "_use")] = xx[,comp]
+hp2 <- lm(gstx_use~hpx_use + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5)+ t, xx)
+hp4 <- lm(gstfp_use~hpx_use + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5)+ t, xx)
+
+
+stargazer(hp1, hp2, hp3, hp4, covariate.labels = c("$HPX_{t}$", "$HPX_{t-1}$", "$HPX_{t-3}$", "$HPX_{t-5}$", "t"), dep.var.labels = c("$Revenues_{t}$", "$Transfers_{t}$"), column.labels = rep(c("Growth","Levels "),4), type = "latex", title = "Regression results of revenues and transfers on house prices", omit.stat = c("f", "ser"), header = FALSE)
+
+```
+
+<!-- # ```{r, echo=FALSE, message=F, warning=FALSE, results='asis'} -->
+<!-- # # test out using house prices to forecast state and local revenue -->
+<!-- # xx[,paste0(comp, "_use")] = sapply(xx[,comp], function(x) yy(x)) -->
+<!-- # hp1 <- lm(gsrpri_use~hpx_use + shift(hpx_use, 1) + shift(hpx_use, 2) + shift(hpx_use, 3), xx) -->
+<!-- # hp3 <- lm(gsrpt_use~hpx_use + shift(hpx_use, 1) + shift(hpx_use, 2) + shift(hpx_use, 3), xx) -->
+<!-- #  -->
+<!-- # xx[,paste0(comp, "_use")] = xx[,comp] -->
+<!-- # hp2 <- lm(gsrpri_use~hpx_use + shift(hpx_use, 1) + shift(hpx_use, 2) + shift(hpx_use, 3)+ t, xx) -->
+<!-- # hp4 <- lm(gsrpt_use~ hpx_use + shift(hpx_use, 1) + shift(hpx_use, 2) + shift(hpx_use, 3)+ t, xx) -->
+<!-- #  -->
+<!-- # stargazer(hp1, hp2, hp3, hp4, covariate.labels = c("$HPX_{t}$", "$HPX_{t-1}$", "$HPX_{t-2}$", "$HPX_{t-3}$" ,"t"), dep.var.labels = c("$Production and ImportRevenues_{t}$", "$IncomeRevenues_{t}$"), column.labels = rep(c("Growth","Levels "),4), type = "latex", title = "Regression results of production and import and income tax revenues on house prices", omit.stat = c("f", "ser"), header = FALSE) -->
+<!-- #  -->
+<!-- # ``` -->
+
+
+## Regressions of tax revenues on GDP components
+
+Table 3 reports results for regressions of total state and local tax revenues on current and two lagged values of GDP, personal consumption expenditures, and personal income. Note the coefficient estimates for the current values in levels are approximately state and local taxes as a share of each component (8 percent, 13 percent, and 10 percent, respectively). This implies that the projections we would construct using these regression estimates may not significantly improve upon just assuming that the state and local tax rate is constant and extrapolating its level forwards. We compare the two methods in Figure 4, which plots realized state and local tax revenues up through 2014 against projections for 2015-2018 as an example. The first projection method assumes the state and local tax rate ($\tau / Y$) is constant and grows with (realized) GDP ($Y$). The second projection method takes predicted values from the regression of revenues on GDP and two of its lags, plus a time trend, estimated using the sample up through 2014.   
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+
+# test out using PCE or GDP to forecast state and local revenue
+xx[,paste0(comp, "_use")] = sapply(xx[,comp], function(x) yy(x))
+gdp1 <- lm(gstx_use~gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2), xx)
+pce1 <- lm(gstx_use~c_use + shift(c_use, 1) + shift(c_use, 2), xx)
+yp1 <- lm(gstx_use~yp_use + shift(yp_use, 1) + shift(yp_use, 2), xx)
+
+xx[,paste0(comp, "_use")] = xx[,comp]
+gdp2 <- lm(gstx_use~t+gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2), xx)
+pce2 <- lm(gstx_use~t+c_use + shift(c_use, 1) + shift(c_use, 2), xx)
+yp2 <- lm(gstx_use~t+yp_use + shift(yp_use, 1) + shift(yp_use, 2), xx)
+
+stargazer(gdp1, gdp2,  pce1, pce2, yp1, yp2, covariate.labels = c("t","$GDP_{t}$", "$GDP_{t-1}$", "$GDP_{t-2}$",  "$PCE_{t}$", "$PCE_{t-1}$", "$PCE_{t-2}$","$YP_{t}$", "$YP_{t-1}$", "$YP_{t-2}$"), dep.var.labels = "$Revenues_{t}$", column.labels = rep(c("Growth","Levels"),3), type = "latex", title = "Regression results of revenues on GDP, consumption (PCE), and personal income (YP)", omit.stat = c("f", "ser"), header = FALSE)
+
+```
+
+\pagebreak
+
+\begin{center} Figure 3. State and local tax revenues projected assuming $\tau /Y$ is constant and using regression (2) above \end{center}
+
+ _Out-of-sample projection period is 2012-2018_ 
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+insamp = which(xx$date<"2012-01-01")
+outsamp = which(xx$date>="2012-01-01")
+xx[,paste0(comp, "_use")] = xx[,comp]
+gdp2 <- lm(gstx_use~t+gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2), xx[insamp,])
+xx$gdp_outpred = NA
+xx$gdp_outpred[outsamp] = predict(gdp2, xx)[outsamp]
+# xx$gdp_outpred = predict(gdp2, xx)
+# xx$gdp_outpred = q_a(xx$gdp_outpred)
+# xx$gdp_outpred_lev = NA
+# xx$gdp_outpred_lev[outsamp[1]] = (1+xx$gdp_outpred[outsamp[1]]/400)*xx$gstx[outsamp[1]-1]
+# for(i in 2:length(outsamp)){
+#     xx$gdp_outpred_lev[outsamp[i]] = (1+xx$gdp_outpred[outsamp[i]]/400)*xx$gdp_outpred_lev[outsamp[i]-1]
+# }
+
+# assume constant tau/Y
+xx$gstx_rate = xx$gstx/xx$gdp
+xx$rate_outpred_lev = NA
+for(i in 1:length(outsamp)){
+  xx$rate_outpred_lev[outsamp[i]] = xx$gstx_rate[outsamp[1]-1]*xx$gdp[outsamp[i]]
+}
+
+lp(xx[c("date", "gstx", "gdp_outpred", "rate_outpred_lev")], c("Realized", "Predicted using regression (2)", "Predicted assuming constant tax rate"), end.date = "2018-12-31")
+```
+
+
+Is the assumption that the tax rate remains constant over time valid? Lutz, Molloy, and Shan (2010) find, for example, that states increased property tax rates during the Great Recession, effectively offsetting the decline in property tax declines from the housing bust. The figures below show annual change ($(\tau/Y)_{t} - (\tau/Y)_{t-1}$) in the tax rate for the four components of taxes at the state and local level (corporate, payroll, production and import taxes, and income taxes). The rates across components tend to be relatively stable, with the exception of personal taxes. Even in that case the changes are relatively small (3/10ths of a percentage point at the largest).  Regardless, it could be that assuming a constant tax rate for some major components--property taxes, e.g.--and allowing the rate to vary for, say, personal taxes is valid. 
+
+\begin{center} Figure 4. State and local tax rates (annual change, percentage points) \end{center}
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+
+xx[,c(paste0(taxpieces, "_rate"))] = sapply(xx[,taxpieces], function(x){100*x/xx$gdp})
+xx[,c(paste0(taxpieces, "_rate"))] = sapply(xx[,c(paste0(taxpieces, "_rate"))], function(x) c(NA, diff(x)))
+
+lp(xx[,c("date", paste0(taxpieces, "_rate"))], c("Personal Income","Production,Import", "Corporate", "Payroll"), start.date = "1980-01-01", end.date = "2018-12-31")
+```
+
+
+Finally, the tables below show regression results for each of the four main components of taxes at the state and local level (corporate, payroll, production and import taxes, and income taxes) on a selection of regressors (GDP, PCE, house prices). We're excluding purchases for now. All regressions are of levels on levels, with a linear time trend variable included.
+
+\pagebreak
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+
+xx[,paste0(comp, "_use")] = xx[,comp]
+gdp1 <- lm(gsrpt~t+gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2), xx)
+gdp2 <- lm(gsrpri~t+gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2), xx)
+gdp3 <- lm(gsrcp~t+gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2), xx)
+gdp4 <- lm(gsrs~t+gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2), xx)
+
+stargazer(gdp1, gdp2,  gdp3, gdp4, covariate.labels = c("t","$GDP_{t}$", "$GDP_{t-1}$", "$GDP_{t-2}$"), column.labels = c("Personal Income","Production,Import", "Corporate", "Payroll"), type = "latex", title = "Regression results of revenues on GDP", omit.stat = c("f", "ser"), header = FALSE)
+
+```
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+
+xx[,paste0(comp, "_use")] = xx[,comp]
+c1 <- lm(gsrpt~t+c_use + shift(c_use, 1) + shift(c_use, 2), xx)
+c2 <- lm(gsrpri~t+c_use + shift(c_use, 1) + shift(c_use, 2), xx)
+c3 <- lm(gsrcp~t+c_use + shift(c_use, 1) + shift(c_use, 2), xx)
+c4 <- lm(gsrs~t+c_use + shift(c_use, 1) + shift(c_use, 2), xx)
+
+stargazer(c1, c2,  c3, c4, covariate.labels = c("t","$PCE_{t}$", "$PCE_{t-1}$", "$PCE_{t-2}$"), dep.var.labels = "$Revenues_{t}$", column.labels = c("Personal Income","Production,Import", "Corporate", "Payroll"), type = "latex", title = "Regression results of revenues on PCE", omit.stat = c("f", "ser"), header = FALSE)
+
+```
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+
+xx[,paste0(comp, "_use")] = xx[,comp]
+hpx1 <- lm(gsrpt~t+ shift(hpx_use, 1) + shift(hpx_use, 3)+ shift(hpx_use, 5), xx)
+hpx2 <- lm(gsrpri~t+ shift(hpx_use, 1) + shift(hpx_use, 3)+ shift(hpx_use, 5), xx)
+hpx3 <- lm(gsrcp~t+ shift(hpx_use, 1) + shift(hpx_use, 3)+ shift(hpx_use, 5), xx)
+hpx4 <- lm(gsrs~t+ shift(hpx_use, 1) + shift(hpx_use, 3)+ shift(hpx_use, 5), xx)
+
+stargazer(hpx1, hpx2,  hpx3, hpx4, covariate.labels = c("t","$HPX_{t-1}$", "$HPX_{t-3}$", "$HPX_{t-5}$"), dep.var.labels = "$Revenues_{t}$", column.labels = c("Personal Income","Production,Import", "Corporate", "Payroll"), type = "latex", title = "Regression results of revenues on house prices", omit.stat = c("f", "ser"), header = FALSE)
+```
+
+\pagebreak 
+## Horse Race Regressions
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+xx[,paste0(comp, "_use")] = xx[,comp]
+race0 <- lm(gstx_use~t + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5) + gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2)+ c_use + shift(c_use, 1) + shift(c_use, 2) + yp_use + shift(yp_use,1) + shift(yp_use,2), xx)
+race1 <- lm(gsrpt_use~t + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5) + gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2)+ c_use + shift(c_use, 1) + shift(c_use, 2) + yp_use + shift(yp_use,1) + shift(yp_use,2), xx)
+race2 <- lm(gsrpri_use~t + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5)+ gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2)  + c_use + shift(c_use, 1) + shift(c_use, 2) + yp_use + shift(yp_use,1) + shift(yp_use,2), xx)
+race3 <- lm(gsrcp_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5)+ gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2)  + c_use + shift(c_use, 1) + shift(c_use, 2) + yp_use + shift(yp_use,1) + shift(yp_use,2), xx)
+race4 <- lm(gsrs_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5)+ gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2)  + c_use + shift(c_use, 1) + shift(c_use, 2) + yp_use + shift(yp_use,1) + shift(yp_use,2), xx)
+
+stargazer(race0, race1, race2,  race3, race4, covariate.labels = c("t","$HPX_{t-1}$", "$HPX_{t-3}$", "$HPX_{t-5}$", "$GDP_{t}$", "$GDP_{t-1}$","$GDP_{t-2}$","$C_{t}$", "$C_{t-1}$","$C_{t-2}$","$YP_{t}$", "$YP_{t-1}$","$YP_{t-2}$"), column.labels = c("Total","Personal Income","Production,Import", "Corporate", "Payroll"), type = "latex", title = "Horse-race regression results of revenues on HPX, GDP, PCE and leading purchases", omit.stat = c("f", "ser"), header = FALSE)
+```
+
+## Horse Race Regressions
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+xx[,paste0(comp, "_use")] = xx[,comp]
+race0 <- lm(gstx_use~t + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5) + gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2)+ c_use + shift(c_use, 1) + shift(c_use, 2) + yp_use + shift(yp_use,1) + shift(yp_use,2), xx)
+race1 <- lm(gsrpt_use~t + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5) + gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2)+ c_use + shift(c_use, 1) + shift(c_use, 2) + yp_use + shift(yp_use,1) + shift(yp_use,2), xx)
+race2 <- lm(gsrpri_use~t + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5)+ gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2)  + c_use + shift(c_use, 1) + shift(c_use, 2) + yp_use + shift(yp_use,1) + shift(yp_use,2), xx)
+race3 <- lm(gsrcp_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5)+ gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2)  + c_use + shift(c_use, 1) + shift(c_use, 2) + yp_use + shift(yp_use,1) + shift(yp_use,2), xx)
+race4 <- lm(gsrs_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3) + shift(hpx_use, 5)+ gdp_use + shift(gdp_use, 1) + shift(gdp_use, 2)  + c_use + shift(c_use, 1) + shift(c_use, 2) + yp_use + shift(yp_use,1) + shift(yp_use,2), xx)
+
+stargazer(race0, race1, race2,  race3, race4, covariate.labels = c("t","$HPX_{t-1}$", "$HPX_{t-3}$", "$HPX_{t-5}$", "$GDP_{t}$", "$GDP_{t-1}$","$GDP_{t-2}$","$C_{t}$", "$C_{t-1}$","$C_{t-2}$","$YP_{t}$", "$YP_{t-1}$","$YP_{t-2}$"), column.labels = c("Total","Personal Income","Production,Import", "Corporate", "Payroll"), type = "latex", title = "Horse-race regression results of revenues on HPX, GDP, PCE and leading purchases", omit.stat = c("f", "ser"), header = FALSE)
+```
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+xx[,paste0(comp, "_use")] = xx[,comp]
+race0 <- lm(gstx_use~t + shift(hpx_use, 1) + shift(hpx_use, 3)  + gdp_use + shift(gdp_use, 1) + c_use + shift(c_use, 1)  + gsnet_use + lead(gsnet_use,1) , xx)
+race1 <- lm(gsrpt_use~t + shift(hpx_use, 1) + shift(hpx_use, 3)  + gdp_use + shift(gdp_use, 1) + c_use + shift(c_use, 1)  + gsnet_use + lead(gsnet_use,1), xx)
+race2 <- lm(gsrpri_use~t + shift(hpx_use, 1) + shift(hpx_use, 3)  + gdp_use + shift(gdp_use, 1) + c_use + shift(c_use, 1)  + gsnet_use + lead(gsnet_use,1), xx)
+race3 <- lm(gsrcp_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3)  + gdp_use + shift(gdp_use, 1) + c_use + shift(c_use, 1)  + gsnet_use + lead(gsnet_use,1), xx)
+race4 <- lm(gsrs_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3)  + gdp_use + shift(gdp_use, 1) + c_use + shift(c_use, 1)  + gsnet_use + lead(gsnet_use,1), xx)
+
+stargazer(race0, race1, race2,  race3, race4, covariate.labels = c("t","$HPX_{t-1}$", "$HPX_{t-3}$",  "$GDP_{t}$", "$GDP_{t-1}$","$C_{t}$", "$C_{t-1}$","$Purchases_{t}$", "$Purchases_{t+1}$","$Purchases_{t+2}$"), column.labels = c("Total","Personal Income","Production,Import", "Corporate", "Payroll"), type = "latex", title = "Horse-race regression results of revenues on HPX, GDP, PCE and leading purchases", omit.stat = c("f", "ser"), header = FALSE)
+```
+
+
+
+
+```{r, echo=FALSE, message=F, warning=FALSE, results='asis'}
+xx[,paste0(comp, "_use")] = xx[,comp]
+race0 <- lm(gstx_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3) + gdp_use + c_use + yp_use + lead(gsnet_use,3) , xx)
+race1 <- lm(gsrpt_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3) + gdp_use + c_use + yp_use + lead(gsnet_use,3) , xx)
+race2 <- lm(gsrpri_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3) + gdp_use + c_use + yp_use + lead(gsnet_use,3) , xx)
+race3 <- lm(gsrcp_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3) + gdp_use + c_use + yp_use + lead(gsnet_use,3) , xx)
+race4 <- lm(gsrs_use~ t + shift(hpx_use, 1) + shift(hpx_use, 3) + gdp_use + c_use + yp_use + lead(gsnet_use,3) , xx)
+
+stargazer(race0, race1, race2,  race3, race4, covariate.labels = c("t","$HPX_{t-1}$","$HPX_{t-3}$", "$GDP_{t}$", "$C_{t}$", "$YP_{t}$","$Purchases_{t+3}$"), column.labels = c("Total","Personal Income","Production,Import", "Corporate", "Payroll"), type = "latex", title = "Horse-race regression results of revenues on HPX, GDP, PCE and leading purchases", omit.stat = c("f", "ser"), header = FALSE)
+```
+
