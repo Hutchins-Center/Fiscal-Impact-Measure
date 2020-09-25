@@ -1,0 +1,37 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## WLA Program Summary
+
+
+```{r}
+library("tidyverse")
+wla <- read_csv("data/wla.csv")
+wla
+```
+
+Only 11 states have started disbursing funds. 
+
+```{r}
+wla %>% filter(`Program Start` == "Started")
+```
+Among States that have not disbursed funds yet, 12 will do so in september, 2 in October, and 25 have not yet announced when their programs start. 
+```{r}
+wla %>% filter(str_detect(`Program Start`, 'September'))
+```
+
+```{r}
+wla %>% filter(str_detect(`Program Start`, 'October'))
+```
+
+```{r}
+wla %>% filter(is.na(`Program Start`)) 
+```
+Only 5 states will provide the extra $100
+
+```{r}
+wla %>% filter(`Enhanced Benefit Amount` == "$400")
+```
+Based on the fact that 11 states started their programs in early September and 12 more will do so at some point this month, I say we should assign 10% of the funds to Q3 (calendar year) and 90% to Q4 (calendar year). So `r 44*0.1` in Q3 and `r 44*0.9` in Q4. At an annualized rate this is `r 44*0.1*4` in Q3 and `r 44*0.9*4` in Q4. 
