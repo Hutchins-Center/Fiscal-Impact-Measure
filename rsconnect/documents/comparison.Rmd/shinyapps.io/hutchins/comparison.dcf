@@ -1,0 +1,12 @@
+name: comparison
+title: comparison
+username:
+account: hutchins
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2749056
+bundleId: 3618786
+url: https://hutchins.shinyapps.io/comparison/
+when: 1599828610.61086
+asMultiple: FALSE
+asStatic: FALSE

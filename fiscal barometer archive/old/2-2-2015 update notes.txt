@@ -1,0 +1,9 @@
+1. Real Structures:
+a) fix the dates
+b) I think GSISH@USNA might be the same series as real structures 
+
+2. Go through Macro line-by-line to fix
+
+3.Re-name jobs-structures csv file and delete extraneous ones from sitecore
+
+3. Taxes_CBO table, am grouping exchange subsidies with 'other.' might want to change the notes in the table
