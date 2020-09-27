@@ -1,0 +1,72 @@
+---
+title: "FIM: Visualizing Dependencies"
+output: html_notebook
+---
+
+```{r, echo =  FALSE, include = FALSE}
+BiocManager::install("graph")
+BiocManager::install("Rgraphviz")
+library("graph")
+library("CodeDepends")
+```
+## Variable definitions timelines
+```{r, echo = FALSE}
+datapull <- readScript("code/fim_datapull.R")
+projections <- readScript("code/fim_projections.R")
+calculations <- readScript("code/fim_calculations.R")
+
+datapull_dtm = getDetailedTimelines(datapull, getInputs(datapull))
+plot(datapull_dtm)
+
+projections_dtm = getDetailedTimelines(projections, getInputs(projections))
+plot(projections_dtm, var.cex = .7, mar = 4, srt = 30)
+
+calculations_dtm = getDetailedTimelines(calculations, getInputs(calculations))
+plot(calculations_dtm, var.cex = .7, mar = 4, srt = 30)
+
+
+```
+## Variable dependency graphs
+
+### Data pull
+```{r, echo =  FALSE}
+ g <- makeVariableGraph( info = getInputs(datapull))
+ if(require(Rgraphviz))
+   plot(g)
+```
+### Projections
+```{r,  echo = FALSE}
+ g <- makeVariableGraph( info = getInputs(projections))
+ if(require(Rgraphviz))
+   plot(g)
+```
+### Calculations
+```{r, echo = FALSE}
+  g <- makeVariableGraph( info = getInputs(calculations))
+ if(require(Rgraphviz))
+   plot(g)
+```
+
+```{r}
+devtools::install_github("MKLau/Rclean")
+library(Rclean)
+```
+
+### Data pull
+```{r}
+get_vars(datapull)
+code_graph(datapull)
+```
+
+### Projections
+
+```{r}
+get_vars(projections)
+code_graph(projections)
+```
+
+```{r}
+get_vars(calculations)
+code_graph(calculations)
+```
+
