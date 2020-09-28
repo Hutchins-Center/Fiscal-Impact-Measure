@@ -1,4 +1,8 @@
-
+f = system.file( "code/fim_projections.R", package = "CodeDepends")
+sc = readScript(f)
+g = makeVariableGraph( info = getInputs(sc))
+if(require(Rgraphviz))
+  plot(g)
 #========================
 # Section 0: setup
 #========================
@@ -13,7 +17,7 @@ mPackages <- installed.packages()
 stInstalled <- rownames( mPackages )
 # Isolate thep package names
 stRequired <- c('tidyverse','stringr','reshape2', 'zoo', 'quantmod', 'rmarkdown', 'TTR',
-   'data.table', 'lubridate')
+   'data.table', 'lubridate', 'Hmisc')
 #  The required packages
 
 for ( stName in stRequired ){
