@@ -62,6 +62,14 @@ pull_data <- function(series, database, start.date, frequency = "quarterly"){
 }
 
 # function to calculate quarterly annualized growth rates
+#' Title
+#'
+#' @param x is a time series object
+#'
+#' @return annualized quarterly growth rate
+#' @export
+#'
+#' @examples
 q_a = function(x){
   j=c()
   for(i in 2:length(x)){
