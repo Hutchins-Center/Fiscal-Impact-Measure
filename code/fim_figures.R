@@ -1,14 +1,13 @@
 # Plot figures
 source("code/fim_calculations.R")
+## Load data viz packages -------
+packages <- Cs(ggplot2, ggtext, gridExtra, grid, wesanderson, tinytex)
+lapply(packages, require, character.only = TRUE)
 
-library(ggplot2)
-library(gridExtra)
-library(grid)
-library(wesanderson)
-library("tinytex")
 
 # Do you want to render the output to PDFs and JPGs?
 render = T
+
 
 ######COVID19 changes#####
 #manually added end date for recesions that's equal to the start of the current month
