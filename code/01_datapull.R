@@ -1,24 +1,23 @@
-
+f = system.file( "code/fim_projections.R", package = "CodeDepends")
+sc = readScript(f)
+g = makeVariableGraph( info = getInputs(sc))
+if(require(Rgraphviz))
+  plot(g)
 #========================
 # Section 0: setup
 #========================
-# myDir <- paste0("C:/Users/",Sys.info()[7],"/The Brookings Institution/Hutchins Center Team - Documents/Projects/Fiscal Impact/")
-# setwd(myDir)
 rm(list=ls())           # Clear the workspace
-set.seed(907)           # set my random seed
 
 # turn off scientific notation except for big numbers
 options(scipen = 9)
 
-#=============
-# Installing packages (checks if they are installed first), then loading packages
-#=============
+## Packages ########
 mPackages <- installed.packages()
 # Details of installed packages
 stInstalled <- rownames( mPackages )
 # Isolate thep package names
 stRequired <- c('tidyverse','stringr','reshape2', 'zoo', 'quantmod', 'rmarkdown', 'TTR',
-   'data.table', 'lubridate')
+   'data.table', 'lubridate', 'Hmisc', 'ggplot2')
 #  The required packages
 
 for ( stName in stRequired ){
@@ -36,14 +35,17 @@ if (!('Haver' %in% stInstalled) ){
 library(Haver)
 
 #####start here#####
-#lapply(stRequired, install.packages, character.only = TRUE)
-#lapply(stRequired, library, character.only = TRUE)
-#library(Haver)
-
-#setwd("C:/Users/kyilla/The Brookings Institution/Hutchins Center Team - Documents/Projects/Fiscal Impact")
 
 # define some helper functions
 # function to pull haver data 
+#' Title
+#'
+#' @param series variables to search for in Haver
+#' @param database Haver name
+#' @param start.date 
+#' @param frequency can be annual or quarterly. Default is quarterly
+#'
+#' @return data frame
 pull_data <- function(series, database, start.date, frequency = "quarterly"){
   q <- haver.data(series, database, eop.dates = T, start = as.Date(start.date, f = "%m-%d-%Y"))
   q <- data.frame(date = as.Date(rownames(q)), q)
@@ -60,6 +62,14 @@ pull_data <- function(series, database, start.date, frequency = "quarterly"){
 }
 
 # function to calculate quarterly annualized growth rates
+#' Title
+#'
+#' @param x is a time series object
+#'
+#' @return annualized quarterly growth rate
+#' @export
+#'
+#' @examples
 q_a = function(x){
   j=c()
   for(i in 2:length(x)){
