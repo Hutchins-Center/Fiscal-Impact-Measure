@@ -5,3 +5,5 @@ Open the Fiscal-Impact-Measure.Rpoj file in the parent directory of Fiscal-Impac
 
 The project structure has been reorganized to remove clutter and make it easier to find things. For example, all the scattered folders from the 2020 updates are now in fim archive along with fim old and fim barometer archive. 
 
+Hello world
+
