@@ -50,50 +50,40 @@ fim = data.frame(
 
 #####ADDONS FOR THE CORONAVIRUS BILLS####
 # !! REMOVE WHEN NIPAS ARE UPDATED AND NEW ECON PROJECTIONS ARE RELEASED (whichever comes first)
+
+#load add factor file
+add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v2.xlsx", 
+                          sheet = "FIM Add Factors", col_types = c("date", 
+                                                                   "numeric", "numeric", "numeric", 
+                                                                   "numeric", "numeric", "numeric", 
+                                                                   "numeric", "numeric"))
+fim <- fim %>% full_join(add_factors, by = "date")
+fim$date = as.Date(fim$date)
+
 fim_corona_hist1 <- fim %>%
-  filter(date <= "2020-06-30")
+  filter(date <= "2020-06-30") #historical data
 
-fim_corona_hist1[202, 'federal_cgrants'] <- fim_corona_hist1[202, 'federal_cgrants'] + (-298)
-# fim_corona_hist1[202, 'federal_corporate_taxes'] <- fim_corona_hist1[202, 'federal_corporate_taxes'] + (-49.05)
-
-fim_corona_hist2 <- fim %>%
-  filter(date > "2021-12-31")
+fim_corona_postProj <- fim %>%
+  filter(date > "2021-12-31") #projections beyond the end of 2021
 
 fim_corona <- fim %>%
   filter(date > "2020-06-30" & date <= "2021-12-31") %>%
   mutate(
-#  #introduce state and local add-ons
-#      #New add-ons for Q3 2020 and beyond Calculations are in covid-19 changes/september/addons_comparison_newadds_sept.xlsx
-      add_state_health_outlays = c(39.46,33.75,28.04,22.33,16.62,18.34),
-      add_state_social_benefits =  c(319.53,32.39,38.99,44.43,21.6,-16.7),
-      add_state_noncorp_taxes =  c(-54.82, -87.56, -114.78, -132.92, -155.13, -161.58),
-      add_state_corporate_taxes = c(31.78, 30.14, 33.5, 34.45, 35.55, 36.31),
-      # add_state_expenditures = c(0,	3.1,	3.1,	3.1,	3.1,	5),
-
-  #introduce federal add-ons
-      #New add-ons for Q3 2020 and beyond Calculations are in covid-19 changes/september/addons_comparison_newadds_sept.xlsx
-  add_federal_health_outlays = c(-22.65,-5.57,-5.84,7.19,9.9,53.43),
-  add_federal_social_benefits = c(-1490.39,-1546.12,-1429.51,-112.18,-899.73,-994.39),
-  # add_federal_noncorp_taxes = c(31.51, 41.57, 55.78, 69.01, 75.67, 96.18),
-  # add_federal_corporate_taxes = c(-4.09, -10.58, -5.48, -6.10, -6.16, -5.76),  #does not include -49.05 for Q2
-  add_federal_subsidies = c(119.97,-715.67,-989.94,-1006.02,-1010.3,-1014.92),
-  add_federal_grants = c(-534.23,-528.32,-530.05,-533.51,-519.94,-591.54), #missing -450 for Q2
-  # add_federal_nom = c(-60, -60, -60, -60, -60, -60),
-
 
     #calculate new variables by adding the add factors
     state_health_outlays  = state_health_outlays + add_state_health_outlays,
     state_social_benefits  = state_social_benefits + add_state_social_benefits,
     state_noncorp_taxes  =  state_noncorp_taxes + add_state_noncorp_taxes,
     state_corporate_taxes  = state_corporate_taxes + add_state_corporate_taxes,
-  #
+  
     federal_health_outlays  = federal_health_outlays + add_federal_health_outlays,
     federal_social_benefits  = federal_social_benefits + add_federal_social_benefits,
-  #   federal_noncorp_taxes  = federal_noncorp_taxes + add_federal_noncorp_taxes,
-  #   federal_corporate_taxes  = federal_corporate_taxes + add_federal_corporate_taxes,
+  # federal_noncorp_taxes  = federal_noncorp_taxes + add_federal_noncorp_taxes,
+  # federal_corporate_taxes  = federal_corporate_taxes + add_federal_corporate_taxes,
     federal_subsidies  = federal_subsidies + add_federal_subsidies,
-  #
-  #   #new category totals
+    federal_cgrants = federal_cgrants + add_federal_grants,
+  
+    #new category totals
     health_outlays  = state_health_outlays  + federal_health_outlays ,
     social_benefits  = state_social_benefits  + federal_social_benefits ,
     noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
@@ -101,13 +91,12 @@ fim_corona <- fim %>%
     subsidies   = state_subsidies + federal_subsidies,
     # state_local_nom = add_state_expenditures + state_local_nom,
     # federal_nom = add_federal_nom + federal_nom,
-    federal_cgrants = add_federal_grants + federal_cgrants
 
   )
 
- fim_new <- bind_rows(fim_corona_hist1, fim_corona, fim_corona_hist2)
+ fim_new <- bind_rows(fim_corona_hist1, fim_corona, fim_corona_postProj)
  fim <- fim_new
- rm(fim_corona, fim_new, fim_corona_hist1, fim_corona_hist2)
+ rm(fim_corona, fim_new, fim_corona_hist1, fim_corona_postProj)
  
  fim$federal_cgrants[202] = 181.51 #Manually entering value for Q2 2020 since add factors start in Q3
  
