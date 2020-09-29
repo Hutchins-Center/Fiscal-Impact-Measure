@@ -32,8 +32,9 @@ library(Haver)
 #' @param frequency can be annual or quarterly. Default is quarterly
 #'
 #' @return data frame
-pull_data <- function(series, database, start.date, frequency = "quarterly"){
+pull_data <- function(series, names, database, start.date, frequency = "quarterly"){
   q <- haver.data(series, database, eop.dates = T, start = as.Date(start.date, f = "%m-%d-%Y"))
+  q <- data.frame(q) %>% setnames(., names)
   q <- data.frame(date = as.Date(rownames(q)), q)
   
   for (j in 2:ncol(q)) {
@@ -75,25 +76,53 @@ q_g = function(x){
   j
 }
 
-
+#' Title
+#' Read all sheets in excel workbook
+#' @param filename 
+#' @param tibble 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+read_excel_allsheets <- function(filename, tibble = TRUE) {
+  # I prefer straight data.frames
+  # but if you like tidyverse tibbles (the default with read_excel)
+  # then just pass tibble = TRUE
+  sheets <- readxl::excel_sheets(filename)
+  x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X))
+  if(!tibble) x <- lapply(x, as.data.frame)
+  names(x) <- sheets
+  x 
+}
 # Pull Data ---------------------------------------------------------------
 
 # NOTE: All quarterly values are in seasonally-adjusted, annual rates (SAAR), billions of dollars. 
 # Annual values are in annual rates, billions of dollars. We will translate annual levels into quarterly values 
 # by imputing them to each of the four quarters in the year and taking the 4-quarter moving average. 
+haverNames <- read_excel_allsheets(
+  "data/processing/haver_names.xlsx"
+)
+
 
 # pull quarterly BEA NIPAs data
-names_usna <- read_excel("data/processing/haver_names.xlsx")
-nationalAccounts <- pull_data(names_usna$code, "usna", start.date = "01-01-1970")
-colnames(data1) <- names_usna$reference[match(colnames(data1), names_usna$code)]
+usna_quarterly <- pull_data(haverNames[["National Accounts Quarterly"]]$code, 
+          haverNames[["National Accounts Quarterly"]]$reference,
+          "usna", start.date = "01-01-1970")
+# pull quarterly data from US Economic Statistics Database
+usecon_quarterly <- pull_data(haverNames[['USECON Quarterly']]$code,
+                      names = haverNames[['USECON Quarterly']]$reference,
+                      "usecon", "01-01-1970")
 
-data2 = pull_data(c("PCW", "GDPPOTHQ","GDPPOTQ", "RECESSQ"), "usecon", "01-01-1970")
-hist = merge(data1, data2, by = "date")
+historical_quarterly <- merge(usna_quarterly, usecon_quarterly, by = "date")
 
 # pull annual BEA NIPAs data, for regressions for state and local tax revenues
-series3 = c("GDP", "C","CH","GDPH","JC", "JGDP", "JGF", "JGS", "PTGH","PTGSH","PTGFH", "YPTMR", "YPTMD", "GTFP", "YPOG", "YPTX", "YTPI", "YCTLG", "G", "GRCSI", "GDPH", "DC",	"PTGFH", "PTGSH", "GF", "GS", "GFH", "GSH", "	GFRPT", "GFRPRI", "GFRCP", "GFRS","GFRPT","	GFRPRI","	GFRCP","	GFRS","	GFTFP","	GFEG","	GSRPT","	GSRPRI","	GSRCP","	GSRS","	GSTFP","	GSET", "YP", "GFSUB", "GSSUB")
+usna_annual <- pull_data(haverNames[["National Accounts Annual"]]$code,
+                         names = haverNames[['National Accounts Annual']]$reference,
+                         database = "usna", start = "01-01-1970", frequency = "annual")
+
+
 series4 = c("USPHPI", "CASUSXAM","GDPPOT", "GDPPOTH")
-data3 = pull_data(series3, "usna", start = as.Date("1970-01-01"), frequency = "annual")
 data4 = pull_data(series4, "usecon", start = as.Date("1970-01-01"), frequency = "annual")
 aa = merge(data3, data4, by = "date")
 aa$hpx = aa$usphpi #house price index of choice is the FHFA purchase only index, 1991 = 100, since that's what CBO forecasts
