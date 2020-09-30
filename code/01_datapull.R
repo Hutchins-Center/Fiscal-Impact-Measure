@@ -1,8 +1,3 @@
-f = system.file( "code/fim_projections.R", package = "CodeDepends")
-sc = readScript(f)
-g = makeVariableGraph( info = getInputs(sc))
-if(require(Rgraphviz))
-  plot(g)
 #========================
 # Section 0: setup
 #========================
