@@ -1,21 +1,12 @@
+# Packages ----------------------------------------------------------------
 
-#========================
-# Section 0: setup
-#========================
-rm(list=ls())           # Clear the workspace
-
-# turn off scientific notation except for big numbers
-options(scipen = 9)
-
-## Packages ########
 mPackages <- installed.packages()
 # Details of installed packages
 stInstalled <- rownames( mPackages )
 # Isolate thep package names
 stRequired <- c('tidyverse','stringr','reshape2', 'zoo', 'quantmod', 'rmarkdown', 'TTR',
-   'data.table', 'lubridate')
+   'data.table', 'lubridate', 'Hmisc', 'ggplot2')
 #  The required packages
-
 for ( stName in stRequired ){
   if ( !( stName %in% stInstalled ) ){
     cat('****************** Installing ', stName, '****************** \n')
@@ -29,8 +20,7 @@ if (!('Haver' %in% stInstalled) ){
   install.packages('Haver', repos = "http://www.haver.com/r/", type = "win.binary")
 }
 library(Haver)
-
-#####start here#####
+# functions ---------------------------------------------------------------
 
 # define some helper functions
 # function to pull haver data 
@@ -58,6 +48,14 @@ pull_data <- function(series, database, start.date, frequency = "quarterly"){
 }
 
 # function to calculate quarterly annualized growth rates
+#' Title
+#'
+#' @param x is a time series object
+#'
+#' @return annualized quarterly growth rate
+#' @export
+#'
+#' @examples
 q_a = function(x){
   j=c()
   for(i in 2:length(x)){
@@ -77,11 +75,22 @@ q_g = function(x){
   j
 }
 
-# NOTE: All quarterly values are in seasonally-adjusted, annual rates (SAAR), billions of dollars. Annual values are in annual rates, billions of dollars. We will translate annual levels into quarterly values by imputing them to each of the four quarters in the year and taking the 4-quarter moving average. 
+
+# Pull Data ---------------------------------------------------------------
+
+# NOTE: All quarterly values are in seasonally-adjusted, annual rates (SAAR), billions of dollars. 
+# Annual values are in annual rates, billions of dollars. We will translate annual levels into quarterly values 
+# by imputing them to each of the four quarters in the year and taking the 4-quarter moving average. 
 
 # pull quarterly BEA NIPAs data
+names_usna <- read_excel("data/processing/haver_names.xlsx")
+
 series1 = c("GDP", "C","CH","GDPH","JC", "JGDP", "JGF", "JGS","JGSE", "JGSI", "PTGH","PTGSH","PTGFH", "YPTMR", "YPTMD", "YPTU", "GTFP", "YPOG", "YPTX", "YTPI", "YCTLG", "G","GRCSI", "GDPH", "DC",	"PTGFH", "PTGSH", "GF", "GS", "GFH", "GSH", "	GFRPT", "GFRPRI", "GFRCP", "GFRS","GFRPT","	GFRPRI","	GFRCP","	GFRS","	GFTFP","	GFEG","	GSRPT","	GSRPRI","	GSRCP","	GSRS","	GSTFP","	GSET", "GFEGHHX", "GFEGHDX", "GFEIGX", "GFSUB", "GSSUB", "GSUB", " GFTFBUSX")
-data1 = pull_data(series1, "usna", start.date = "01-01-1970")
+data1 = pull_data(names_usna$code, "usna", start.date = "01-01-1970")
+START <- "01-01-1970"
+usna <- haver.data(names_usna$code, database = "usna", eop.dates = T, start = as.Date(START, f = "%m-%d-%Y"))
+colnames(data1) <- names_usna$reference[match(colnames(usna), names_usna$code)]
+
 metadata1 = cbind(haver.metadata(series1, "usna")$code, haver.metadata(series1, "usna")$descriptor) # use this for reference
 data2 = pull_data(c("PCW", "GDPPOTHQ","GDPPOTQ", "RECESSQ"), "usecon", "01-01-1970")
 hist = merge(data1, data2, by = "date")
