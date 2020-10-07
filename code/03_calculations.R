@@ -1,9 +1,10 @@
 #source("code/fim_projections.R")
 
 
+# 5 Construct FIM data frame for calculations -----------------------------------------------------------
+
 writedata = T
 
-##### construct nice df for calculations#####
 fim = data.frame(
   date = xx$date,
   
@@ -48,8 +49,12 @@ fim = data.frame(
   recession = xx$recessq + 1)
 #######
 
-#####ADDONS FOR THE CORONAVIRUS BILLS####
-# !! REMOVE WHEN NIPAS ARE UPDATED AND NEW ECON PROJECTIONS ARE RELEASED (whichever comes first)
+
+# 5.2 Add-ons  ------------------------------------------------------------------------------------------
+
+# Created to adjust our forecasts for the coronavirus bills
+# Remove when NIPAS are updated or new economic projections are released (whichever comes first)
+
 fim_corona_hist1 <- fim %>%
   filter(date <= "2020-06-30")
 
@@ -115,6 +120,9 @@ fim_corona <- fim %>%
 
 fim$recession[fim$recession == 2] = 1
 
+# 4.3 Contributions -------------------------------------------------------------------------------------
+
+
 #######Government purchases FIM####
 # Federal purchases FIM
 fim$federal_cont = NA
@@ -156,7 +164,9 @@ fim = fim %>% mutate(
 )
 #######
 
-####### Taxes and Transfers FIM#######
+
+# 4.4 Taxes and Transfers -------------------------------------------------------------------------------
+
 
 # subtract counterfactual taxes and transfers from realized taxes
 tt = c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes") # category totals
@@ -173,7 +183,12 @@ fim[,paste0(tts, "_net")] = y = lapply(fim[,tts], function(x){
 tts = paste0(tts, "_net") # rename for efficiency
 tt = paste0(tt, "_net") # rename for efficiency
 
-####### Set MPC's##### 
+
+# 4.5 MPCs ----------------------------------------------------------------------------------------------
+
+
+### 4.5.1 Pre-COVID -----------------------------------------------------------------------------------------
+
 mpc_health_outlays = function(x){
   0.9*c(SMA(x, n=4))
 }
@@ -238,7 +253,8 @@ noncorp = grep("noncorp", tts, value=T)
 corporate = grep("corporate", tts, value=T)
 subsidies = grep("subsidies", tts, value=T)
 
-####Corona Virus MPC Changes####
+### 4.5.2 Post-COVID ---------------------------------------------------------------------------------------------
+
 
 #Same as pre-covid
 mpc_noncorp_taxes_CRN19 =  function(x){
@@ -371,15 +387,23 @@ fim[,c(tt_cont, other_cont, sub_cont)] = lapply(fim[,c("transfers_net_taxes", "s
 ####change to 6 quarters ahead for COVID19 as of August 3rd 2020
 last_proj_date = fim$date[which(fim$date == last_hist_date) + 6]
 
-# cleaner fim df
+
+# 4.6 Export data -------------------------------------------------------------------------------------------
+
+# 4.6.1 Clean FIM data frame ----------------------------------------------------------------------------
+
+
 fim <- fim %>% 
   mutate(fim_bars = state_local_cont + federal_cont + taxes_transfers_cont + subsidies_cont, 
          fim_bars_ma = SMA(na.locf(fim_bars, na.rm = F), n = 4)) %>% 
   filter(date <= as.Date(last_proj_date)) %>%
-  select(date, fim_bars, fim_bars_ma, state_local_cont, federal_cont, taxes_transfers_cont, subsidies_cont, recession, everything())
+  select(date, fim_bars, fim_bars_ma, state_local_cont, federal_cont, taxes_transfers_cont, 
+         subsidies_cont, recession, everything())
 
 
-# this csv is tailored for the website interactive
+
+# 4.6.2 Website interactive ----------------------------------------------------------------------------------
+
 fim_interactive <- fim %>% 
   filter(date >= "1999-12-31") %>% 
   mutate(projection = as.numeric(date > last_hist_date),
@@ -391,8 +415,10 @@ fim_interactive <- fim %>%
   select(year, quarter, fim_bars_ma, recession, fim_bars, federal_cont, state_local_cont, taxes_transfers_subsidies_cont, projection) %>%
   dplyr::rename("impact" = fim_bars_ma,"total" =  fim_bars, "state_local" = state_local_cont, "federal" =  federal_cont, "consumption" = taxes_transfers_subsidies_cont)
 
-######creating csv files######
 
+# 4.6.3 Create CSV files --------------------------------------------------------------------------------
+
+# Create folder for current month's update
 thismonth_folder <- as.character(paste0(format(as.yearmon(Sys.Date()), f = "%m-%Y")))
 if (file.exists(thismonth_folder)){
  subdir <- thismonth_folder
@@ -401,10 +427,10 @@ if (file.exists(thismonth_folder)){
   subdir <- thismonth_folder
   }
 
+# Write csv to current month's folder
 if(writedata == T){
   write.csv(fim, paste0(subdir, '/fim-projections-', Sys.Date(), ".csv"))
   write.csv(fim_interactive, paste0(subdir, '/fim-interactive-', Sys.Date(),".csv"), row.names = F)
   write.csv(xx, paste0(subdir, '/xx-', Sys.Date(), ".csv"))
   save(fim, file = 'V:/mng/updates/dashboard_V2/data/fim.rds')
 }
-######
