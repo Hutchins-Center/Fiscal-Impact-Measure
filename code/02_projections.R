@@ -14,28 +14,26 @@
 ## ---------------------------
 ##
 ## Notes:
-##   
+## We use projected growth rates and iteratively forecast levels from current levels. 
 ##
 ## ---------------------------
 
 # I prefer to view outputs in non-scientific notation
-options(scipen = 6, digits = 4) 
+options(scipen = 6, digits = 5) 
 
 ## ---------------------------
-
-# pull data
-#source("code/fim_datapull.R")
 
 last_proj_date = as.Date(paste0(year(Sys.Date()) + 2, "-12-31"))
 last_hist_date = tail(hist$date, 1)
 
+# 2 Annual Projections -----------------------------------------------------------------------------
 
-# Annual Budget Projections -----------------------------------------------------------------------------
+
+## 2.1 Budget ------------------------------------------------------------------------------------------
+
 
 # construct forecasts of federal taxes and transfers growth using CBO's annual budget/revenue projections 
 # as they appear in the NIPAs (except Medicaid and Medicare, which come straight from revenue projections)
-
-# we're going to use annual rates anyhow, so just replicate the annual levels over each q
 
 budg <- 
   # we use annual rates, so we can just replicate annual levesl for each q
@@ -44,36 +42,29 @@ budg <-
   mutate(date = econ$date) %>%
   mutate(date = lag(date))
  
+### 2.1.1 COLA Adjustments --------------------------------------------------------------------------------------
 
-
-# adjust federal transfers to feature their january COLA-related bump; 
+# Adjust federal transfers to feature their january COLA-related bump; 
 # reattribute that growth to calendar quarter 1 before smoothing out the rest of the non-COLA related growth. 
-#SSA uses CPI-W to create COLAs; we just take CBO's projection of CPI-U. That won't affect the level of total transfers, 
-# just the timing a little bit
+# SSA uses CPI-W to create COLAs; We use CBO's projection of CPI-U. 
+# This slightly affects the timing of total transfers, but not their levels
 
 budg <- budg %>%
   mutate(cpiu = lag(econ$cpiu),
          cpiu_g = q_a(cpiu)/100,
-         pcw = lag(hist$pcw),
-         pcw_g = q_a(pcw)/100)
-# Don't think this does anything  tbh
-budg$pcw_g[is.na(budg$pcw_g)] = budg$cpiu_g[is.na(budg$pcw_g)]
-
-# applicable cola rate is CPIW from Q3 of previous year
-
-budg <- budg %>%
-  mutate(cola_rate =
+#        pcw = lag(hist$pcw),
+#        pcw_g = q_a(pcw)/100),
+#        Applicable cola rate is CPIW from Q3 of previous year
+         cola_rate =
            case_when(
              month(date) == 3  ~ lag(cpiu_g, 2)
            )
-         ) %>% 
-  # forward filling so each of the quarters has its correct cola rate, 
-  # remove negative value
+  ) %>% 
+  # forward filling so each q has correct cola rate, 
   fill(cola_rate)
 
-
-
-# COLA Adjustments --------------------------------------------------------------------------------------
+# Don't think this does anything  
+# budg$pcw_g[is.na(budg$pcw_g)] = budg$cpiu_g[is.na(budg$pcw_g)]
 
 budg <- 
   budg %>% mutate(health_ui = SMA(yptmd + yptmr + yptu, n = 4),
@@ -103,10 +94,11 @@ budg <-
 
 
 
-# Alternate tax scenario --------------------------------------------------------------------------------
+### 2.1.2 Alternate tax scenario --------------------------------------------------------------------------------
 
-# construct alternative scenario for personal current taxes, 
+# Construct alternative scenario for personal current taxes, 
 # under which the TCJA provisions for income taxes don't expire in 2025
+
 expdate = "2025-12-30"
 predate = "2025-09-30"
 
@@ -119,59 +111,110 @@ budg <-
                        lag(gfrpt_g),
                        gfrpt_g,
                        missing = NULL
-                     ),
+                     ),?
            gfrpt  = if_else(date >= predate,
                             lag(gfrpt) * (1 + gfrpt_g / 400),
                             gfrpt)
 )
 
-# construct forecasts of state and local taxes growth
+
+# 2.2 Economic ------------------------------------------------------------------------------------------
+
+
+# 2.2.1 Forecast S&L Tax Growth -------------------------------------------------------------------------
+
 aa <- plyr::rbind.fill(aa,econ_a)
 forward_aa <- which(aa$date > last_hist_date)
 taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
 taxpieces_gdp = paste0(taxpieces, "_gdp")
+
+aa %>%
+  mutate(
+    across(.cols  = taxpieces,
+           .fns   = ~ na.locf(. / gdp),
+           .names = "{.col}_gdp")
+  ) 
+
 aa[,taxpieces_gdp] = lapply(aa[,taxpieces], function(x) x/aa$gdp)
 aa[,taxpieces_gdp] = lapply(aa[,taxpieces_gdp], function(x) na.locf(x))
-# aa[,taxpieces] = sapply(aa[,taxpieces_gdp], function(x) x*aa$gdp)
+aa[,taxpieces] = sapply(aa[,taxpieces_gdp], function(x) x*aa$gdp)
 
-# translate into quarterly SAAR levels by replicating over four quarters and smoothing
-aa = rbind(aa, aa, aa, aa) # we're going to use annual rates anyhow, so just replicate the annual levels over each q
+# Translate into quarterly Seasonally Adjusted Annualized Rates levels 
+# by replicating over four quarters and smoothing
+aa = rbind(aa, aa, aa, aa) 
 aa = aa[order(aa$date),]
 aa$date[format(aa$date, f="%Y") %in% format(econ$date, f="%Y")] = econ$date[format(econ$date, f="%Y") %in% format(aa$date, f="%Y")]
 
+aa <- 
+  rbind(aa, aa, aa, aa) %>%
+  arrange(date) %>%
+  mutate(date = econ$date) %>%
+  mutate(date = lag(date))
 
-# Implicit price deflators ------------------------------------------------------------------------------
+# 3 Quarterly projections ------------------------------------------------------------------------------------
 
-# calculate CBO's implicit price deflators for gf, gs, c
-# growth rate of nominal over real
-econ[,paste0("j",c("gf", "gs", "c"))] = lapply(c("gf", "gs", "c"), function(x){
-  econ[,x]/econ[,paste0(x,"h")]
-})
 
-# Quarterly rates ---------------------------------------------------------------------------------------
+## 3.1 Economic ----------------------------------------------------------------------------------------------
 
-econ[,c(paste0(comp, "_g"))] = lapply(econ[,comp], function(x) q_g(x))
-econ[,paste0("j",c("gf", "gs", "c"), "_g")] = lapply(econ[,paste0("j",c("gf", "gs", "c"))], function(x) q_g(x))
+
+### 3.1.1 Implicit price deflators ---------------------------------------------------------------------------
+
+# Calculate for federal spending, state spending, and personal consumption
+econ <-
+  econ %>%
+  # Nominal over real
+  mutate(jgf =  gf/gfh,
+         jgs = gs/gsh,
+         jc = c/ch)  %>%
+  # Growth rate of implicit price deflators
+  mutate(
+    across(
+      .cols = where(is.numeric),
+      .fns = ~ q_g(.x),
+      .names = "{.col}_g"
+      
+    )
+  )
+
+### 3.1.2 Tax pieces -----------------------------------------------------------------------------------------
+
+taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
+
+# Calculate growth rates 
+econ <- merge(aa %>% 
+              select(date, taxpieces, taxpieces_gdp), 
+              econ,
+              by = "date",
+              all.x = F) %>%
+  mutate(
+    across(
+      .cols = taxpieces,
+      .fns = ~ q_g(.),
+      .names = "{.col}_g"
+    )
+  )
 
 econ <- merge(aa[,c("date", taxpieces, taxpieces_gdp)], econ, by = "date", all.x = F)
 econ[,taxpieces] = sapply(econ[,taxpieces_gdp], function(x) x*econ$gdp)
-
-
-# calculate growth rates
 econ[,paste0(taxpieces, "_g")] = lapply(econ[,taxpieces], function(x) q_g(x))
 
-# Merge all projection dfs and generate projections of levels. 
-# We use projected growth rates and iteratively forecast levels from current levels. 
+
+# 4 Project levels ------------------------------------------------------------------------------------------
+
+
+# 4.1 Merge projections data frames ---------------------------------------------------------------------
+
 xx = Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = "date", all = TRUE),
             list(budg[,c("date", grep("_g", colnames(budg), value = T))], 
                  # aa[,c("date",grep("_g", colnames(aa), value = T))],
                   econ[,c("date", grep("_g", colnames(econ), value = T))], 
                   hist))
 
-forward = which(!(xx$date %in% hist$date))
 
-#reattribute state unemployment from federal back to state
-#includes federal UI which we need to take out 768.8 [legislation total] from Q2 of state unemployment insurance
+# 4.2 Component calculations ----------------------------------------------------------------------------
+
+# reattribute state unemployment from federal back to state
+# includes federal UI which we need to take out 768.8 [legislation total] from Q2 of state unemployment insurance
 xx$gftfbusx = xx$gftfbusx/1000 #translate from millions to billions
 xx$gftfp = xx$gftfp - xx$gftfbusx # + 768.8
 xx$gftfp[202] = xx$gftfp[202] + 768.8
@@ -179,6 +222,7 @@ xx$gftfp[202] = xx$gftfp[202] + 768.8
 xx$gstfp = xx$gstfp + xx$gftfbusx # - 768.8
 xx$gstfp[202] = xx$gstfp[202] - 768.8
 
+fmap$fshare[match(as.integer(format(as.Date(econ$date, format="%d-%m-%Y"),"%Y")), fmap$year)]
 # assume FMAP remains constant -- we still need the fmaps to do pre-1993 reallocation of grants
 xx$fshare = fmap$fshare[match(as.integer(format(as.Date(xx$date, format="%d-%m-%Y"),"%Y")), fmap$year)]
 xx$fshare = na.locf(xx$fshare)
@@ -187,6 +231,10 @@ xx$fshare = na.locf(xx$fshare)
 xx$gs_g[203] = -0.05  
 xx$gs_g[204] = 0.04
   
+xx <- xx %>%
+  mutate(gftfbusx = gftfbusx/1000,
+         gftfp = gftfp - gftfbusx,
+         gstfp = gstfp + gftfbusx)
 # Additional component calculations
 xx <- xx %>% mutate(
   
@@ -220,6 +268,7 @@ xx <- xx %>% mutate(
 # xx$gfeigx_g[xx$date == "2020-03-31"] = xx$gfeg_g[xx$date == "2019-12-31"][1]
 
 # generate forward values of components using current levels and projected growth rates. 
+forward = which(!(xx$date %in% hist$date))
 comp2 = c("gdph", "gdppothq", "gdp","c", "yptmr","yptmd","g","gf", 
           "gfeg","gfeigx","gfeghhx", "gfeghdx", "gs", "gfrpt","gfrpri","gfrcp",
           "gfrs","gsrpt","gsrpri","gsrcp","gsrs","gftfp","gstfp","gdppotq",
@@ -230,7 +279,9 @@ for(i in 1:length(comp2)){
   }
 }
 
-# Additional component calculations
+
+# 4.3 Additional component calculations -----------------------------------------------------------------
+
 xx <- xx %>%   mutate(
   
   # save some vars
@@ -264,12 +315,29 @@ xx <- xx %>%   mutate(
   
 ) 
 
-# projections of total tax and transfer pieces = projections of state & local plus federal tax and transfer pieces 
-xx$gtfp[forward] = xx$gftfp[forward] + xx$gstfp[forward] # social benefits = federal benefits + state and local benefits
-xx$yptx[forward] = xx$gfrpt[forward] + xx$gsrpt[forward] # alternative path
-xx$yptxb[forward] = xx$gfrptb[forward] + xx$gsrpt[forward] # current law
-xx$ytpi[forward] = xx$gsrpri[forward] + xx$gfrpri[forward]  #production and import taxes
-xx$grcsi[forward] = xx$gsrs[forward] + xx$gfrs[forward]  # payroll taxes
-xx$yctlg[forward] = xx$gsrcp[forward] + xx$gfrcp[forward] # corporate taxes
-xx$gsub[forward] = xx$gssub[forward] + xx$gfsub[forward] # subsidies
+
+# 4.4 Project total tax and transfers -----------------------------------------------------------------------
+
+# S&L + Federal tax and transfer pieces:
+
+
+# Taxes
+## Personal Taxes
+### Under Current law
+xx$yptxb[forward] = xx$gfrptb[forward] + xx$gsrpt[forward]
+### Under Alternative path
+xx$yptx[forward] = xx$gfrpt[forward] + xx$gsrpt[forward] 
+## Production and import taxes
+xx$ytpi[forward] = xx$gsrpri[forward] + xx$gfrpri[forward] 
+## Payroll taxes
+xx$grcsi[forward] = xx$gsrs[forward] + xx$gfrs[forward]  
+## corporate taxes
+xx$yctlg[forward] = xx$gsrcp[forward] + xx$gfrcp[forward]
+
+# Transfers
+## Social benefits 
+xx$gtfp[forward] = xx$gftfp[forward] + xx$gstfp[forward]
+# subsidies
+xx$gsub[forward] = xx$gssub[forward] + xx$gfsub[forward] 
+
 

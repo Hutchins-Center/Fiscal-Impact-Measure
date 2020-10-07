@@ -5,7 +5,7 @@ mPackages <- installed.packages()
 stInstalled <- rownames( mPackages )
 # Isolate thep package names
 stRequired <- c('tidyverse','stringr','reshape2', 'zoo', 'quantmod', 'rmarkdown', 'TTR',
-   'data.table', 'lubridate', 'Hmisc', 'ggplot2')
+   'data.table', 'lubridate', 'Hmisc', 'ggplot2', 'magrittr')
 #  The required packages
 for ( stName in stRequired ){
   if ( !( stName %in% stInstalled ) ){
@@ -75,6 +75,46 @@ q_g = function(x){
   j
 }
 
+growthRate <- function(df, x, period){
+  r <- c()
+  if_else(period == "annualized",
+    r <- c()
+    r <-( ( ( x / lag(x) )^4 ) - 1) * 100,
+    
+  r <- c()
+
+}
+
+args_names <- function(...) {
+  vars <- enquos(..., .named = TRUE)
+  names(vars)
+}
+
+qoqGrowth <- function(.data, expr){
+  
+  .data <- .data %>%
+    mutate(
+      "{{expr}}_g" := ( {{expr}} / lag( {{expr}} ) ) - 1
+      ) 
+  #na.locf(.data[,paste0((as_label(enquo(expr))), "_g")])
+.data
+} 
+econ %>%  qoqGrowth(gf)
+
+annualizedGrowth <- function(data, expr){
+  data %>%
+    mutate(
+      "{{expr}}_g" := ((( {{expr}} / lag( {{expr}} ) )^4)-1)*100
+    )
+}
+
+econ %>% annualizedGrowth(gf)
+growthRate <- function(data, expr, freq = "annualized"){
+  ifelse(freq == "annualized", 
+    data %>% growthRateA({{expr}}), 
+    data %>% growthRateQ({{expr}})
+  )
+}
 
 # Pull Data ---------------------------------------------------------------
 
@@ -104,7 +144,8 @@ aa = merge(data3, data4, by = "date")
 aa$hpx = aa$usphpi #house price index of choice is the FHFA purchase only index, 1991 = 100, since that's what CBO forecasts
 
 # pull quarterly CBO economic projections data
-econ = read.csv('./data/cbo_econ_proj_quarterly.csv', stringsAsFactors = F)
+econ = read.csv('./data/cbo_econ_proj_quarterly.csv', stringsAsFactors = F) %>% 
+  as_tibble()
 econ$date = gsub("12/30/", "12/31/", econ$date)
 econ$date = as.Date(econ$date, f = "%m/%d/%Y")
 comp = colnames(econ)[!colnames(econ) %in% "date"]
@@ -116,7 +157,8 @@ econ_a = econ_a[econ_a$date > Sys.Date(),] # keep annuals for current calendar y
 
 # pull annual CBO budget projections, "as they appear in the NIPAS"
 # budg = read.csv('data/cbo_budget_nipas_proj_annual.csv', stringsAsFactors = F)
-budg = read.csv('./data/cbo_budget_nipas_proj_annual_new.csv', stringsAsFactors = F)
+budg = read.csv('./data/cbo_budget_nipas_proj_annual_new.csv', stringsAsFactors = F) %>%
+  as_tibble()
 
 # pull annual FMAPS data, which come from CMS.gov, NHE by type of service and source of funds. Annual data, later translated to quarterly just as we do with the budget data.  
 fmap = read.csv('./data/nhe_fmap.csv', stringsAsFactors = F)
