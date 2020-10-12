@@ -116,14 +116,15 @@ budg <-
 
 # 2.2 Economic (Annual) ------------------------------------------------------------------------------------------
 # 2.2.1 S&L Tax Growth -------------------------------------------------------------------------
+# construct forecasts of state and local taxes growth
 
 aa <- plyr::rbind.fill(aa, econ_a)
 taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
 aa <- aa %>%
   mutate(
     across(.cols  = taxpieces,
-           .fns   = ~ na.locf(. / gdp),
-           .names = "{.col}_gdp")
+           .fns   = ~ na.locf(. / gdp)
+    )
   ) 
 
 # Translate into quarterly Seasonally Adjusted Annualized Rates levels 
@@ -138,8 +139,9 @@ aa <-
   rbind(aa, aa, aa, aa) %>%
   arrange(date) %>%
   filter(date > firstDateEcon) %>% 
-  mutate(date = lag(econ$date)) %>% 
+  mutate(date = econ$date) %>% 
   as_tibble()
+
 
 ## 3.1 Economic (Quarterly) ----------------------------------------------------------------------------------------------
 
@@ -165,6 +167,12 @@ econ <-
           select(date, taxpieces),
         by = 'date',
         all.x = F) %>%
+  mutate(
+    across(
+      .cols = taxpieces,
+      .fns = ~ .x * gdp 
+    )
+  ) %>%
   # Growth rate of S&L Taxes
     mutate(
       across(
@@ -174,8 +182,6 @@ econ <-
       )
     ) %>%
     as_tibble()
-  
-
 ## 4 Merge growth rates and levels data frames ---------------------------------------------------------------------
 
 econGrowthRates <-
@@ -187,10 +193,14 @@ budgetGrowthRates <-
   budg %>% 
   select(date, ends_with('_g'), gfrptCurrentLaw) 
 
-growthRates <- left_join(econGrowthRates, budgetGrowthRates, by = 'date') 
+growthRates <- left_join(econGrowthRates, 
+                         budgetGrowthRates,
+                         by = 'date') 
 
 xx <-
-    full_join(hist, growthRates, by = 'date')
+    full_join(hist, 
+              growthRates,
+              by = 'date')
 
 ## 4.2 FIM component calculations ----------------------------------------------------------------------------
 
@@ -381,3 +391,16 @@ forecastPeriod <- which(xx$date > last_hist_date)
 for(f in forecastPeriod){
   xx[f,components] = xx[f -1, components]  * (1 + xx[f, paste0(components, "_g")])
 }
+# projections of total tax and transfer pieces = projections of state & local plus federal tax and transfer pieces 
+xx <-
+  xx %>%
+    mutate(
+      
+     
+      gtfp = gftfp + gstfp, # social benefits = federal benefits + state and local benefits
+      yptx = gfrpt + gsrpt, # alternative path
+      yptxb = gfrptb + gsrpt, # current law
+      ytpi = gsrpri + gfrpri,  #production and import taxes
+      grcsi = gsrs + gfrs,  # payroll taxes
+      yctlg = gsrcp + gfrcp # corporate taxes
+    )

@@ -13,7 +13,9 @@ fim <-
          pi_gdp = q_g(jgdp), # gdp "deflator"
          pce = c, # nominal consumption
          pi_pce = q_g(jc),
-         recession = recessq + 1,
+         recession = if_else(recessq == -1,
+                             0,
+                             recessq),        
          # TAXES AND TRANSFERS
          ## Federal
          state_health_outlays = ysptmd,
@@ -43,55 +45,10 @@ fim <-
          state_local_nom = gs ,
          pi_state_local = q_g(jgs) ,
          pi_state_local_c = q_g(jgse) ,
-         pi_state_local_i = q_g(jgsi) 
+         pi_state_local_i = q_g(jgsi)
          )
 
-writedata = T
-
-fim2 = data.frame(
-  date = xx$date,
-  
-  # tax and transfers by level of government (all sources)
-  state_health_outlays = xx$ysptmd, # only includes medicaid 
-  state_social_benefits = xx$gstfpnet - xx$ysptmd, # no medicare at state and local level
-  state_noncorp_taxes = xx$gsrpt + xx$gsrpri + xx$gsrs, 
-  state_corporate_taxes = xx$gsrcp,
-  state_subsidies = xx$gssub,
-  
-  federal_health_outlays = xx$yfptmd + xx$yptmr,
-  federal_social_benefits = xx$gftfpnet - (xx$yfptmd + xx$yptmr),
-  federal_noncorp_taxes = xx$gfrpt + xx$gfrpri + xx$gfrs, 
-  federal_corporate_taxes = xx$gfrcp,
-  federal_subsidies = xx$gfsub,
-  
-  # taxes and transfers category totals
-  health_outlays = xx$yptmr + xx$yptmd , # Medicare + Medicaid
-  social_benefits = xx$gtfp - (xx$yptmr + xx$yptmd), # Social benefits net health outlays
-  noncorp_taxes = xx$yptx+xx$ytpi+xx$grcsi , # alternative
-  corporate_taxes = xx$yctlg,
-  subsidies  = xx$gsub,
-  
-  # consumption and investment totals
-  federal_nom = xx$gf, # BEA line item
-  federal_cgrants = xx$gfegnet, # Federal (non-health) grants in aid to states, nominal. I.e, federal grants to state and local net of medicaid grants
-  federal_igrants = xx$gfeigx, # Federal capital grants in aid to states, nominal
-  pi_federal = q_g(xx$jgf),
-  
-  state_local_nom = xx$gs ,
-  pi_state_local = q_g(xx$jgs) ,
-  pi_state_local_c = q_g(xx$jgse) ,
-  pi_state_local_i = q_g(xx$jgsi) ,
-  
-  # other needed reference variables 
-  gdp = xx$gdp , # nominal gdp
-  gdppot = q_g(xx$gdppothq) + q_g(xx$jgdp) , #  nominal potential output growth
-  gdppoth = q_g(xx$gdppothq), # real potential output growth
-  pi_gdp = q_g(xx$jgdp), # gdp "deflator"
-  pce = xx$c, # nominal consumption
-  pi_pce = q_g(xx$jc),
-  recession = xx$recessq + 1)
-#######
-
+# writedata = T
 
 # 5.2 Add-ons  ------------------------------------------------------------------------------------------
 
@@ -161,7 +118,6 @@ fim_corona <- fim %>%
  
 #====
 
-fim$recession[fim$recession == 2] = 1
 
 # 4.3 Contributions -------------------------------------------------------------------------------------
 
@@ -429,7 +385,11 @@ tt_cont = c("taxes_transfers_cont", "state_taxes_transfers_cont", "federal_taxes
 other_cont = c("health_cont", "social_benefits_cont", "noncorp_cont", "corporate_cont")
 sub_cont = c("state_subsidies_cont", "federal_subsidies_cont", "subsidies_cont")
 
-fim[,c(tt_cont, other_cont, sub_cont)] = lapply(fim[,c("transfers_net_taxes", "state_transfers_net_taxes", "federal_transfers_net_taxes", "health_outlays_net_xmpc", "social_benefits_net_xmpc", "noncorp_taxes_net_xmpc", "corporate_taxes_net_xmpc", "state_subsidies_net_xmpc", "federal_subsidies_net_xmpc", "subsidies_net_xmpc")], function(x){
+net <- c("transfers_net_taxes", "state_transfers_net_taxes", "federal_transfers_net_taxes",
+         "health_outlays_net_xmpc", "social_benefits_net_xmpc", "noncorp_taxes_net_xmpc",
+         "corporate_taxes_net_xmpc", "state_subsidies_net_xmpc", "federal_subsidies_net_xmpc",
+         "subsidies_net_xmpc")
+fim[,c(tt_cont, other_cont, sub_cont)] = lapply(fim[ ,net], function(x){
   for(i in 2:length(x)){
     j[i] = 400*x[i]/fim$gdp[i-1]
   }
@@ -438,7 +398,7 @@ fim[,c(tt_cont, other_cont, sub_cont)] = lapply(fim[,c("transfers_net_taxes", "s
 
 # We forecast two years ahead
 ####change to 6 quarters ahead for COVID19 as of August 3rd 2020
-last_proj_date = fim$date[which(fim$date == last_hist_date) + 6]
+last_proj_date = fim$date[which(fim$date == last_hist_date) + 8]
 
 
 # 4.6 Export data -------------------------------------------------------------------------------------------
@@ -478,7 +438,7 @@ fim_interactive <-
   
 
 # 4.6.3 Create CSV files --------------------------------------------------------------------------------
-
+write.csv(fim, paste0(subdir, '/fim-projections-', Sys.Date(), ".csv"))
 # Create folder for current month's update
 thismonth_folder <- as.character(paste0(format(as.yearmon(Sys.Date()), f = "%m-%Y")))
 if (file.exists(thismonth_folder)){
