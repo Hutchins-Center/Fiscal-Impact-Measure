@@ -3,9 +3,52 @@
 
 # 5 Construct FIM data frame for calculations -----------------------------------------------------------
 
+fim <-
+  xx %>%
+  transmute(date = date,
+         # REFERENCE VARIABLES
+         gdp = gdp, # nominal gdp
+         gdppot = q_g(gdppothq) + q_g(jgdp) , #  nominal potential output growth
+         gdppoth = q_g(gdppothq), # real potential output growth
+         pi_gdp = q_g(jgdp), # gdp "deflator"
+         pce = c, # nominal consumption
+         pi_pce = q_g(jc),
+         recession = recessq + 1,
+         # TAXES AND TRANSFERS
+         ## Federal
+         state_health_outlays = ysptmd,
+         state_social_benefits = gstfpnet - ysptmd, # no medicare at state and local level
+         state_noncorp_taxes = gsrpt + gsrpri + gsrs, 
+         state_corporate_taxes = gsrcp,
+         state_subsidies = gssub,
+         ## State
+         federal_health_outlays = yfptmd + yptmr,
+         federal_social_benefits = gftfpnet - (yfptmd + yptmr),
+         federal_noncorp_taxes = gfrpt + gfrpri + gfrs, 
+         federal_corporate_taxes = gfrcp,
+         federal_subsidies = gfsub,
+         ## Total
+         health_outlays = yptmr + yptmd , # Medicare + Medicaid
+         social_benefits = gtfp - (yptmr + yptmd), # Social benefits net health outlays
+         noncorp_taxes = yptx+ytpi+grcsi , # alternative
+         corporate_taxes = yctlg,
+         subsidies  = gsub,
+         # CONSUMPTION AND INVESTMENT
+         ## Federal
+         federal_nom = gf, # Purchases
+         federal_cgrants = gfegnet, # Federal (non-health) grants in aid to states
+         federal_igrants = gfeigx, # Federal capital grants in aid to states, nominal
+         pi_federal = q_g(jgf),
+         ## State
+         state_local_nom = gs ,
+         pi_state_local = q_g(jgs) ,
+         pi_state_local_c = q_g(jgse) ,
+         pi_state_local_i = q_g(jgsi) 
+         )
+
 writedata = T
 
-fim = data.frame(
+fim2 = data.frame(
   date = xx$date,
   
   # tax and transfers by level of government (all sources)
@@ -122,29 +165,21 @@ fim$recession[fim$recession == 2] = 1
 
 # 4.3 Contributions -------------------------------------------------------------------------------------
 
-
-#######Government purchases FIM####
-# Federal purchases FIM
+contribution <- function(df, var){
+  df %>%
+    mutate(
+      "{{ var }}_cont" := 400 * ({{ var }} - (1 + jgf + gdppothq) * lag({{ var }}) ) / lag(gdp)
+      )
+}
+xx %>% contribution(gf) %>% select(gf, gf_cont)
+# PURCHASES
+## Federal 
 fim$federal_cont = NA
 for(i in 2:nrow(fim)){
   fim$federal_cont[i] = 400*(fim$federal_nom[i] - (1 + fim$pi_federal[i] + fim$gdppoth[i])*fim$federal_nom[i-1])/fim$gdp[i-1]
 }
 
-# Federal "C" grants to states FIM
-# Note we use the state and local consumption deflator, becuase those entities are spending the money
-fim$federal_cgrants_cont = NA
-for(i in 2:nrow(fim)){
-  fim$federal_cgrants_cont[i] = 400*(fim$federal_cgrants[i] - (1 + fim$pi_state_local_c[i] + fim$gdppoth[i])*fim$federal_cgrants[i-1])/fim$gdp[i-1]
-}
-
-# Federal "I" grants to states FIM
-# Note we use the state and local investment deflator, becuase those entities are spending the money
-fim$federal_igrants_cont = NA
-for(i in 2:nrow(fim)){
-  fim$federal_igrants_cont[i] = 400*(fim$federal_igrants[i] - (1 + fim$pi_state_local_i[i] + fim$gdppoth[i])*fim$federal_igrants[i-1])/fim$gdp[i-1]
-}
-
-# State and Local purchases FIM
+# S&L
 fim$state_local_cont = NA
 for(i in 2:nrow(fim)){
   fim$state_local_cont[i] = 400*(fim$state_local_nom[i] - (1 + fim$pi_state_local[i] + fim$gdppoth[i])*fim$state_local_nom[i-1])/fim$gdp[i-1]
@@ -162,6 +197,24 @@ fim = fim %>% mutate(
   
   purchases_cont = state_local_cont + federal_cont
 )
+
+# GRANTS
+## Federal "C" grants to states 
+## Use S&L consumption deflator, since those entities are spending the money
+fim$federal_cgrants_cont = NA
+for(i in 2:nrow(fim)){
+  fim$federal_cgrants_cont[i] = 400*(fim$federal_cgrants[i] - (1 + fim$pi_state_local_c[i] + fim$gdppoth[i])*fim$federal_cgrants[i-1])/fim$gdp[i-1]
+}
+
+## Federal "I" grants to states 
+## Use S&L consumption deflator, since those entities are spending the money
+fim$federal_igrants_cont = NA
+for(i in 2:nrow(fim)){
+  fim$federal_igrants_cont[i] = 400*(fim$federal_igrants[i] - (1 + fim$pi_state_local_i[i] + fim$gdppoth[i])*fim$federal_igrants[i-1])/fim$gdp[i-1]
+}
+
+
+
 #######
 
 
@@ -403,18 +456,26 @@ fim <- fim %>%
 
 
 # 4.6.2 Website interactive ----------------------------------------------------------------------------------
+firstDate <- "1999-12-31"
 
-fim_interactive <- fim %>% 
-  filter(date >= "1999-12-31") %>% 
-  mutate(projection = as.numeric(date > last_hist_date),
-         yrq = as.yearqtr(date),
-         recession = ifelse(is.na(recession), 0, recession),
-         projection = ifelse(is.na(projection), 0, projection),
-         taxes_transfers_subsidies_cont = taxes_transfers_cont + subsidies_cont) %>%
-  separate(yrq, c("year", "quarter")) %>%
-  select(year, quarter, fim_bars_ma, recession, fim_bars, federal_cont, state_local_cont, taxes_transfers_subsidies_cont, projection) %>%
-  dplyr::rename("impact" = fim_bars_ma,"total" =  fim_bars, "state_local" = state_local_cont, "federal" =  federal_cont, "consumption" = taxes_transfers_subsidies_cont)
-
+fim_interactive <- 
+  fim %>% 
+    filter(date >= firstDate) %>% 
+    mutate(projection = as.numeric(date > last_hist_date),
+           yrq = as.yearqtr(date),
+           recession = if_else(is.na(recession),
+                               0,
+                               recession),
+           projection = if_else(is.na(projection),
+                                0,
+                                projection),
+           taxes_transfers_subsidies_cont = taxes_transfers_cont + subsidies_cont) %>%
+    separate(yrq, c("year", "quarter")) %>%
+    select(year, quarter, fim_bars_ma, recession, fim_bars,
+           federal_cont, state_local_cont, taxes_transfers_subsidies_cont, projection) %>%
+    dplyr::rename("impact" = fim_bars_ma,"total" =  fim_bars, "state_local" = state_local_cont,
+                  "federal" =  federal_cont, "consumption" = taxes_transfers_subsidies_cont)
+  
 
 # 4.6.3 Create CSV files --------------------------------------------------------------------------------
 

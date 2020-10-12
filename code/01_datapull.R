@@ -1,29 +1,32 @@
-# Packages ----------------------------------------------------------------
+# Packages
+# ----------------------------------------------------------------
 
 mPackages <- installed.packages()
 # Details of installed packages
-stInstalled <- rownames( mPackages )
+stInstalled <- rownames(mPackages)
 # Isolate thep package names
-stRequired <- c('tidyverse','stringr','reshape2', 'zoo', 'quantmod', 'rmarkdown', 'TTR',
-   'data.table', 'lubridate', 'Hmisc', 'ggplot2', 'magrittr')
-#  The required packages
-for ( stName in stRequired ){
-  if ( !( stName %in% stInstalled ) ){
-    cat('****************** Installing ', stName, '****************** \n')
-    install.packages( stName )
+stRequired <- c("tidyverse", "stringr", "reshape2", "zoo", "quantmod", 
+  "rmarkdown", "TTR", "data.table", "lubridate", "Hmisc", "ggplot2", 
+  "magrittr")
+# The required packages
+for (stName in stRequired) {
+  if (!(stName %in% stInstalled)) {
+    cat("****************** Installing ", stName, "****************** \n")
+    install.packages(stName)
   }
-  library( stName, character.only=TRUE )
+  library(stName, character.only = TRUE)
 }
 
 # since Haver is a proprietary package, load it separately
-if (!('Haver' %in% stInstalled) ){
-  install.packages('Haver', repos = "http://www.haver.com/r/", type = "win.binary")
+if (!("Haver" %in% stInstalled)) {
+  install.packages("Haver", repos = "http://www.haver.com/r/", 
+    type = "win.binary")
 }
 library(Haver)
-# functions ---------------------------------------------------------------
+# functions
+# ---------------------------------------------------------------
 
-# define some helper functions
-# function to pull haver data 
+# define some helper functions function to pull haver data
 #' Title
 #'
 #' @param series variables to search for in Haver
@@ -32,14 +35,15 @@ library(Haver)
 #' @param frequency can be annual or quarterly. Default is quarterly
 #'
 #' @return data frame
-pull_data <- function(series, database, start.date, frequency = "quarterly"){
-  q <- haver.data(series, database, eop.dates = T, start = as.Date(start.date, f = "%m-%d-%Y"))
+pull_data <- function(series, database, start.date, frequency = "quarterly") {
+  q <- haver.data(series, database, eop.dates = T, start = as.Date(start.date, 
+    f = "%m-%d-%Y"))
   q <- data.frame(date = as.Date(rownames(q)), q)
   
   for (j in 2:ncol(q)) {
     for (k in 4:nrow(q)) {
-      if (is.na(q[k,j])){
-        q[k,j]=mean(q[c(k-1,k-2,k-3),j]) # if the data is missing on unreported, use the 3-qtr moving average
+      if (is.na(q[k, j])) {
+        q[k, j] = mean(q[c(k - 1, k - 2, k - 3), j])  # if the data is missing on unreported, use the 3-qtr moving average
         
       }
     }
@@ -56,109 +60,140 @@ pull_data <- function(series, database, start.date, frequency = "quarterly"){
 #' @export
 #'
 #' @examples
-q_a = function(x){
-  j=c()
-  for(i in 2:length(x)){
-    j[i] = (((x[i]/x[i-1])^4)-1)*100
+q_a = function(x) {
+  j = c()
+  for (i in 2:length(x)) {
+    j[i] = (((x[i]/x[i - 1])^4) - 1) * 100
   }
   j[1] = 0
   j
 }
 
 # function to calculate quarter-over-quarter growth rate
-q_g = function(x){
-  j=c()
-  for(i in 2:length(x)){
-    j[i] = (((x[i]/x[i-1]))-1)
+q_g = function(x) {
+  j = c()
+  for (i in 2:length(x)) {
+    j[i] = (((x[i]/x[i - 1])) - 1)
   }
   j[1] = j[2]
   j
 }
 
-growthRate <- function(df, x, period){
-  r <- c()
-  if_else(period == "annualized",
-    r <- c()
-    r <-( ( ( x / lag(x) )^4 ) - 1) * 100,
-    
-  r <- c()
-
+#' Title: Growth rate
+#' Description: Replaces q_g and q_a function
+#' @param x A numeric vector of values
+#' @param period "qoq" (quarter-over-quarter) or "annualized" growth rate
+#' 
+#' @return A numeric vector with the growth rate of the input
+#' @example growthRate(econ$gf, period =  "qoq")
+growthRate <- function(x, period) {
+  rate <- c()
+  if (period == "annualized") {
+    rate <- (((x/lag(x))^4) - 1) * 100
+    rate[1] = 0
+  } 
+  else if (period == "qoq") {
+    rate <- (x/lag(x)) - 1
+    rate[1] = rate[2]
+  }
+  return(rate)
 }
 
-args_names <- function(...) {
-  vars <- enquos(..., .named = TRUE)
-  names(vars)
-}
+# qoqGrowth <- function(.data, expr){ .data <- .data %>%
+# mutate( '{{expr}}_g' := ( {{expr}} / lag( {{expr}} ) ) - 1
+# ) #na.locf(.data[,paste0((as_label(enquo(expr))), '_g')])
+# .data } annualizedGrowth <- function(data, expr){ data %>%
+# mutate( '{{expr}}_g' := ((( {{expr}} / lag( {{expr}} )
+# )^4)-1)*100 ) }
 
-qoqGrowth <- function(.data, expr){
-  
-  .data <- .data %>%
-    mutate(
-      "{{expr}}_g" := ( {{expr}} / lag( {{expr}} ) ) - 1
-      ) 
-  #na.locf(.data[,paste0((as_label(enquo(expr))), "_g")])
-.data
-} 
-econ %>%  qoqGrowth(gf)
 
-annualizedGrowth <- function(data, expr){
-  data %>%
-    mutate(
-      "{{expr}}_g" := ((( {{expr}} / lag( {{expr}} ) )^4)-1)*100
-    )
-}
+# Pull Data
+# ---------------------------------------------------------------
 
-econ %>% annualizedGrowth(gf)
-growthRate <- function(data, expr, freq = "annualized"){
-  ifelse(freq == "annualized", 
-    data %>% growthRateA({{expr}}), 
-    data %>% growthRateQ({{expr}})
-  )
-}
-
-# Pull Data ---------------------------------------------------------------
-
-# NOTE: All quarterly values are in seasonally-adjusted, annual rates (SAAR), billions of dollars. 
-# Annual values are in annual rates, billions of dollars. We will translate annual levels into quarterly values 
-# by imputing them to each of the four quarters in the year and taking the 4-quarter moving average. 
+# NOTE: All quarterly values are in seasonally-adjusted,
+# annual rates (SAAR), billions of dollars.  Annual values
+# are in annual rates, billions of dollars. We will translate
+# annual levels into quarterly values by imputing them to
+# each of the four quarters in the year and taking the
+# 4-quarter moving average.
 
 # pull quarterly BEA NIPAs data
 names_usna <- read_excel("data/processing/haver_names.xlsx")
 
-series1 = c("GDP", "C","CH","GDPH","JC", "JGDP", "JGF", "JGS","JGSE", "JGSI", "PTGH","PTGSH","PTGFH", "YPTMR", "YPTMD", "YPTU", "GTFP", "YPOG", "YPTX", "YTPI", "YCTLG", "G","GRCSI", "GDPH", "DC",	"PTGFH", "PTGSH", "GF", "GS", "GFH", "GSH", "	GFRPT", "GFRPRI", "GFRCP", "GFRS","GFRPT","	GFRPRI","	GFRCP","	GFRS","	GFTFP","	GFEG","	GSRPT","	GSRPRI","	GSRCP","	GSRS","	GSTFP","	GSET", "GFEGHHX", "GFEGHDX", "GFEIGX", "GFSUB", "GSSUB", "GSUB", " GFTFBUSX")
+series1 = c("GDP", "C", "CH", "GDPH", "JC", "JGDP", "JGF", "JGS", 
+  "JGSE", "JGSI", "PTGH", "PTGSH", "PTGFH", "YPTMR", "YPTMD", 
+  "YPTU", "GTFP", "YPOG", "YPTX", "YTPI", "YCTLG", "G", "GRCSI", 
+  "GDPH", "DC", "PTGFH", "PTGSH", "GF", "GS", "GFH", "GSH", 
+  "\tGFRPT", "GFRPRI", "GFRCP", "GFRS", "GFRPT", "\tGFRPRI", 
+  "\tGFRCP", "\tGFRS", "\tGFTFP", "\tGFEG", "\tGSRPT", "\tGSRPRI", 
+  "\tGSRCP", "\tGSRS", "\tGSTFP", "\tGSET", "GFEGHHX", "GFEGHDX", 
+  "GFEIGX", "GFSUB", "GSSUB", "GSUB", " GFTFBUSX")
 data1 = pull_data(names_usna$code, "usna", start.date = "01-01-1970")
 START <- "01-01-1970"
-usna <- haver.data(names_usna$code, database = "usna", eop.dates = T, start = as.Date(START, f = "%m-%d-%Y"))
-colnames(data1) <- names_usna$reference[match(colnames(usna), names_usna$code)]
+usna <- haver.data(names_usna$code, database = "usna", eop.dates = T, 
+  start = as.Date(START, f = "%m-%d-%Y"))
+colnames(data1) <- names_usna$reference[match(colnames(usna), 
+  names_usna$code)]
 
-metadata1 = cbind(haver.metadata(series1, "usna")$code, haver.metadata(series1, "usna")$descriptor) # use this for reference
-data2 = pull_data(c("PCW", "GDPPOTHQ","GDPPOTQ", "RECESSQ"), "usecon", "01-01-1970")
-hist = merge(data1, data2, by = "date")
+metadata1 = cbind(haver.metadata(series1, "usna")$code, haver.metadata(series1, 
+  "usna")$descriptor)  # use this for reference
+data2 = pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ"), 
+  "usecon", "01-01-1970")
 
-# pull annual BEA NIPAs data, for regressions for state and local tax revenues
-series3 = c("GDP", "C","CH","GDPH","JC", "JGDP", "JGF", "JGS", "PTGH","PTGSH","PTGFH", "YPTMR", "YPTMD", "GTFP", "YPOG", "YPTX", "YTPI", "YCTLG", "G", "GRCSI", "GDPH", "DC",	"PTGFH", "PTGSH", "GF", "GS", "GFH", "GSH", "	GFRPT", "GFRPRI", "GFRCP", "GFRS","GFRPT","	GFRPRI","	GFRCP","	GFRS","	GFTFP","	GFEG","	GSRPT","	GSRPRI","	GSRCP","	GSRS","	GSTFP","	GSET", "YP", "GFSUB", "GSSUB")
-series4 = c("USPHPI", "CASUSXAM","GDPPOT", "GDPPOTH")
-data3 = pull_data(series3, "usna", start = as.Date("1970-01-01"), frequency = "annual")
-data4 = pull_data(series4, "usecon", start = as.Date("1970-01-01"), frequency = "annual")
-aa = merge(data3, data4, by = "date")
-aa$hpx = aa$usphpi #house price index of choice is the FHFA purchase only index, 1991 = 100, since that's what CBO forecasts
+data1 <- read_csv("data/raw/data1.csv") %>% 
+  mutate(date = as.Date(date, f = "%m/%d/%y")) %>% 
+  as_tibble()
+data2 <- read_csv("data/raw/data2.csv") %>% 
+  mutate(date = as.Date(date, f = "%m/%d/%y")) %>% 
+  select(-X1) %>% 
+  as_tibble()
+hist = merge(data1, data2, by = "date") %>% as_tibble()
+
+# pull annual BEA NIPAs data, for regressions for state and
+# local tax revenues
+series3 = c("GDP", "C", "CH", "GDPH", "JC", "JGDP", "JGF", "JGS", 
+  "PTGH", "PTGSH", "PTGFH", "YPTMR", "YPTMD", "GTFP", "YPOG", 
+  "YPTX", "YTPI", "YCTLG", "G", "GRCSI", "GDPH", "DC", "PTGFH", 
+  "PTGSH", "GF", "GS", "GFH", "GSH", "\tGFRPT", "GFRPRI", "GFRCP", 
+  "GFRS", "GFRPT", "\tGFRPRI", "\tGFRCP", "\tGFRS", "\tGFTFP", 
+  "\tGFEG", "\tGSRPT", "\tGSRPRI", "\tGSRCP", "\tGSRS", "\tGSTFP", 
+  "\tGSET", "YP", "GFSUB", "GSSUB")
+series4 = c("USPHPI", "CASUSXAM", "GDPPOT", "GDPPOTH")
+data3 = pull_data(series3, "usna", start = as.Date("1970-01-01"), 
+  frequency = "annual")
+data4 = pull_data(series4, "usecon", start = as.Date("1970-01-01"), 
+  frequency = "annual")
+
+data3 <- read_csv("data/raw/data3.csv") %>% 
+  select(-X1)
+  as_tibble()
+data4 <- read_csv("data/raw/data4.csv") %>% 
+  select(-X1)
+  as_tibble()
+aa = merge(data3, data4, by = "date") %>% as_tibble()
+aa$hpx = aa$usphpi  #house price index of choice is the FHFA purchase only index, 1991 = 100, since that's what CBO forecasts
 
 # pull quarterly CBO economic projections data
-econ = read.csv('./data/cbo_econ_proj_quarterly.csv', stringsAsFactors = F) %>% 
+econ = read.csv("./data/cbo_econ_proj_quarterly.csv", stringsAsFactors = F) %>% 
   as_tibble()
 econ$date = gsub("12/30/", "12/31/", econ$date)
 econ$date = as.Date(econ$date, f = "%m/%d/%Y")
 comp = colnames(econ)[!colnames(econ) %in% "date"]
 
 # pull annual CBO economic projections data
-econ_a = read.csv('./data/cbo_econ_proj_annual.csv', stringsAsFactors = F)
-econ_a$date = as.Date(paste0(econ_a$calendar_date, "-12-31"), f="%Y-%m-%d")
-econ_a = econ_a[econ_a$date > Sys.Date(),] # keep annuals for current calendar year
+econ_a = read.csv("./data/cbo_econ_proj_annual.csv", stringsAsFactors = F)
+econ_a$date = as.Date(paste0(econ_a$calendar_date, "-12-31"), 
+  f = "%Y-%m-%d")
+econ_a = econ_a[econ_a$date > Sys.Date(), ]  # keep annuals for current calendar year
 
-# pull annual CBO budget projections, "as they appear in the NIPAS"
-# budg = read.csv('data/cbo_budget_nipas_proj_annual.csv', stringsAsFactors = F)
-budg = read.csv('./data/cbo_budget_nipas_proj_annual_new.csv', stringsAsFactors = F) %>%
-  as_tibble()
+# pull annual CBO budget projections, 'as they appear in the
+# NIPAS' budg =
+# read.csv('data/cbo_budget_nipas_proj_annual.csv',
+# stringsAsFactors = F)
+budg = read.csv("./data/cbo_budget_nipas_proj_annual_new.csv", 
+  stringsAsFactors = F) %>% as_tibble()
 
-# pull annual FMAPS data, which come from CMS.gov, NHE by type of service and source of funds. Annual data, later translated to quarterly just as we do with the budget data.  
-fmap = read.csv('./data/nhe_fmap.csv', stringsAsFactors = F)
+# pull annual FMAPS data, which come from CMS.gov, NHE by
+# type of service and source of funds. Annual data, later
+# translated to quarterly just as we do with the budget data.
+fmap = read.csv("./data/nhe_fmap.csv", stringsAsFactors = F)

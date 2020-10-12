@@ -1,4 +1,4 @@
-## ---------------------------
+## HEADER ---------------------------
 ##
 ## Script name: Projections
 ##
@@ -11,25 +11,21 @@
 ## Date Created: 2020-10-05
 ##
 ##
-## ---------------------------
 ##
-## Notes:
+##
+## Notes ---------------------
 ## We use projected growth rates and iteratively forecast levels from current levels. 
 ##
-## ---------------------------
+## 
 
-# I prefer to view outputs in non-scientific notation
-options(scipen = 6, digits = 5) 
-
-## ---------------------------
-
+# 2 Projected Growth Rates -----------------------------------------------------------------------------
 last_proj_date = as.Date(paste0(year(Sys.Date()) + 2, "-12-31"))
-last_hist_date = tail(hist$date, 1)
+last_hist_date <-
+  hist %>% 
+  select(date) %>% 
+  slice_tail()
 
-# 2 Annual Projections -----------------------------------------------------------------------------
-
-
-## 2.1 Budget ------------------------------------------------------------------------------------------
+## 2.1 Budget (Annual) ------------------------------------------------------------------------------------------
 
 
 # construct forecasts of federal taxes and transfers growth using CBO's annual budget/revenue projections 
@@ -51,9 +47,9 @@ budg <-
 
 budg <- budg %>%
   mutate(cpiu = lag(econ$cpiu),
-         cpiu_g = q_a(cpiu)/100,
-#        pcw = lag(hist$pcw),
-#        pcw_g = q_a(pcw)/100),
+         cpiu_g = q_a(cpiu) / 100,
+         pcw = hist$pcw[match(budg$date, hist$date)],
+         pcw_g = q_a(pcw) / 100,
 #        Applicable cola rate is CPIW from Q3 of previous year
          cola_rate =
            case_when(
@@ -118,51 +114,41 @@ budg <-
 )
 
 
-# 2.2 Economic ------------------------------------------------------------------------------------------
+# 2.2 Economic (Annual) ------------------------------------------------------------------------------------------
+# 2.2.1 S&L Tax Growth -------------------------------------------------------------------------
 
-
-# 2.2.1 Forecast S&L Tax Growth -------------------------------------------------------------------------
-
-aa <- plyr::rbind.fill(aa,econ_a)
-forward_aa <- which(aa$date > last_hist_date)
+aa <- plyr::rbind.fill(aa, econ_a)
 taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
-taxpieces_gdp = paste0(taxpieces, "_gdp")
-
-aa %>%
+aa <- aa %>%
   mutate(
     across(.cols  = taxpieces,
            .fns   = ~ na.locf(. / gdp),
            .names = "{.col}_gdp")
   ) 
 
-aa[,taxpieces_gdp] = lapply(aa[,taxpieces], function(x) x/aa$gdp)
-aa[,taxpieces_gdp] = lapply(aa[,taxpieces_gdp], function(x) na.locf(x))
-aa[,taxpieces] = sapply(aa[,taxpieces_gdp], function(x) x*aa$gdp)
-
 # Translate into quarterly Seasonally Adjusted Annualized Rates levels 
 # by replicating over four quarters and smoothing
-aa = rbind(aa, aa, aa, aa) 
-aa = aa[order(aa$date),]
-aa$date[format(aa$date, f="%Y") %in% format(econ$date, f="%Y")] = econ$date[format(econ$date, f="%Y") %in% format(aa$date, f="%Y")]
+
+firstDateEcon <- 
+  econ %>%
+  select(date) %>%
+  slice_head()
 
 aa <- 
   rbind(aa, aa, aa, aa) %>%
   arrange(date) %>%
-  mutate(date = econ$date) %>%
-  mutate(date = lag(date))
+  filter(date > firstDateEcon) %>% 
+  mutate(date = lag(econ$date)) %>% 
+  as_tibble()
 
-# 3 Quarterly projections ------------------------------------------------------------------------------------
+## 3.1 Economic (Quarterly) ----------------------------------------------------------------------------------------------
 
+### 3.1.1 ---------------------------------------------------------------------------
+taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
 
-## 3.1 Economic ----------------------------------------------------------------------------------------------
-
-
-### 3.1.1 Implicit price deflators ---------------------------------------------------------------------------
-
-# Calculate for federal spending, state spending, and personal consumption
 econ <-
   econ %>%
-  # Nominal over real
+  # Implicit price deflators
   mutate(jgf =  gf/gfh,
          jgs = gs/gsh,
          jc = c/ch)  %>%
@@ -172,172 +158,226 @@ econ <-
       .cols = where(is.numeric),
       .fns = ~ q_g(.x),
       .names = "{.col}_g"
+    )
+  ) %>%
+  # S&L Taxes
+ merge(aa %>%
+          select(date, taxpieces),
+        by = 'date',
+        all.x = F) %>%
+  # Growth rate of S&L Taxes
+    mutate(
+      across(
+        .cols = taxpieces,
+        .fns = ~ q_g(.),
+        .names = "{.col}_g"
+      )
+    ) %>%
+    as_tibble()
+  
+
+## 4 Merge growth rates and levels data frames ---------------------------------------------------------------------
+
+econGrowthRates <-
+  econ %>%
+  select(date, ends_with('_g'))
+
+# Filter so that we only get the budget growth rates
+budgetGrowthRates <-
+  budg %>% 
+  select(date, ends_with('_g'), gfrptCurrentLaw) 
+
+growthRates <- left_join(econGrowthRates, budgetGrowthRates, by = 'date') 
+
+xx <-
+    full_join(hist, growthRates, by = 'date')
+
+## 4.2 FIM component calculations ----------------------------------------------------------------------------
+
+### 4.2.1 ------------------------------------------------------------------------------------------
+
+# gftfbusx =	Fed Transfer Payments/Persons: State Unemployment Insurance Benefits (SAAR, Mil.$)
+# gftfp = Federal Government Social Benefit Payments to Persons (SAAR, Bil.$)
+# gstfp = State & Local Government Social Benefit Payments to Persons (SAAR, Bil.$)
+
+# Federal UI legislation total from Q2 of 2020 is $768.8 (Bil. $)
+Q2_2020 <- "2020-06-30" 
+federal_UI <- 768.8
+xx <- 
+  xx %>%
+    mutate(
       
+      # SOCIAL BENEFITS
+      # Unemployment Insurance
+      gftfbusx = gftfbusx / 1000, # Translate UI from millions to billions
+      gftfp = gftfp - gftfbusx,
+      gstfp = gstfp + gftfbusx,
+      gftfp = if_else(date == Q2_2020,
+                      gftfp + federal_UI,
+                      gftfp),
+      gstfp = if_else(date == Q2_2020,
+                      gstfp - federal_UI,
+                      gstfp),
+     
+      # GRANTS
+      
+      # Fix units  (millions -> billions)
+      # Health & Hospitals grants
+      gfeghhx = gfeghhx / 1000,
+      # Medicaid grants
+      gfeghdx = gfeghdx / 1000,
+      # Capital grants to S&L
+      gfeigx = gfeigx / 1000,
+      
+        ## Medicaid
+      
+      # assume FMAP remains constant -- we still need the fmaps to do pre-1993 reallocation of grants
+      fshare = fmap$fshare[match(year(date), fmap$year)] %>%
+        na.locf(), 
+      
+      yfptmd = if_else(is.na(gfeghdx), # if we don't have the medicaid data (pre-1993)'
+                      yptmd*fshare, # use the fmaps to estimate
+                      gfeghdx), # otherwise, use data for medicaid + prescription drugs transfers
+      
+      # Reattribute federal grants to states back to Federal government
+      # Parse between those for consumption and investment and those for transfers (Medicaid)
+      
+      # state medicaid payments = total medicaid - federal medicaid grants
+      ysptmd = yptmd - yfptmd,
+      gfegnet = gfeg - yfptmd, # federal grants to state and local net of medicaid grants
+      
+      # Reattribute federal Medicaid grants to states back to federal government, 
+      # away from state and local transfer payments
+      # net state and local transfer payments = state and local transfer payments - medicaid transfers paid for by the federal government
+      gstfpnet = gstfp - yfptmd, 
+      # net federal transfer payments = federal transfer payments + medicaid transfers paid for by the federal government
+      gftfpnet = gftfp + yfptmd 
+      # we reattribute the capital grants later after calculating contributions. 
     )
-  )
-
-### 3.1.2 Tax pieces -----------------------------------------------------------------------------------------
-
-taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
-
-# Calculate growth rates 
-econ <- merge(aa %>% 
-              select(date, taxpieces, taxpieces_gdp), 
-              econ,
-              by = "date",
-              all.x = F) %>%
-  mutate(
-    across(
-      .cols = taxpieces,
-      .fns = ~ q_g(.),
-      .names = "{.col}_g"
-    )
-  )
-
-econ <- merge(aa[,c("date", taxpieces, taxpieces_gdp)], econ, by = "date", all.x = F)
-econ[,taxpieces] = sapply(econ[,taxpieces_gdp], function(x) x*econ$gdp)
-econ[,paste0(taxpieces, "_g")] = lapply(econ[,taxpieces], function(x) q_g(x))
 
 
-# 4 Project levels ------------------------------------------------------------------------------------------
+# 4.2.3 Growth Rates Assumptions -----------------------------------------------------------------------------------------
 
-
-# 4.1 Merge projections data frames ---------------------------------------------------------------------
-
-xx = Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = "date", all = TRUE),
-            list(budg[,c("date", grep("_g", colnames(budg), value = T))], 
-                 # aa[,c("date",grep("_g", colnames(aa), value = T))],
-                  econ[,c("date", grep("_g", colnames(econ), value = T))], 
-                  hist))
-
-
-# 4.2 Component calculations ----------------------------------------------------------------------------
-
-# reattribute state unemployment from federal back to state
-# includes federal UI which we need to take out 768.8 [legislation total] from Q2 of state unemployment insurance
-xx$gftfbusx = xx$gftfbusx/1000 #translate from millions to billions
-xx$gftfp = xx$gftfp - xx$gftfbusx # + 768.8
-xx$gftfp[202] = xx$gftfp[202] + 768.8
-
-xx$gstfp = xx$gstfp + xx$gftfbusx # - 768.8
-xx$gstfp[202] = xx$gstfp[202] - 768.8
-
-fmap$fshare[match(as.integer(format(as.Date(econ$date, format="%d-%m-%Y"),"%Y")), fmap$year)]
-# assume FMAP remains constant -- we still need the fmaps to do pre-1993 reallocation of grants
-xx$fshare = fmap$fshare[match(as.integer(format(as.Date(xx$date, format="%d-%m-%Y"),"%Y")), fmap$year)]
-xx$fshare = na.locf(xx$fshare)
 
 ## Louise override CBO growth rate for S&L purchases for Q3 and Q4 for 2020
-xx$gs_g[203] = -0.05  
-xx$gs_g[204] = 0.04
-  
-xx <- xx %>%
-  mutate(gftfbusx = gftfbusx/1000,
-         gftfp = gftfp - gftfbusx,
-         gstfp = gstfp + gftfbusx)
-# Additional component calculations
-xx <- xx %>% mutate(
-  
-  # Make special assumptions for projected growth rates
-  # past cap expiration dates, CBO assumes that fed purchases just grow with inflation. 
-  # we want to assume they grow with nominal potential (zero impact, essentially)
-  
-  gf_g = ifelse((date > "2021-09-30"), gdppothq_g + jgdp_g, gf_g), 
-  gstfp_g = gs_g, # state and local transfers grow with state and local current expenditures
-  gstfpnet_g =  gs_g, # state and local transfers grow with state and local current expenditures
-  gftfpnet_g = gftfp_g, # net federal transfers same as gross federal transfers
 
-  gfeghhx_g = yptmd_g, # federal health grants to states grow with medicaid
-  gfeghdx_g = yptmd_g, # federal medicaid grants to states grow with medicaid
+Q3_2020 <- "2020-09-30" 
+Q4_2020 <- "2020-12-31" 
+
+
+# past cap expiration dates, CBO assumes that fed purchases just grow with inflation. 
+# we want to assume they grow with nominal potential (zero impact, essentially)
+capExpiration <- "2020-09-30"
+
+# Additional component calculations
+# Make special assumptions for projected growth rates
+xx <- xx %>% mutate(
+  # PURCHASES
+    # Federal
+    gf_g = if_else(date > capExpiration,
+                   gdppothq_g + jgdp_g,
+                   gf_g),
+    # State & Local
+      # Note: Louise said to override CBO growth rate for S&L purchases for Q3 and Q4 for 2020
+    gs_g = if_else(date == Q3_2020,
+                   -0.05,
+                   gs_g),
+    gs_g = if_else(date == Q4_2020,
+                   0.04,
+                   gs_g),
+  # TRANSFERS
   
-  gfeg_g = gf_g, # federal current grants to state and local gov'ts grow with federal purchases
-  gfeigx_g = gf_g, # federal capital grants to state and local gov'ts grow with federal purchases
+    # Federal
+      # Net federal transfers grow at the same rate as gross federal transfers
+    gftfpnet_g = gftfp_g, 
   
-  jgsi_g = jgs_g,
-  jgse_g = jgs_g, # deflators for state & local investment, consumption grow with overall deflator
-  
+    # State & Local
+      # S&L gross and net transfers both grow with S&L current expenditures
+    gstfp_g = gs_g,
+    gstfpnet_g =  gs_g, 
+
+  # SUBSIDIES
+    # Federal and S&L subsidies grow with potential GDP
   gfsub_g = gdppothq_g,
-  gssub_g = gdppothq_g # subsidies grow with potential
+  gssub_g = gdppothq_g,
   
-  # yfptmd_g = yptmd_g,  # disaggregated medicaid components grow with the aggregate
-  # ysptmd_g = yptmd_g, # disaggregated medicaid components grow with the aggregate
+  # GRANTS
+    # Federal
+      #  Health & Hospital grants to states growth with Medicaid
+        gfeghhx_g = yptmd_g, 
+      # Medicaid grants to states grow with medicaid
+        gfeghdx_g = yptmd_g, 
+  
+      # Aid to S&L grow with federal purchases
+        gfeg_g = gf_g, 
+      # Capital grants to state and local gov'ts grow with federal purchases
+        gfeigx_g = gf_g, 
+  
+  # DEFLATORS
+    # State & Local
+        # Investment deflator grows with overall deflator for S&L
+        jgsi_g = jgs_g,
+        # Consumption deflator grows with overall deflator for S&L
+        jgse_g = jgs_g
+  
+  # Disaggregated medicaid components grow with the aggregate  
+      # yfptmd_g = yptmd_g,  
+      # ysptmd_g = yptmd_g, 
 )
 
-# TEMPORARY ADJUSTMENT TO GROWTH RATES FOR FEDERAL GRANTS
-# xx$gfeg_g[xx$date == "2020-03-31"] = xx$gfeg_g[xx$date == "2019-12-31"][1]
-# xx$gfeigx_g[xx$date == "2020-03-31"] = xx$gfeg_g[xx$date == "2019-12-31"][1]
 
-# generate forward values of components using current levels and projected growth rates. 
-forward = which(!(xx$date %in% hist$date))
-comp2 = c("gdph", "gdppothq", "gdp","c", "yptmr","yptmd","g","gf", 
-          "gfeg","gfeigx","gfeghhx", "gfeghdx", "gs", "gfrpt","gfrpri","gfrcp",
-          "gfrs","gsrpt","gsrpri","gsrcp","gsrs","gftfp","gstfp","gdppotq",
-          "jgdp","jc","jgf","jgs","jgse", "jgsi", "gssub", "gfsub")
-for(i in 1:length(comp2)){
-  for(j in 1:length(forward)){
-    xx[forward[j], comp2[i]] = xx[forward[j]-1, comp2[i]]*(1+xx[forward[j], paste0(comp2[i], "_g")])
-  }
+# 5 Forecast ----------------------------------------------------------------------------------------------------
+
+## Generate forward values of components using current levels and our projected growth rates. 
+
+components <-
+c(
+    # GDP
+      ## Actual
+      'gdp', 'gdph', 'jgdp',
+      ## Potential
+      'gdppotq', 'gdppothq',
+    # Gov't Consumption Expenditures & Gross Investment 
+      ## Total 
+      'g', 'gf', 'gs', 
+      ## Deflators
+         ### Total
+           'jgf', 'jgs',
+         ### S&L Consumption/Investment Expenditures
+              'jgse', 'jgsi',
+    # GRANTS
+    ## Total
+      'gfeg', 
+      ### Health & Hospitals
+        'gfeghhx',
+      ### Medicaid
+        'gfeghdx', 
+      ### Investment
+        'gfeigx', 
+    # TAXES
+      ## Personal
+        'gfrpt', 'gsrpt',
+      ## Social Insurance
+        'gfrs' ,'gsrs', 
+      ## Corporate
+        'gfrcp', 'gsrcp',
+      ## Production & Imports
+        'gfrpri', 'gsrpri',
+    # SOCIAL BENEFITS
+      ## Total
+      'gftfp', 'gstfp',
+      ## Medicaid
+      'yptmd',
+      ## Medicare
+      'yptmr',
+    # SUBSIDIES 
+    'gssub', 'gfsub', 
+    # PERSONAL CONSUMPTION
+    'c', 'jc'
+)
+
+forecastPeriod <- which(xx$date > last_hist_date)
+
+for(f in forecastPeriod){
+  xx[f,components] = xx[f -1, components]  * (1 + xx[f, paste0(components, "_g")])
 }
-
-
-# 4.3 Additional component calculations -----------------------------------------------------------------
-
-xx <- xx %>%   mutate(
-  
-  # save some vars
-  gfsave = gf, 
-  gssave = gs, 
-  gfrptsave = gfrpt, # preserve current law personal taxes, levels
-  
-  # fix units on some variables (millions -> billions)
-  gfeghhx = gfeghhx / 1000,
-  gfeghdx = gfeghdx / 1000,
-  gfeigx = gfeigx / 1000,
-  
-  # Reattribute federal grants to states back to Federal government
-  # Parse between those for consumption and investment and those for transfers (Medicaid)
-  
-  # federal medicaid grants to states
-  yfptmd = ifelse(is.na(gfeghdx), # if we don't have the medicaid data (pre-1993)'
-                  yptmd*fshare, # use the fmaps to estimate
-                  gfeghdx), # otherwise, use data for medicaid + prescription drugs transfers
-  
-  # state medicaid payments = total medicaid - federal medicaid grants
-  ysptmd = yptmd - yfptmd,
-  gfegnet = gfeg - yfptmd, # federal grants to state and local net of medicaid grants
-  
-  # Reattribute federal Medicaid grants to states back to federal government, away from state and local transfer payments
-  # net state and local transfer payments = state and local transfer payments - medicaid transfers paid for by the federal government
-  gstfpnet = gstfp - yfptmd, 
-  # net federal transfer payments = federal transfer payments + medicaid transfers paid for by the federal government
-  gftfpnet = gftfp + yfptmd 
-  # we reattribute the capital grants later after calculating contributions. 
-  
-) 
-
-
-# 4.4 Project total tax and transfers -----------------------------------------------------------------------
-
-# S&L + Federal tax and transfer pieces:
-
-
-# Taxes
-## Personal Taxes
-### Under Current law
-xx$yptxb[forward] = xx$gfrptb[forward] + xx$gsrpt[forward]
-### Under Alternative path
-xx$yptx[forward] = xx$gfrpt[forward] + xx$gsrpt[forward] 
-## Production and import taxes
-xx$ytpi[forward] = xx$gsrpri[forward] + xx$gfrpri[forward] 
-## Payroll taxes
-xx$grcsi[forward] = xx$gsrs[forward] + xx$gfrs[forward]  
-## corporate taxes
-xx$yctlg[forward] = xx$gsrcp[forward] + xx$gfrcp[forward]
-
-# Transfers
-## Social benefits 
-xx$gtfp[forward] = xx$gftfp[forward] + xx$gstfp[forward]
-# subsidies
-xx$gsub[forward] = xx$gssub[forward] + xx$gfsub[forward] 
-
-
