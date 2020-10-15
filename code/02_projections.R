@@ -19,11 +19,14 @@
 ## 
 
 # 2 Projected Growth Rates -----------------------------------------------------------------------------
-last_proj_date = as.Date(paste0(year(Sys.Date()) + 2, "-12-31"))
 last_hist_date <-
   hist %>% 
   select(date) %>% 
-  slice_tail()
+  slice_tail() %>% 
+  pull()
+
+last_proj_date <- last_hist_date + years(2)
+
 
 ## 2.1 Budget (Annual) ------------------------------------------------------------------------------------------
 
@@ -107,7 +110,7 @@ budg <-
                        lag(gfrpt_g),
                        gfrpt_g,
                        missing = NULL
-                     ),?
+                     ),
            gfrpt  = if_else(date >= predate,
                             lag(gfrpt) * (1 + gfrpt_g / 400),
                             gfrpt)
@@ -243,26 +246,7 @@ xx <-
       
       # assume FMAP remains constant -- we still need the fmaps to do pre-1993 reallocation of grants
       fshare = fmap$fshare[match(year(date), fmap$year)] %>%
-        na.locf(), 
-      
-      yfptmd = if_else(is.na(gfeghdx), # if we don't have the medicaid data (pre-1993)'
-                      yptmd*fshare, # use the fmaps to estimate
-                      gfeghdx), # otherwise, use data for medicaid + prescription drugs transfers
-      
-      # Reattribute federal grants to states back to Federal government
-      # Parse between those for consumption and investment and those for transfers (Medicaid)
-      
-      # state medicaid payments = total medicaid - federal medicaid grants
-      ysptmd = yptmd - yfptmd,
-      gfegnet = gfeg - yfptmd, # federal grants to state and local net of medicaid grants
-      
-      # Reattribute federal Medicaid grants to states back to federal government, 
-      # away from state and local transfer payments
-      # net state and local transfer payments = state and local transfer payments - medicaid transfers paid for by the federal government
-      gstfpnet = gstfp - yfptmd, 
-      # net federal transfer payments = federal transfer payments + medicaid transfers paid for by the federal government
-      gftfpnet = gftfp + yfptmd 
-      # we reattribute the capital grants later after calculating contributions. 
+        na.locf()
     )
 
 
@@ -399,8 +383,30 @@ xx <-
      
       gtfp = gftfp + gstfp, # social benefits = federal benefits + state and local benefits
       yptx = gfrpt + gsrpt, # alternative path
-      yptxb = gfrptb + gsrpt, # current law
+      yptxb = gfrptCurrentLaw + gsrpt, # current law
       ytpi = gsrpri + gfrpri,  #production and import taxes
       grcsi = gsrs + gfrs,  # payroll taxes
-      yctlg = gsrcp + gfrcp # corporate taxes
+      yctlg = gsrcp + gfrcp, # corporate taxes
+      
+      
+      # Reattribute federal grants to states back to Federal government
+      # Parse between those for consumption and investment and those for transfers (Medicaid)
+      
+      # federal medicaid grants to states
+      yfptmd = if_else(is.na(gfeghdx), # if we don't have the medicaid data (pre-1993)'
+                       yptmd*fshare, # use the fmaps to estimate
+                       gfeghdx), # otherwise, use data for medicaid + prescription drugs transfers
+      
+      
+      # state medicaid payments = total medicaid - federal medicaid grants
+      ysptmd = yptmd - yfptmd,
+      gfegnet = gfeg - yfptmd, # federal grants to state and local net of medicaid grants
+      
+      # net state and local transfer payments = state and local transfer payments - medicaid transfers paid for by the federal government
+      gstfpnet = gstfp - yfptmd, 
+      # net federal transfer payments = federal transfer payments + medicaid transfers paid for by the federal government
+      gftfpnet = gftfp + yfptmd 
+      # we reattribute the capital grants later after calculating contributions. 
     )
+
+

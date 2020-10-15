@@ -20,6 +20,10 @@
 
 ## load up the packages we will need:
 
+# -----------------------------------------------------------------------------------------------------------------
+
+
+# Data viz packages -----------------------------------------------------------------------------------------------
 packages <-
   c('ggplot2', 
     'ggtext',
@@ -29,23 +33,9 @@ packages <-
     'tinytex')
 lapply(packages, require, character.only = TRUE)
 
-# Do you want to render the output to PDFs and JPGs?
-render = T
+# End data for recession is one month after the end of the current quarter
+end_date_reccession = last_hist_date + months(1)
 
-
-######COVID19 changes#####
-#manually added end date for recesions that's equal to the start of the current month
-end_date_reccession = as.Date("2020-07-31") #last date a month after the end of the current quarter
-
-##want to add subsidies to taxes and transfers
-fim <- fim %>% 
-  mutate(taxes_transfers_cont = taxes_transfers_cont + subsidies_cont,
-         state_taxes_transfers_cont = state_taxes_transfers_cont + state_subsidies_cont,
-         federal_taxes_transfers_cont = federal_taxes_transfers_cont + federal_subsidies_cont
-  )
-
-##renamed "Taxes and Transfers" with "taxes, transfers, and subsidies"
-######
 
 # set plot formats, theme 
 uni.theme <- theme_bw() + 
@@ -155,11 +145,18 @@ bp <- function(data, labelz = NULL, ylabel = NULL, t = NULL, sub = NULL, cap = N
 }
 
 # data frames for projection and recession shading
-projection = data.frame(start = as.Date(last_hist_date + 40) , end = last_proj_date)
+
+projection = data.frame(start = last_hist_date + 40 , end = last_proj_date)
 recessions = data.frame(start = hist$date[which(diff(hist$recessq)==2)], end = c(hist$date[which(diff(hist$recessq)==-2)],end_date_reccession)[-1])
 
 # gg objects for recession and projection shading
-projection_shade =  geom_rect(data = projection, aes(xmin = start, xmax = end, ymin=-Inf, ymax=+Inf), fill = 'yellow', alpha = 0.1)
+projection_shade =  geom_rect(data = projection, 
+                              aes(xmin = start,
+                                  xmax = end,
+                                  ymin= -Inf,
+                                  ymax= +Inf),
+                              fill = 'yellow', 
+                              alpha = 0.1)
 recession_shade = geom_rect(data = recessions, aes(xmin = start, xmax = end, ymin=-Inf, ymax=+Inf), fill = 'grey', alpha = 0.3)
 
 # gg object for the moving-average line
@@ -227,7 +224,10 @@ fimbars3 = bp(data = fim[,c("date",c("state_local_cont", "state_taxes_transfers_
  
 
 
-fimbars4 = bp(data = fim[,c("date",other_cont, "purchases_cont", "subsidies_cont")], 
+fimbars4 = bp(data = fim[,c("date",
+                            "health_cont", "social_benefits_cont", 
+                            "noncorp_cont", "corporate_cont", 
+                            "purchases_cont", "subsidies_cont")], 
               labelz = c(" Health Outlays", " Social Benefits", " Noncorporate Taxes", 
                          " Corporate Taxes", " Purchases", " Subsidies"), 
               start.date = "2000-01-01",
@@ -259,36 +259,3 @@ fimbars4 = bp(data = fim[,c("date",other_cont, "purchases_cont", "subsidies_cont
   recession_shade + 
   #ylim(min_y, max_y) + 
   guidez
-
-# render to pdf and jpg
-if(render){
-  rmarkdown::render('Fiscal-Impact-Expanded.RMD',
-                    output_file = paste0(subdir,
-                                         '/Fiscal-Impact-Expanded-',
-                                         Sys.Date(),
-                                         '.pdf'),
-                    output_format = "pdf_document")
-  
-  rmarkdown::render('Fiscal-Impact.RMD',
-                    output_file = paste0(subdir,
-                                         '/Fiscal-Impact-',
-                                         Sys.Date(),
-                                         '.pdf'),
-                    output_format = "pdf_document")
-  
-  jpeg(filename = paste0(subdir, '/FIMbars-1-', Sys.Date(), '.jpg'),
-       res = 400, 
-       height = 6, 
-       width = 8, 
-       units = "in")
-  fimbars1
-  dev.off()
-  
-  jpeg(filename = paste0(subdir, '/FIMbars-2-', Sys.Date(), '.jpg'),
-       res = 400,
-       height = 6,
-       width = 8,
-       units = "in")
-  fimbars2
-  dev.off()
-}

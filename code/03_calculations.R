@@ -1,8 +1,5 @@
-#source("code/fim_projections.R")
-
 
 # 5 Construct FIM data frame for calculations -----------------------------------------------------------
-
 fim <-
   xx %>%
   transmute(date = date,
@@ -45,60 +42,47 @@ fim <-
          state_local_nom = gs ,
          pi_state_local = q_g(jgs) ,
          pi_state_local_c = q_g(jgse) ,
-         pi_state_local_i = q_g(jgsi)
+         pi_state_local_i = q_g(jgsi),
+         federal_nom_pi = pi_federal,
+         state_local_nom_pi = pi_state_local,
+         federal_cgrants_pi = pi_state_local_c,
+         federal_igrants_pi = pi_state_local_i
          )
-
-# writedata = T
 
 # 5.2 Add-ons  ------------------------------------------------------------------------------------------
 
 # Created to adjust our forecasts for the coronavirus bills
 # Remove when NIPAS are updated or new economic projections are released (whichever comes first)
 
-fim_corona_hist1 <- fim %>%
-  filter(date <= "2020-06-30")
+#load add factor file
+add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v2.xlsx", 
+                          sheet = "FIM Add Factors") %>%
+                  mutate(
+                    date = as.Date(date)
+                  ) 
+ 
+fim <-
+  fim %>% 
+  full_join(add_factors,
+            by = "date") %>%
+  mutate(across(
+    .cols = starts_with('add_'),
+    .fns = ~ if_else(is.na(.x), 
+                     0,
+                     .x)
+    )
+  )
 
-fim_corona_hist1[202, 'federal_cgrants'] <- fim_corona_hist1[202, 'federal_cgrants'] + (-298)
-# fim_corona_hist1[202, 'federal_corporate_taxes'] <- fim_corona_hist1[202, 'federal_corporate_taxes'] + (-49.05)
+# Add factors to categories
+covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies', 'federal_cgrants',
+                      'state_health_outlays', 'state_social_benefits', 'state_noncorp_taxes', 'state_corporate_taxes')
+fim[ ,covidLegislation] <- fim[ ,covidLegislation] + fim[ ,paste0('add_', covidLegislation)]
 
-fim_corona_hist2 <- fim %>%
-  filter(date > "2021-12-31")
-
-fim_corona <- fim %>%
-  filter(date > "2020-06-30" & date <= "2021-12-31") %>%
+# New Totals
+fim <- 
+  fim %>%
   mutate(
-#  #introduce state and local add-ons
-#      #New add-ons for Q3 2020 and beyond Calculations are in covid-19 changes/september/addons_comparison_newadds_sept.xlsx
-      add_state_health_outlays = c(39.46,33.75,28.04,22.33,16.62,18.34),
-      add_state_social_benefits =  c(319.53,32.39,38.99,44.43,21.6,-16.7),
-      add_state_noncorp_taxes =  c(-54.82, -87.56, -114.78, -132.92, -155.13, -161.58),
-      add_state_corporate_taxes = c(31.78, 30.14, 33.5, 34.45, 35.55, 36.31),
-      # add_state_expenditures = c(0,	3.1,	3.1,	3.1,	3.1,	5),
-
-  #introduce federal add-ons
-      #New add-ons for Q3 2020 and beyond Calculations are in covid-19 changes/september/addons_comparison_newadds_sept.xlsx
-  add_federal_health_outlays = c(-22.65,-5.57,-5.84,7.19,9.9,53.43),
-  add_federal_social_benefits = c(-1490.39,-1546.12,-1429.51,-112.18,-899.73,-994.39),
-  # add_federal_noncorp_taxes = c(31.51, 41.57, 55.78, 69.01, 75.67, 96.18),
-  # add_federal_corporate_taxes = c(-4.09, -10.58, -5.48, -6.10, -6.16, -5.76),  #does not include -49.05 for Q2
-  add_federal_subsidies = c(119.97,-715.67,-989.94,-1006.02,-1010.3,-1014.92),
-  add_federal_grants = c(-534.23,-528.32,-530.05,-533.51,-519.94,-591.54), #missing -450 for Q2
-  # add_federal_nom = c(-60, -60, -60, -60, -60, -60),
-
-
-    #calculate new variables by adding the add factors
-    state_health_outlays  = state_health_outlays + add_state_health_outlays,
-    state_social_benefits  = state_social_benefits + add_state_social_benefits,
-    state_noncorp_taxes  =  state_noncorp_taxes + add_state_noncorp_taxes,
-    state_corporate_taxes  = state_corporate_taxes + add_state_corporate_taxes,
-  #
-    federal_health_outlays  = federal_health_outlays + add_federal_health_outlays,
-    federal_social_benefits  = federal_social_benefits + add_federal_social_benefits,
-  #   federal_noncorp_taxes  = federal_noncorp_taxes + add_federal_noncorp_taxes,
-  #   federal_corporate_taxes  = federal_corporate_taxes + add_federal_corporate_taxes,
-    federal_subsidies  = federal_subsidies + add_federal_subsidies,
-  #
-  #   #new category totals
+    # new totals
     health_outlays  = state_health_outlays  + federal_health_outlays ,
     social_benefits  = state_social_benefits  + federal_social_benefits ,
     noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
@@ -106,105 +90,66 @@ fim_corona <- fim %>%
     subsidies   = state_subsidies + federal_subsidies,
     # state_local_nom = add_state_expenditures + state_local_nom,
     # federal_nom = add_federal_nom + federal_nom,
-    federal_cgrants = add_federal_grants + federal_cgrants
-
+    federal_cgrants = add_federal_cgrants + federal_cgrants,
+    federal_cgrants = if_else(date == Q2_2020,
+                              181.51,
+                              federal_cgrants)
   )
 
- fim_new <- bind_rows(fim_corona_hist1, fim_corona, fim_corona_hist2)
- fim <- fim_new
- rm(fim_corona, fim_new, fim_corona_hist1, fim_corona_hist2)
- 
- fim$federal_cgrants[202] = 181.51 #Manually entering value for Q2 2020 since add factors start in Q3
- 
-#====
+# 4.3 Contribution of purchases and grants -------------------------------------------------------------------------------------
+
+## Calculate contributions
+
+fim <-
+  map(
+    alist(federal_nom, state_local_nom, federal_cgrants, federal_igrants),
+    ~ contribution(fim, !!.x)
+  ) %>%
+  reduce(left_join) %>%
+  left_join(fim, .)
+
+# Sum up purchases, taking out the federal grants contribution from state and local and adding it back to federal. 
+fim <-
+  fim %>%
+    mutate(federal_cont_0 = federal_nom_cont,
+           federal_cont = federal_nom_cont + federal_cgrants_cont + federal_igrants_cont,
+           state_local_cont_0 = state_local_nom_cont,
+           state_local_cont = state_local_nom_cont - (federal_cgrants_cont + federal_igrants_cont),
+           purchases_cont = federal_cont + state_local_cont)
+  
+# 4.4 Counterfactual Taxes and Transfers -------------------------------------------------------------------------------
+
+## Category totals
+tt = c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes")
+## Category totals by level of government
+tts = c(tt, paste0("federal_", tt), paste0("state_", tt)) # totals and disaggregations by level of goverment
 
 
-# 4.3 Contributions -------------------------------------------------------------------------------------
-
-contribution <- function(df, var){
-  df %>%
+# Calculate "net" taxes and transfers by subtracting counterfactual from realized 
+fim <-  
+  fim %>%
     mutate(
-      "{{ var }}_cont" := 400 * ({{ var }} - (1 + jgf + gdppothq) * lag({{ var }}) ) / lag(gdp)
+      across(
+        .cols = tts, 
+        .fns =  ~ .x - lag(.x) * (1 + pi_pce + gdppoth),
+        .names = "{.col}_net"
       )
-}
-xx %>% contribution(gf) %>% select(gf, gf_cont)
-# PURCHASES
-## Federal 
-fim$federal_cont = NA
-for(i in 2:nrow(fim)){
-  fim$federal_cont[i] = 400*(fim$federal_nom[i] - (1 + fim$pi_federal[i] + fim$gdppoth[i])*fim$federal_nom[i-1])/fim$gdp[i-1]
-}
+    ) %>%
+    fill(ends_with("_net"))
 
-# S&L
-fim$state_local_cont = NA
-for(i in 2:nrow(fim)){
-  fim$state_local_cont[i] = 400*(fim$state_local_nom[i] - (1 + fim$pi_state_local[i] + fim$gdppoth[i])*fim$state_local_nom[i-1])/fim$gdp[i-1]
-}
-
-# Sum up purchases FIM, taking out the federal grants contribution from state and local and adding it back to federal. 
-
-fim = fim %>% mutate(
-  
-  federal_cont_0 = federal_cont,
-  federal_cont = federal_cont + federal_cgrants_cont + federal_igrants_cont,
-  
-  state_local_cont_0 = state_local_cont,
-  state_local_cont = state_local_cont - (federal_cgrants_cont + federal_igrants_cont),
-  
-  purchases_cont = state_local_cont + federal_cont
-)
-
-# GRANTS
-## Federal "C" grants to states 
-## Use S&L consumption deflator, since those entities are spending the money
-fim$federal_cgrants_cont = NA
-for(i in 2:nrow(fim)){
-  fim$federal_cgrants_cont[i] = 400*(fim$federal_cgrants[i] - (1 + fim$pi_state_local_c[i] + fim$gdppoth[i])*fim$federal_cgrants[i-1])/fim$gdp[i-1]
-}
-
-## Federal "I" grants to states 
-## Use S&L consumption deflator, since those entities are spending the money
-fim$federal_igrants_cont = NA
-for(i in 2:nrow(fim)){
-  fim$federal_igrants_cont[i] = 400*(fim$federal_igrants[i] - (1 + fim$pi_state_local_i[i] + fim$gdppoth[i])*fim$federal_igrants[i-1])/fim$gdp[i-1]
-}
-
-
-
-#######
-
-
-# 4.4 Taxes and Transfers -------------------------------------------------------------------------------
-
-
-# subtract counterfactual taxes and transfers from realized taxes
-tt = c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes") # category totals
-tts = c(tt, paste0("state_", tt), paste0("federal_", tt)) # totals and disaggregations by level of goverment
-fim[,paste0(tts, "_net")] = y = lapply(fim[,tts], function(x){
-  j = c()
-  j[1] = x[1]
-  for(i in 2:length(x)){
-    j[i] = x[i] - x[i-1]*(1 + fim$pi_pce[i] + fim$gdppoth[i])
-  }
-  na.locf(j)
-})
-
-tts = paste0(tts, "_net") # rename for efficiency
-tt = paste0(tt, "_net") # rename for efficiency
-
+tts <- paste0(tts, "_net") # rename for efficiency
+tt <- paste0(tt, "_net") # rename for efficiency
 
 # 4.5 MPCs ----------------------------------------------------------------------------------------------
-
 
 ### 4.5.1 Pre-COVID -----------------------------------------------------------------------------------------
 
 mpc_health_outlays = function(x){
-  0.9*c(SMA(x, n=4))
+  0.9 * rollapply(x, width = 4, mean, fill = NA, align =  'right')
 }
 
-
 mpc_social_benefits = function(x){
-  0.9*c(SMA(x, n=4))
+  0.9 * rollapply(x, width = 4, mean, fill = NA, align =  'right')
 }
 
 mpc_noncorp_taxes = function(x){
@@ -264,7 +209,6 @@ subsidies = grep("subsidies", tts, value=T)
 
 ### 4.5.2 Post-COVID ---------------------------------------------------------------------------------------------
 
-
 #Same as pre-covid
 mpc_noncorp_taxes_CRN19 =  function(x){
   j = NA
@@ -284,7 +228,7 @@ mpc_noncorp_taxes_CRN19 =  function(x){
 
 #Same as pre-covid
 mpc_health_outlays_CRN19 = function(x){
-  0.9*c(SMA(x, n=4))
+   0.9 * rollapply(x, width = 4, mean, fill = NA, align =  'right')
 }
 
 #FIX
@@ -316,10 +260,6 @@ mpc_noncorp_taxes_CRN19 =  function(x){
   j
 }
 
-
-
-
-
 #Same as pre-covid
 mpc_corporate_taxes_CRN19 = function(x){
   j = NA
@@ -336,122 +276,190 @@ mpc_corporate_taxes_CRN19 = function(x){
   j
 }
 
-#comment out the old MPC functions  
-  # fim[,paste0(health, "_xmpc")] = lapply(fim[,health], function(x) mpc_health_outlays(x))
-  # fim[,paste0(social_benefits, "_xmpc")] =  lapply(fim[,social_benefits], function(x) mpc_social_benefits(x))
-  # fim[,paste0(noncorp, "_xmpc")] = lapply(fim[,noncorp], function(x) mpc_noncorp_taxes(x))
-  # fim[,paste0(corporate, "_xmpc")] =  lapply(fim[,corporate], function(x) mpc_corporate_taxes(x))
-  # fim[,paste0(subsidies, "_xmpc")] = lapply(fim[,subsidies], function(x) mpc_subsidies(x))
-  
-#calculate the new mpc variables using the new functions only for the selected dates
-  fim_MPC_crn19 <- fim %>%
-    filter(date >= "2017-09-30" & date <= "2021-12-31") %>% #need to include 12 piror quarters to Q2 2020 for MPC calculation
-    mutate_at(.funs = list("xmpc" = ~mpc_health_outlays_CRN19(.)), .vars = health) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_social_benefits_CRN19(.)), .vars = social_benefits) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_noncorp_taxes_CRN19(.)), .vars = noncorp) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_corporate_taxes_CRN19(.)), .vars = corporate) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_subsidies(.)), .vars = subsidies) %>%
-    filter(date > "2020-03-31")
+# Translate Taxes & Transfers into Consumption --------------------------------------------------------------------
 
-#for the historial dates use the old/pre-Corona MPC functions 
-  fim_MPCold <- fim %>%
-    filter(date <= "2020-03-31") %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_health_outlays(.)), .vars = health) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_social_benefits(.)), .vars = social_benefits) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_noncorp_taxes(.)), .vars = noncorp) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_corporate_taxes(.)), .vars = corporate) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_subsidies(.)), .vars = subsidies)
+## Dates for new MPCs
+mpc_lag <- fim %>% 
+  select(date) %>%
+  slice(
+    which(date == last_hist_date) - 11
+  )
 
-  fim_MPCold2 <- fim %>%
-    filter(date >= "2017-09-30") %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_health_outlays(.)), .vars = health) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_social_benefits(.)), .vars = social_benefits) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_noncorp_taxes(.)), .vars = noncorp) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_corporate_taxes(.)), .vars = corporate) %>%
-    mutate_at(.funs = list("xmpc" = ~mpc_subsidies(.)), .vars = subsidies) %>%
-    filter(date > "2021-12-31")
-  
-#combine for new fim data frame   
-    fim <- bind_rows(fim_MPCold, fim_MPC_crn19, fim_MPCold2)
-######
+nlag <- 12
+mpc_lag <-
+  fim %>%
+  select(date) %>%
+  slice(
+    which(date == last_hist_date) - (nlag - 1)
+  )
+Q4_2021 <- "2021-12-31"
+
+## CALCULATE MPCS
+fim <-
+  fim %>% 
+    ## HEALTH OUTLAYS
+    mutate(
+      across(
+        .cols = all_of(health),
+        .fns = ~ if_else(date >= mpc_lag & date <= Q4_2021,
+                         mpc_health_outlays_CRN19(.x),
+                         mpc_health_outlays(.x)),
+        .names = "{.col}_xmpc"
+      )
+    ) %>%
+    ## SOCIAL BENEFITS
+    mutate(
+      across(
+        .cols = all_of(social_benefits),
+        .fns = ~ if_else(date >= mpc_lag & date <= Q4_2021,
+                         mpc_social_benefits_CRN19(.x),
+                         mpc_social_benefits(.x)
+        ),
+        .names = "{.col}_xmpc"
+      )
+    ) %>%
+    ## CORPORATE TAXES
+    mutate(
+      across(
+        .cols = all_of(corporate),
+        .fns = ~ if_else(date >= mpc_lag & date <= Q4_2021,
+                         mpc_corporate_taxes_CRN19(.x),
+                         mpc_corporate_taxes(.x)
+        ),
+        .names = "{.col}_xmpc"
+      )
+    ) %>%
+    ## NON-CORPORATE TAXES
+    mutate(
+      across(
+        .cols = all_of(noncorp),
+        .fns = ~ if_else(date >= mpc_lag & date <= Q4_2021,
+                         mpc_noncorp_taxes_CRN19(.x),
+                         mpc_noncorp_taxes(.x)
+        ),
+        .names = "{.col}_xmpc"
+      )
+    ) %>%
+    ## SUBSIDIES
+    mutate(
+      across(
+        .cols = all_of(subsidies),
+        .fns = ~ if_else(date >= mpc_lag & date <= Q4_2021,
+                         mpc_subsidies(.x),
+                         mpc_subsidies(.x)
+        ),
+        .names = "{.col}_xmpc"
+      )
+    )
+
 
 # Sum up transfers net taxes
-fim$transfers_net_taxes = rowSums(fim[,paste0(tt,"_xmpc")], na.rm = T)
-fim$state_transfers_net_taxes = rowSums(fim[,paste0("state_",tt,"_xmpc")], na.rm = T)
-fim$federal_transfers_net_taxes = rowSums(fim[,paste0("federal_",tt,"_xmpc")], na.rm = T)
 
-# calulate the taxes, transfers, and subsidies FIM
-tt_cont = c("taxes_transfers_cont", "state_taxes_transfers_cont", "federal_taxes_transfers_cont")
-other_cont = c("health_cont", "social_benefits_cont", "noncorp_cont", "corporate_cont")
-sub_cont = c("state_subsidies_cont", "federal_subsidies_cont", "subsidies_cont")
+fim <-
+  fim %>%
+  mutate(
+    transfers_net_taxes = rowSums(
+      select(., paste0(tt, "_xmpc")), na.rm = TRUE
+    ),
+    state_transfers_net_taxes = rowSums(
+      select(., paste0("state_", tt, "_xmpc")), na.rm = TRUE
+    ),
+    federal_transfers_net_taxes = rowSums(
+      select(., paste0("federal_", tt, "_xmpc")), na.rm = TRUE
+    )
+  )
+
+
+# Taxes, Transfers, & Subsidies Contributions ---------------------------------------------------------------------
+
+## Calulate the taxes, transfers, and subsidies FIM
+
+contributionTTS <- paste0(
+  c('health', 'social_benefits', 
+    'taxes_transfers', 'federal_taxes_transfers', 'state_taxes_transfers',
+    'corporate', 'noncorp',
+    'subsidies', 'federal_subsidies', 'state_subsidies'),
+  '_cont'
+)
 
 net <- c("transfers_net_taxes", "state_transfers_net_taxes", "federal_transfers_net_taxes",
          "health_outlays_net_xmpc", "social_benefits_net_xmpc", "noncorp_taxes_net_xmpc",
          "corporate_taxes_net_xmpc", "state_subsidies_net_xmpc", "federal_subsidies_net_xmpc",
          "subsidies_net_xmpc")
-fim[,c(tt_cont, other_cont, sub_cont)] = lapply(fim[ ,net], function(x){
-  for(i in 2:length(x)){
-    j[i] = 400*x[i]/fim$gdp[i-1]
-  }
-  j
-})
+
+fim <-
+  fim %>%
+    mutate(
+      across(
+        .cols  = net,
+        .fns = ~ 400 * .x / lag(gdp),
+        .names = "{.col}_cont"
+      )
+    ) %>%
+  rename(!!set_names(paste0(net, "_cont"), contributionTTS)) %>%
+  ## Add contribution of subsidies to contribution of taxes and transfers
+  mutate(
+    taxes_transfers_cont = taxes_transfers_cont + subsidies_cont,
+    federal_taxes_transfers_cont = federal_taxes_transfers_cont + federal_subsidies_cont,
+    state_taxes_transfers_cont = state_taxes_transfers_cont + state_subsidies_cont
+  )
 
 # We forecast two years ahead
 ####change to 6 quarters ahead for COVID19 as of August 3rd 2020
-last_proj_date = fim$date[which(fim$date == last_hist_date) + 8]
+#last_proj_date = fim$date[which(fim$date == last_hist_date) + 8]
 
 
 # 4.6 Export data -------------------------------------------------------------------------------------------
 
 # 4.6.1 Clean FIM data frame ----------------------------------------------------------------------------
-
-
-fim <- fim %>% 
-  mutate(fim_bars = state_local_cont + federal_cont + taxes_transfers_cont + subsidies_cont, 
-         fim_bars_ma = SMA(na.locf(fim_bars, na.rm = F), n = 4)) %>% 
-  filter(date <= as.Date(last_proj_date)) %>%
-  select(date, fim_bars, fim_bars_ma, state_local_cont, federal_cont, taxes_transfers_cont, 
-         subsidies_cont, recession, everything())
-
-
-
+fim <-
+  fim %>% 
+    mutate(fim_bars = federal_cont + state_local_cont + taxes_transfers_cont,
+           fim_bars_ma = SMA(na.locf(fim_bars, na.rm = F), n = 4)) %>% 
+    filter(date <= as.Date(last_proj_date)) %>%
+    select(date, fim_bars, fim_bars_ma, state_local_cont, federal_cont, taxes_transfers_cont, 
+           subsidies_cont, recession, everything())
 # 4.6.2 Website interactive ----------------------------------------------------------------------------------
 firstDate <- "1999-12-31"
 
 fim_interactive <- 
   fim %>% 
     filter(date >= firstDate) %>% 
-    mutate(projection = as.numeric(date > last_hist_date),
+    mutate(
            yrq = as.yearqtr(date),
-           recession = if_else(is.na(recession),
-                               0,
-                               recession),
-           projection = if_else(is.na(projection),
-                                0,
-                                projection),
-           taxes_transfers_subsidies_cont = taxes_transfers_cont + subsidies_cont) %>%
+           projection = if_else(date > last_hist_date,
+                                1,
+                                0),
+           taxes_transfers_subsidies_cont = taxes_transfers_cont
+           ) %>%
     separate(yrq, c("year", "quarter")) %>%
-    select(year, quarter, fim_bars_ma, recession, fim_bars,
-           federal_cont, state_local_cont, taxes_transfers_subsidies_cont, projection) %>%
-    dplyr::rename("impact" = fim_bars_ma,"total" =  fim_bars, "state_local" = state_local_cont,
-                  "federal" =  federal_cont, "consumption" = taxes_transfers_subsidies_cont)
+    select(year, quarter, recession, projection,
+           fim_bars, fim_bars_ma, 
+           federal_cont, state_local_cont,
+           taxes_transfers_subsidies_cont) %>%
+    rename(
+      "total" = fim_bars,
+      "impact" = fim_bars_ma,
+      "federal" = federal_cont,
+      "state_local" = state_local_cont,
+      "consumption" = taxes_transfers_subsidies_cont
+    )
+
   
 
 # 4.6.3 Create CSV files --------------------------------------------------------------------------------
-write.csv(fim, paste0(subdir, '/fim-projections-', Sys.Date(), ".csv"))
+
 # Create folder for current month's update
-thismonth_folder <- as.character(paste0(format(as.yearmon(Sys.Date()), f = "%m-%Y")))
-if (file.exists(thismonth_folder)){
- subdir <- thismonth_folder
-  } else {
-  dir.create(file.path(getwd(), thismonth_folder))
-  subdir <- thismonth_folder
-  }
+thismonth <- format(Sys.Date(), "%m-%Y")
+dir.create('results/', thismonth)
 
 # Write csv to current month's folder
-if(writedata == T){
-  write.csv(fim, paste0(subdir, '/fim-projections-', Sys.Date(), ".csv"))
-  write.csv(fim_interactive, paste0(subdir, '/fim-interactive-', Sys.Date(),".csv"), row.names = F)
-  write.csv(xx, paste0(subdir, '/xx-', Sys.Date(), ".csv"))
-  save(fim, file = 'V:/mng/updates/dashboard_V2/data/fim.rds')
-}
+results <- 
+  list(fim = fim,
+                fim_interactive = fim_interactive,
+                xx = xx)
+
+list(data = results, 
+     names = names(results)) %>%
+  purrr::pmap(output_csv) 
+
