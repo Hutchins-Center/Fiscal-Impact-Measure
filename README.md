@@ -1,5 +1,5 @@
-# Fiscal-Impact-Measure
-![Logo of the project](https://raw.githubusercontent.com/jehna/readme-best-practices/master/sample-logo.png)
+
+![Logo of the project](https://github.com/Hutchins-Center/Fiscal-Impact-Measure/blob/master/images/HC_NEW_BROOKINGS_RGB.jpg)
 
 # Fiscal Impact Measure
 > Hutchins Center
