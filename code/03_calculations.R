@@ -74,8 +74,9 @@ fim <-
   )
 
 # Add factors to categories
-covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies', 'federal_cgrants',
-                      'state_health_outlays', 'state_social_benefits', 'state_noncorp_taxes', 'state_corporate_taxes')
+covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies',
+                      'federal_cgrants', 'state_health_outlays', 'state_social_benefits',
+                      'state_noncorp_taxes', 'state_corporate_taxes')
 fim[ ,covidLegislation] <- fim[ ,covidLegislation] + fim[ ,paste0('add_', covidLegislation)]
 
 # New Totals
