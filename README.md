@@ -2,95 +2,35 @@
 ![Logo of the project](https://github.com/Hutchins-Center/Fiscal-Impact-Measure/blob/master/images/HC_NEW_BROOKINGS_RGB.jpg)
 
 # Fiscal Impact Measure
+[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+
 > Hutchins Center
 
 The Hutchins Center Fiscal Impact Measure shows how much local, state, and federal tax and spending policy adds to or subtracts from overall economic growth, and provides a near-term forecast of fiscal policies’ effects on economic activity.
 
-## Installing / Getting started
+Click [here](https://www.brookings.edu/interactives/hutchins-center-fiscal-impact-measure/) to see the most recent version of the FIM.
+## Motivation
 
-A quick introduction of the minimal setup you need to get a hello world up &
-running.
+The Fiscal Impact Measure (FIM) is a tool created the Hutchins Center to illustrate how much local, state and federal fiscal policy adds to or subtracts from overall economic growth. When the FIM is positive, policy is expansionary in the sense that it is pushing growth in real Gross Domestic Product (GDP) above its longer-run potential. When the FIM is negative, policy is lowering real GDP growth relative to potential. The FIM is broader than measures of fiscal impetus that rely on the size of the federal deficit because it includes the includes the direct effects of federal, state, and local government purchases as well as the more indirect effects of government taxes and government transfers, which affect private consumption.
 
-```shell
-packagemanager install awesome-project
-awesome-project start
-awesome-project "Do something!"  # prints "Nah."
-```
+## Methodology
 
-Here you should say what actually happens when you execute the code above.
+The Hutchins Center FIM uses quarterly data from the U.S. Commerce Department’s Bureau of Economic Analysis (BEA) to measure the contribution of fiscal policy to GDP growth.  For a detailed derivation of the FIM components, please see the attached document.
 
-### Initial Configuration
+The FIM for purchases is defined as the actual contribution of real government purchases to GDP less the contribution that would have prevailed if real purchases were growing with potential GDP. To calculate the actual contribution of real purchases to GDP, we take the growth rate of real government purchases times their share of GDP; for the counterfactual we perform the same calculation but use the growth rate of real potential GDP.
 
-Some projects require initial configuration (e.g. access tokens or keys, `npm i`).
-This is the section where you would document those requirements.
+Likewise, the FIM for taxes and transfers is measured as the contribution of consumption to real GDP growth given actual net taxes (taxes less transfers) less the contribution that would have occurred had net taxes been rising with potential GDP. Calculating the contribution of taxes and transfers to consumption requires a number of assumptions. In particular, we make an assumption about the magnitude of the effect of a change in taxes and transfers on consumption (the MPC, or the marginal propensity to consume) and the timing of the effects (consumers may not respond instantaneously to changes in taxes or benefits). We then calculate what consumption growth would have been in the hypothetical scenario in which taxes and transfers rise with potential GDP—the counterfactual net taxes. The difference between that growth rate and the actual growth rate represents the share of consumption growth attributable to fiscal policy. To get an estimate of the contribution to GDP growth, we multiply the contribution to consumption growth by the nominal ratio of consumption to GDP.
 
-## Developing
+Assumed Marginal Propensities to Consume: Our assumptions about marginal propensities to consume (MPCs) are similar to those discussed in Cashin et al. (2017). For transfers, we assume that the MPC is 0.9, reflecting the fact that some transfers—like Medicare and Medicaid—are likely to increase spending one for one, and others, like temporary changes in unemployment benefits, are received by liquidity-constrained households that are likely to spend most of their benefits. For individual taxes, we assign an MPC of 0.6. The MPC out of a corporate tax cut is much smaller, since most corporate equity is held by high-income individuals and pension plans, who are less likely to be liquidity constrained. Part of the effect may also be viewed as a responsiveness of investment to corporate tax changes. Cashin et al. (2017) note that changes in MPC do not have a large effect on their fiscal stance measure.
 
-Here's a brief intro about what a developer must do in order to start developing
-the project further:
+For more information, see https://www.brookings.edu/research/the-hutchins-centers-fiscal-impact-measure/.
 
-```shell
-git clone https://github.com/your/awesome-project.git
-cd awesome-project/
-packagemanager install
-```
+Click here for a detailed derivation of the FIM: https://www.brookings.edu/wp-content/uploads/2019/07/Deriving_the_Fiscal_Impact_Measure-1.pdf
 
-And state what happens step-by-step.
+### Built with
+* [R](https://www.r-project.org/)
+* [R Studio](https://rstudio.com/)
 
-### Building
-
-If your project needs some additional steps for the developer to build the
-project after some code changes, state them here:
-
-```shell
-./configure
-make
-make install
-```
-
-Here again you should state what actually happens when the code above gets
-executed.
-
-### Deploying / Publishing
-
-In case there's some step you have to take that publishes this project to a
-server, this is the right time to state it.
-
-```shell
-packagemanager deploy awesome-project -s server.com -u username -p password
-```
-
-And again you'd need to tell what the previous code actually does.
-
-## Features
-
-What's all the bells and whistles this project can perform?
-* What's the main functionality
-* You can also do another thing
-* If you get really randy, you can even do this
-
-## Configuration
-
-Here you should write what are all of the configurations a user can enter when
-using the project.
-
-#### Argument 1
-Type: `String`  
-Default: `'default value'`
-
-State what an argument does and how you can use it. If needed, you can provide
-an example below.
-
-Example:
-```bash
-awesome-project "Some other value"  # Prints "You're nailing this readme!"
-```
-
-#### Argument 2
-Type: `Number|Boolean`  
-Default: 100
-
-Copy-paste as many of these as you need.
 
 ## Contributing
 
@@ -100,19 +40,18 @@ branch. Pull requests are warmly welcome.
 
 ## Links
 
-Even though this information can be found inside the project on machine-readable
-format like in a .json file, it's good to include a summary of most useful
-links to humans using your project. You can include links like:
-
-- Project homepage: https://your.github.com/awesome-project/
-- Repository: https://github.com/your/awesome-project/
-- Issue tracker: https://github.com/your/awesome-project/issues
-  - In case of sensitive bugs like security vulnerabilities, please contact
-    my@email.com directly instead of using issue tracker. We value your effort
-    to improve the security and privacy of this project!
-- Related projects:
-  - Your other project: https://github.com/your/other-project/
-  - Someone else's project: https://github.com/someones/awesome-project/
+Relevant links for using this code:
+- Repository: https://github.com/Hutchins-Center/Fiscal-Impact-Measure
+- Issue tracker: https://github.com/Hutchins-Center/Fiscal-Impact-Measure/issues
+  - In case of sensitive bugs, please contact malcalakovalski@brookings.edu
+    directly instead of using issue tracker. We value your effort
+    to improve this project!
+- Relavant resources for understanding and extending code:
+  - Version control: https://www.sas.upenn.edu/~jesusfv/Chapter_HPC_5_Git.pdf
+                     https://swcarpentry.github.io/git-novice/
+  - Metaprogramming: https://adv-r.hadley.nz/#
+- Related literature:
+  -  Fiscal effect measure: https://www.federalreserve.gov/econres/feds/files/2017061pap.pdf
 
 
 ## License
