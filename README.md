@@ -1,9 +1,10 @@
 ![Logo of the project](https://raw.githubusercontent.com/jehna/readme-best-practices/master/sample-logo.png)
 
-# Fiscal Impact Measure
-> Hutchins Center
+# Name of the project
+> Additional information or tagline
 
-The Hutchins Center Fiscal Impact Measure shows how much local, state, and federal tax and spending policy adds to or subtracts from overall economic growth, and provides a near-term forecast of fiscal policies’ effects on economic activity.
+A brief description of your project, what it is used for and how does life get
+awesome when someone starts to use it.
 
 ## Installing / Getting started
 
@@ -93,9 +94,19 @@ Copy-paste as many of these as you need.
 
 ## Contributing
 
-If you'd like to contribute, please fork the repository and use a feature
-branch. Pull requests are warmly welcome.
+When you publish something open source, one of the greatest motivations is that
+anyone can just jump in and start contributing to your project.
 
+These paragraphs are meant to welcome those kind souls to feel that they are
+needed. You should state something like:
+
+"If you'd like to contribute, please fork the repository and use a feature
+branch. Pull requests are warmly welcome."
+
+If there's anything else the developer needs to know (e.g. the code style
+guide), you should link it here. If there's a lot of things to take into
+consideration, it is common to separate this section to its own file called
+`CONTRIBUTING.md` (or similar). If so, you should say that it exists here.
 
 ## Links
 
@@ -114,6 +125,10 @@ links to humans using your project. You can include links like:
   - Someone else's project: https://github.com/someones/awesome-project/
 
 
-## Licensine
+## Licensing
 
-The code in this project is licensed under Brookings Institution license.
+One really important part: Give your project a proper license. Here you should
+state what the license is and how to find the text version of the license.
+Something like:
+
+"The code in this project is licensed under MIT license."
