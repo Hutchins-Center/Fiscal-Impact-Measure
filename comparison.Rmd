@@ -4,12 +4,16 @@ runtime: shiny
 output:
   html_document:
     df_print: paged
+resource_files:
+- results/09-2020/fim-projections-2020-09-12.csv
+- results/10-2020/fim-2020-10-15.csv
 ---
 
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = FALSE, fig.width = 6.5, fig.height = 4.5, fig.align = "center")
-knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(echo = FALSE, fig.width = 6.5, fig.height = 4.5, fig.align = "center",
+                      warnings = FALSE, message = FALSE)
+# knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 
@@ -20,7 +24,6 @@ library(reshape2)
 library(rmarkdown)
 library(TTR)
 library(data.table)
-library(DataExplorer)
 library(shiny)
 library(rsconnect)
 library(lubridate)
@@ -28,6 +31,7 @@ library(here)
 library(DT)
 library(ggtext)
 library(ggthemes)
+library(RColorBrewer)
 ```
 
 The purpose of this document is to document changes between the previous FIM update and the most recent one. 
@@ -35,6 +39,8 @@ The purpose of this document is to document changes between the previous FIM upd
 ```{r hardcoded, echo = FALSE}
 # PUT ALL HARDCODED VARIABLES HERE
 last_hist_date <- '2020-06-30'
+previousDate <- "2020-09-12"
+newDate <- "2020-10-15"
 ```
 
 
@@ -46,25 +52,49 @@ previousYear <- year(currentDate - months(1))
 currentMonth <- month(currentDate)
 previousMonth <- month(currentDate - months(1)) 
 
+
+
+```
+
+
+```{r files, results = FALSE}
+## Previous
+previousMonthYear <- if_else(previousMonth >= 10, 
+                             paste0(previousMonth, '-', previousYear),
+                             paste0('0', previousMonth, '-', previousYear)
+)
+previousProjection <- paste0('fim-projections', '-', previousDate, '.csv')
+
+previousFile <-
+  here('results',
+       previousMonthYear,
+       previousProjection)
+
+## Current
+currentMonthYear <- if_else(currentMonth >= 10, 
+                             paste0(currentMonth, '-', currentYear),
+                             paste0('0', currentMonth, '-', currentYear)
+)
+currentProjection <- paste0('fim', '-', newDate, '.csv')
+
+currentFile <-
+  here('results',
+       currentMonthYear, 
+       currentProjection
+      )
+
+
 ```
 
 ## Previous FIM Update
 
 ```{r load previous, echo=FALSE, message=F, warning=FALSE, results='asis'}
-previousMonthYear <- if_else(previousMonth >= 10, 
-                             paste0(previousMonth, '-', previousYear),
-                             paste0('0', previousMonth, '-', previousYear)
-)
-previousDate <- "2020-09-12"
-previousProjection <- paste0('fim-projections', '-', previousDate, '.csv')
+
+
+
 
 previous <- 
-  read_csv(
-  here('results',
-       previousMonthYear, 
-       previousProjection
-      )
-  ) %>%
+  read_csv(previousFile) %>%
   select(-X1) %>%
   filter(date > last_hist_date) %>%
   mutate(
@@ -178,19 +208,9 @@ renderPlot({
 ### Table
 
 ```{r load current}
-newDate <- "2020-10-15"
-currentMonthYear <- if_else(currentMonth >= 10, 
-                             paste0(currentMonth, '-', currentYear),
-                             paste0('0', currentMonth, '-', currentYear)
-)
-currentProjection <- paste0('fim', '-', newDate, '.csv')
+
 current <-
-  read_csv(
-  here('results',
-       currentMonthYear, 
-       currentProjection
-      )
-  ) %>%
+  read_csv(currentFile) %>%
   filter(date > last_hist_date) %>%
     select(-starts_with('add_'), recession) %>%
   as_tibble() 
@@ -287,10 +307,12 @@ renderPlot({
 ```{r merge}
 both <-
   previous %>%
-  mutate(key = 0) %>%
-  bind_rows(current %>% mutate(key = 1)) %>%
-  melt(id = c('date', 'key'))
+  mutate(key = 'previous') %>%
+  bind_rows(current %>% mutate(key = 'current')) %>%
+  pivot_longer(where(is.numeric))
 ```
+
+
 ```{r both plot}
 inputPanel(
   selectInput(
@@ -300,7 +322,16 @@ inputPanel(
               select(where(is.numeric)) %>%
               names(),
     selected = "federal_cont",
-    multiple = TRUE
+    multiple = FALSE
+  ),
+  dateRangeInput(
+    inputId = 'date',
+    label = 'Select date range',
+    start = min(current$date),
+    end = max(current$date),
+    min = min(current$date),
+    max = max(current$date),
+    startview = 'year'
   )
 )
 
@@ -308,10 +339,13 @@ inputPanel(
 bothReactiveMelt <-
   reactive({
  previous %>%
-  mutate(key = 0) %>%
-  bind_rows(current %>% mutate(key = 1)) %>%
+  mutate(key = 'previous') %>%
+  bind_rows(current %>% 
+              mutate(key = 'current')
+            ) %>%
   select(date, key, input$variables) %>%
-  melt(id = c('date', 'key'))
+  pivot_longer(where(is.numeric)) %>%
+     filter(between(date ,input$date[1], input$date[2]))
   })
 
 
@@ -319,14 +353,22 @@ renderPlot({
   bothReactiveMelt() %>%
     ggplot(aes(x = date,
                y = value,
-               group = key,
-               color = key)
+               fill = key
+               )
            ) +
-    geom_line() +
+    geom_col(position = position_dodge2(reverse = TRUE),
+             width = 50) +
+    geom_hline(yintercept = 0) +
     labs(x = '',
          y = '', 
-         title = "<span style = 'font-size:16pt; font-family:Helvetica;'>Current FIM</span>") +
+         title = "<span style = 'font-size:16pt; font-family:Helvetica;'>Previous vs Current FIM</span>") +
     theme_hc() +
+    scale_fill_brewer(name = '', 
+                      labels = c('Current', 'Previous'),
+                      type = 'qualitative',
+                      palette = 'Paired',
+                       direction = -1) +
+    guides(fill = guide_legend(reverse = TRUE)) +
      theme(
     text = element_text(family = "Times"),
     plot.title.position = "plot",

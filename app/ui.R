@@ -8,12 +8,38 @@
 #
 
 library(shiny)
+library(shinythemes)
+library(ggplot2)
+library(reshape2)
+library(DT)
+library(grDevices)
+library(ggthemes)
+library(zip)
 
+source('code/05_renderFigures.R')
 # Define UI for application that draws a histogram
-shinyUI(fluidPage(
+shinyUI(
+    fluidPage(
+        # Theme
+        theme <- shinytheme('lumen'),
+        # App title
+        navbarPage("Fiscal Impact Measure",
+                   sidebarLayout(
+                       slidebarPanel(
+                           sliderInput(
+                             "bins",
+                             "Number of bins:",
+                             min = 1,
+                             max = 50,
+                             value = 30   
+                           )
+                       )
+                       
+                    )
+                   )
+    )
+)
 
-    # Application title
-    titlePanel("Fiscal Impact Measure Data"),
 
     # Sidebar with a slider input for number of bins
     sidebarLayout(
