@@ -48,6 +48,7 @@ Relevant links for using this code:
   - Version control: https://www.sas.upenn.edu/~jesusfv/Chapter_HPC_5_Git.pdf
                      https://swcarpentry.github.io/git-novice/
   - Metaprogramming: https://adv-r.hadley.nz/#
+  - Programming and Non-Standard Evaluation with dplyr: https://shipt.tech/https-shipt-tech-advanced-programming-and-non-standard-evaluation-with-dplyr-e043f89deb3d
 - Related literature:
   -  Fiscal effect measure: https://www.federalreserve.gov/econres/feds/files/2017061pap.pdf
 
