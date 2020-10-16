@@ -25,8 +25,7 @@ Assumed Marginal Propensities to Consume: Our assumptions about marginal propens
 
 For more information, see https://www.brookings.edu/research/the-hutchins-centers-fiscal-impact-measure/.
 
-Click here for a detailed derivation of the FIM: https://www.brookings.edu/wp-content/uploads/2019/07/Deriving_the_Fiscal_Impact_Measure-1.pdf
-
+Click [here](https://www.brookings.edu/interactives/hutchins-center-fiscal-impact-measure/) for a detailed derivation of the FIM. 
 ### Built with
 * [R](https://www.r-project.org/)
 * [R Studio](https://rstudio.com/)
