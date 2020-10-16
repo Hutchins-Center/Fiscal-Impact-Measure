@@ -1,0 +1,39 @@
+Package: friendlyeval
+Title: A Friendly Interface to Tidyeval
+Version: 0.1.1
+Authors@R: c(
+           person("Miles", "McBain", email = "miles.mcbain@gmail.com", role = c("aut", "cre")),
+           person("Patrick", "Kennedy", role = "aut"),
+           person("Alicia", "Schep", role = "aut"),
+           person("Lionel","Henry", role = "ctb"),
+           person("Nicholas", "Tierney", role = "ctb"))
+Description: Provides an alternative auto-complete friendly interface to rlang
+    that is more closely aligned with the task domain of a user 'programming with
+    dplyr'. Facility is provided to replace friendlyeval functions with their rlang
+    equivalents after protyping a solution.
+Depends: R (>= 3.4.0)
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: rlang (>= 0.3.0.0), purrr, tibble, rstudioapi
+RoxygenNote: 6.1.0
+Suggests: testthat, dplyr
+RemoteType: github
+RemoteHost: api.github.com
+RemoteRepo: friendlyeval
+RemoteUsername: milesmcbain
+RemoteRef: HEAD
+RemoteSha: 7ea2ed91fac54ad5813a372390d7da9d5ed095a8
+GithubRepo: friendlyeval
+GithubUsername: milesmcbain
+GithubRef: HEAD
+GithubSHA1: 7ea2ed91fac54ad5813a372390d7da9d5ed095a8
+NeedsCompilation: no
+Packaged: 2020-10-14 05:33:31 UTC; malcalakovalski
+Author: Miles McBain [aut, cre],
+  Patrick Kennedy [aut],
+  Alicia Schep [aut],
+  Lionel Henry [ctb],
+  Nicholas Tierney [ctb]
+Maintainer: Miles McBain <miles.mcbain@gmail.com>
+Built: R 4.0.1; ; 2020-10-14 05:33:31 UTC; unix
