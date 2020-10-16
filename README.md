@@ -115,6 +115,14 @@ links to humans using your project. You can include links like:
   - Someone else's project: https://github.com/someones/awesome-project/
 
 
-## Licensine
+## License
 
 The code in this project is licensed under Brookings Institution license.
+
+Copyright [2020] [The Brookings Institution]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
