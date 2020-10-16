@@ -38,5 +38,11 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
+# Log files
+*.log
+
 # Custom attributes of folders
 .DS_Store
+
+# Development
+/development/*
