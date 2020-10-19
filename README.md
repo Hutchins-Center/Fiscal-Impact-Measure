@@ -51,6 +51,7 @@ Relevant links for using this code:
   - [Programming and Non-Standard Evaluation with dplyr](https://shipt.tech/https-shipt-tech-advanced-programming-and-non-standard-evaluation-with-dplyr-e043f89deb3d)
 - Related literature:
   - [Fiscal effect measure](https://www.federalreserve.gov/econres/feds/files/2017061pap.pdf)
+  - [Measuring Fiscal Impetus](https://www.chicagofed.org/publications/economic-perspectives/2014/3q-mcgranahan-berman)
   - [A Guide to the National Income and Production Accounts of the United State](http://piketty.pse.ens.fr/files/capitalisback/CountryData/USA/Methodo/NIPA%20Guide.pdf)
 
 
