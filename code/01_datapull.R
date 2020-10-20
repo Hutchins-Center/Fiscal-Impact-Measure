@@ -1,45 +1,23 @@
-# Source custom functions used in code
+# Source ----------------------------------------------------------------------------------------------------------
+## Source custom  functions and packages
 source('src/functions.R')
-# Packages
-# ----------------------------------------------------------------
-
-mPackages <- installed.packages()
-# Details of installed packages
-stInstalled <- rownames(mPackages)
-# Isolate thep package names
-stRequired <- c("tidyverse", "stringr", "reshape2", "zoo", "quantmod", 
-  "rmarkdown", "TTR", "data.table", "lubridate", "Hmisc", "ggplot2", 
-  "magrittr", 'readxl', 'writexl')
-# The required packages
-for (stName in stRequired) {
-  if (!(stName %in% stInstalled)) {
-    cat("****************** Installing ", stName, "****************** \n")
-    install.packages(stName)
-  }
-  library(stName, character.only = TRUE)
-}
-
-# since Haver is a proprietary package, load it separately
-# if (!("Haver" %in% stInstalled)) {
-#   install.packages("Haver", repos = "http://www.haver.com/r/", 
-#     type = "win.binary")
-# }
-# library(Haver)
-# functions
-# ---------------------------------------------------------------
+source('src/packages.R')
 
 # Pull Data
 # ---------------------------------------------------------------
 
-# NOTE: All quarterly values are in seasonally-adjusted,
-# annual rates (SAAR), billions of dollars.  Annual values
-# are in annual rates, billions of dollars. We will translate
-# annual levels into quarterly values by imputing them to
-# each of the four quarters in the year and taking the
-# 4-quarter moving average.
+# We will translate annual levels into quarterly values 
+# by imputing them to each of the four quarter in the year
+# and taking the 4-quarter moving average
+
+# All quarterly values are in seasonally-adjusted,
+# annual rates (SAAR), billions of dollars. 
+
+# Annual values are in annual rates, billions of dollars. 
+
 
 # pull quarterly BEA NIPAs data
-names_usna <- read_excel("data/processing/haver_names.xlsx")
+names_usna <- read_excel("data/auxilliary/haver_names.xlsx")
 
 series1 = c("GDP", "C", "CH", "GDPH", "JC", "JGDP", "JGF", "JGS", 
   "JGSE", "JGSI", "PTGH", "PTGSH", "PTGFH", "YPTMR", "YPTMD", 
@@ -95,14 +73,14 @@ aa = merge(data3, data4, by = "date") %>% as_tibble()
 aa$hpx = aa$usphpi  #house price index of choice is the FHFA purchase only index, 1991 = 100, since that's what CBO forecasts
 
 # pull quarterly CBO economic projections data
-econ = read.csv("./data/cbo_econ_proj_quarterly.csv", stringsAsFactors = F) %>% 
+econ = read.csv("./data/raw/cbo_econ_proj_quarterly.csv", stringsAsFactors = F) %>% 
   as_tibble()
 econ$date = gsub("12/30/", "12/31/", econ$date)
 econ$date = as.Date(econ$date, f = "%m/%d/%Y")
 comp = colnames(econ)[!colnames(econ) %in% "date"]
 
 # pull annual CBO economic projections data
-econ_a = read.csv("./data/cbo_econ_proj_annual.csv", stringsAsFactors = F)
+econ_a = read.csv("./data/raw/cbo_econ_proj_annual.csv", stringsAsFactors = F)
 econ_a$date = as.Date(paste0(econ_a$calendar_date, "-12-31"), 
   f = "%Y-%m-%d")
 econ_a = econ_a[econ_a$date > Sys.Date(), ]  # keep annuals for current calendar year
@@ -111,10 +89,10 @@ econ_a = econ_a[econ_a$date > Sys.Date(), ]  # keep annuals for current calendar
 # NIPAS' budg =
 # read.csv('data/cbo_budget_nipas_proj_annual.csv',
 # stringsAsFactors = F)
-budg = read.csv("./data/cbo_budget_nipas_proj_annual_new.csv", 
+budg = read.csv("./data/raw/cbo_budget_nipas_proj_annual_new.csv", 
   stringsAsFactors = F) %>% as_tibble()
 
 # pull annual FMAPS data, which come from CMS.gov, NHE by
 # type of service and source of funds. Annual data, later
 # translated to quarterly just as we do with the budget data.
-fmap = read.csv("./data/nhe_fmap.csv", stringsAsFactors = F)
+fmap = read.csv("./data/raw/nhe_fmap.csv", stringsAsFactors = F)

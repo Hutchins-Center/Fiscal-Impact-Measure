@@ -1,0 +1,331 @@
+---
+title: "FIM Components Summary"
+author: "Manuel Alcalá Kovalski"
+date: "10/16/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r, setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 6.5, fig.height = 4.5, fig.align = "center", warnings = FALSE, message = FALSE, cache  = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r}
+source('src/packages.R')
+```
+
+```{r pull data, warnings = FALSE, message = FALSE, hide = TRUE, include = FALSE}
+last_hist_date <- as.Date("2020-06-30")
+last_proj_date <- last_hist_date + years(2) + months(7)
+fim <- readRDS('data/processed/fim.RDS') %>%
+  filter(date >= last_hist_date & date <= last_proj_date ) %>%
+  as_tibble() 
+```
+
+## Components
+
+Our quarterly  fiscal impact  measure is:
+
+$$FIM_{t} = FIM^{Fed}_{t} + FIM^{S \&L}_{t}  + FIM^{Taxes \ \& \ Transfers}  $$
+
+
+
+```{r bars}
+fim %>%
+  select(date, federal_cont, state_local_cont, taxes_transfers_cont) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_fill_discrete(name = '') +
+  theme_hc()
+
+```
+
+### Federal purchases
+
+The contribution of federal purchases is the sum of the contributions of federal spending, consumption grants, and investment grants to GDP.
+
+$$FIM^{Fed,\ Purchases}_{t} = FIM^{Fed,\ Spending}_{t} + FIM^{Fed, \ Consumption\ Grants}_{t} + FIM^{Fed, \ Investment\ Grants}_{t} $$
+
+
+
+```{r federal purchases}
+fim %>%
+  select(date, federal_nom_cont, federal_cgrants_cont, federal_igrants_cont) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Federal purchases contribution by components')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+
+
+### State purchases
+
+Similarily, the contribution of state & local purchases is the sum of the contributions of State & Local spending minus consumption grants, and investment grants to GDP. That is,
+
+$$FIM^{S\&L,\  Purchases}_{t} = FIM^{S\&L,\ Spending}_{t} - FIM^{Fed,\ Consumption\ Grants}_{t} - FIM^{Fed,\ Investment\ Grants}_{t} $$
+
+```{r state purchases}
+fim %>%
+  select(date, state_local_nom_cont, federal_cgrants_cont, federal_igrants_cont) %>%
+  mutate(
+    across(contains("grants_cont"),
+           .fns = ~ -1 * .x)
+  ) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'State purchases contribution by components')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+
+The pieces used to calculate these contributions were nominal federal and S&L spending, federal consumption grants, and investment grants. Federal consumption grants consist of federal consumption grants to state net of Medicaid grants.
+
+```{r purchases pieces}
+fim %>%
+  select(date, federal_nom, state_local_nom, federal_cgrants, federal_igrants) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'State purchases contribution by components')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+To understand the level of our federal cgrants we must know the levels for  gross consumption grants, medicaid grants, health and hospital grants. Because of COVID legislation, we also need to know our add factor for net consumption grants. 
+
+```{r}
+fim %>%
+  select(date, federal_cgrants_gross, federal_medicaid_grants, federal_health_grants, add_federal_cgrants) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'State purchases contribution by components')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+### Taxes, transfers and subsidies
+
+$$FIM^{Taxes\ \& \ Transfers} = FIM^{Taxes\ \&\ Transfers} + FIM^{Subsidies}  $$
+```{r taxes transfers and subsidies}
+fim %>%
+  select(date, taxes_transfers_cont, subsidies_cont) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Taxes, transfers, and subsidies')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+
+
+### Taxes, transfers, subsidies by level of government
+
+#### Government Taxes
+
+```{r taxes}
+fim %>%
+  select(date, personal_taxes, payroll_taxes, production_taxes, corporate_taxes) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Levels',
+       title =  'Taxes, transfers, and subsidies')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+### Federal Taxes
+
+```{r federal taxes}
+fim %>%
+  select(date, federal_personal_taxes, federal_payroll_taxes,
+         federal_production_taxes, federal_corporate_taxes) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  scale_fill_manual(values = 
+                      wes_palette("Moonrise3")
+                    )+
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Levels',
+       title =  'Taxes, transfers, and subsidies')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+
+### State & Local Taxes
+
+```{r state taxes}
+fim %>%
+  select(date, state_personal_taxes, state_payroll_taxes,
+         state_production_taxes, state_corporate_taxes) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Levels',
+       title =  'Taxes, transfers, and subsidies')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+
+### Government Transfers
+
+```{r transfers}
+fim %>%
+  select(date, health_cont, social_benefits_cont) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Transfers')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+
+Social benefit payments to persons includes social security benefits, medical benefits, veterans benefits, and unemployment insurance benefits. 
+
+As of `r Sys.Date()` we have medicare, medicaid benefits, and unemployment insurance benefits. However, we don't have UI projections. The figure below  shows the pieces we have and the remainder. Once our projection period begins, the remainder includes unemployment insurance. 
+
+During our projection period, we include add factors to account for COVID-19 legislation.  
+
+```{r social benefits}
+fim %>%
+  mutate(
+    add_social_benefits = add_federal_social_benefits + add_state_social_benefits,
+    socialbenefits_remainder = if_else(date <= last_hist_date,
+                                       social_benefits - medicare - medicaid ,
+                                       social_benefits - medicare - medicaid - add_social_benefits)) %>%
+  select(date, social_benefits, socialbenefits_remainder,
+         medicare, medicaid, 
+         add_social_benefits) %>%
+  filter(date >= "2015-12-31") %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Social benefits')   +
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+
+
+### Subsidies
+```{r subsidies}
+fim %>%
+  select(date, subsidies_cont, state_subsidies_cont, federal_subsidies_cont) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Levels',
+       title =  'Taxes, transfers, and subsidies')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
+
+
