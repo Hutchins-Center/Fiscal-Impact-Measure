@@ -48,3 +48,9 @@ vignettes/*.pdf
 
 # Development
 /development/*
+data/.DS_Store
+data/processed/fim.rds
+*.csv
+*.pdf
+*.csv
+.DS_Store
