@@ -474,7 +474,7 @@ fim_interactive <-
 
 # Create folder for current month's update
 thismonth <- format(Sys.Date(), "%m-%Y")
-dir.create('results/', thismonth)
+dir.create(here('results/', thismonth))
 
 # Write csv to current month's folder
 results <- 
