@@ -136,7 +136,8 @@ aa <- aa %>%
 firstDateEcon <- 
   econ %>%
   select(date) %>%
-  slice_head()
+  slice_head() %>%
+  pull()
 
 aa <- 
   rbind(aa, aa, aa, aa) %>%
