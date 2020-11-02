@@ -1,0 +1,138 @@
+---
+title: "FIM Update Summary"
+runtime: shiny
+output:
+  html_document:
+    df_print: paged
+---
+```{r, setup, include = FALSE}
+knitr::opts_chunk$set( warning = FALSE, message = FALSE, echo = FALSE)
+```
+
+```{r, include = FALSE}
+library(tidyverse)
+library(stringr)
+library(reshape2)
+library(rmarkdown)
+library(TTR)
+library(data.table)
+library(DataExplorer)
+library(shiny)
+library(rsconnect)
+```
+
+The purpose of this document is to document changes between the previous FIM update and the most recent one. 
+## September FIM
+
+### Levels
+
+#### Table
+```{r}
+fimPrevious <- read_csv("results/09-2020/fim-projections-2020-09-12.csv") 
+fimPrevious <- fimPrevious %>% select(-X1)
+fimPrevious <- fimPrevious %>% filter(date > "2019-12-31") %>% mutate_if(is.numeric, round, 2)
+
+inputPanel(
+  selectInput(
+    inputId = "col3",
+    label = "Select columns",
+    choices = names(fimPrevious)[-1], 
+    multiple = TRUE
+  )
+)
+mydata3 <- reactive({
+fimPrevious %>%
+    select(date, input$col3)
+})
+
+
+library(DT)
+renderDT({
+  DT::datatable(mydata3(), class = "cell-border stripe", rownames = F, editable = TRUE, extensions = 'Buttons', options = list(
+  dom = 'Bfrtip',
+  buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+})
+
+
+```
+
+#### Plots
+```{r, echo = FALSE}
+inputPanel(
+selectInput(inputId = "yaxis3",label = "Y-axis",choices = names(fimPrevious)[-1])
+)
+
+renderPlot({
+  ggplot(fimPrevious, aes_string("date", input$yaxis3)) + geom_line() 
+})
+```
+
+
+## October FIM
+
+### Levels
+
+#### Table
+
+```{r}
+fimNew <- read_csv("results/10-2020/fim-projections-2020-10-01.csv") 
+fimNew <- fimNew %>% select(-X1) %>%
+  filter(date > "2019-12-31") %>% 
+  mutate_if(is.numeric, round, 2)
+
+inputPanel(
+  selectInput(
+    inputId = "col3",
+    label = "Select columns",
+    choices = names(fimNew)[-1], 
+    multiple = TRUE
+  )
+)
+mydata3 <- reactive({
+fimNew %>%
+    select(date, input$col3)
+})
+
+
+library(DT)
+renderDT({
+  DT::datatable(mydata3(), class = "cell-border stripe", rownames = F, editable = TRUE, extensions = 'Buttons', options = list(
+  dom = 'Bfrtip',
+  buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+})
+
+
+```
+
+
+#### Plots
+
+```{r, echo = FALSE}
+inputPanel(
+selectInput(inputId = "yaxis3",label = "Y-axis",choices = names(fimNew)[-1])
+)
+
+renderPlot({
+  ggplot(fimNew, aes_string("date", input$yaxis3)) + geom_line() 
+})
+```
+
+
+
+## Difference in projections
+
+```{r, include = FALSE}
+fimNew <- fimNew %>% mutate(id = "Updated") %>% filter(date > "2019-12-31") %>% mutate_if(is.numeric, round, 2)
+fimPrevious <- fimPrevious %>% mutate(id = "Previous") %>% filter(date > "2019-12-31") %>% mutate_if(is.numeric, round, 2)
+
+fimPrevious <- fimPrevious %>% select(-starts_with("add"))
+fimNew <- fimNew %>% select(-starts_with("add"))
+
+
+fimNew <- fimNew %>% select(-starts_with("add"))
+fimPrevious <- fimPrevious %>% select(-starts_with("add"))
+fim_both <- rbind(fimPrevious, fimNew) %>% group_by(id, date)
+fim_diff <- fimNew - fimPrevious
+fim_diff <- fim_diff %>% mutate_if(is.numeric, round, 2) %>% mutate(date = fimNew$date)
+
+```

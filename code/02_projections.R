@@ -2,31 +2,38 @@
 #source("code/fim_datapull.R")
 
 last_proj_date = as.Date(paste0(year(Sys.Date()) + 2, "-12-31"))
-last_hist_date = tail(hist$date, 1)
+last_historical_date = tail(historical_quarterly$date, 1)
 
-# calculate CBO's implicit price deflators for gf, gs, c
+# calculate CBO's implicit price deflators for spendingFederal, spendingState, c
 # growth rate of nominal over real
-econ[,paste0("j",c("gf", "gs", "c"))] = lapply(c("gf", "gs", "c"), function(x){
-  econ[,x]/econ[,paste0(x,"h")]
-})
-econ[,paste0("j",c("gf", "gs", "c"), "_g")] = lapply(econ[,paste0("j",c("gf", "gs", "c"))], function(x) q_g(x))
+
+econ[,paste0("j",c("spendingFederal", "spendingState", "personalConsumptionNom"), "_g")] = 
+  lapply(econ[,paste0("j",c("spendingFederal", "spendingState", "personalConsumptionNom"))], function(x) q_g(x))
 
 # calculate quarterly rates
 econ[,c(paste0(comp, "_g"))] = lapply(econ[,comp], function(x) q_g(x))
 
-# construct forecasts of federal taxes and transfers growth using CBO's annual budget/revenue projections as they appear in the NIPAs (except Medicaid and Medicare, which come straight from revenue projections)
+# construct forecasts of federal taxes and transfers growth using CBO's annual 
+# budget/revenue projections as they appear in the NIPAs
+#(except Medicaid and Medicare, which come straight from revenue projections)
 
-
-budg = rbind(budg, budg, budg, budg) # we're going to use annual rates anyhow, so just replicate the annual levels over each q
+# we're going to use annual rates anyhow, 
+# so just replicate the annual levels over each q
+budg = rbind(budg, budg, budg, budg) 
 budg = budg[order(budg$fy),]
 # shift budget projection date (FY) to match calendar date 
-budg$date = shift(econ$date[which(as.integer(format(as.Date(econ$date, format="%d-%m-%Y"),"%Y")) %in% budg$fy)], 1, type=c("lag")) 
+budg$date =
+  shift(econ$date[which(as.integer(format(as.Date(econ$date, format="%d-%m-%Y"),"%Y")) %in% budg$fy)], 1, type=c("lag")) 
 
 
-# adjust federal transfers to feature their january COLA-related bump; reattribute that growth to calendar quarter 1 before smoothing out the rest of the non-COLA related growth. SSA uses CPI-W to create COLAs; we just take CBO's projection of CPI-U. That won't affect the level of total transfers, just the timing a little bit
+# adjust federal transfers to feature their january COLA-related bump; 
+# reattribute that growth to calendar quarter 1 before smoothing out the 
+# rest of the non-COLA related growth. SSA uses CPI-W to create COLAs; 
+# we just take CBO's projection of CPI-U. That won't affect the level of 
+# total transfers, just the timing a little bit
 budg = budg %>% mutate(cpiu = econ$cpiu[match(budg$date, econ$date)], 
                        cpiu_g = q_a(cpiu)/100, 
-                       pcw = hist$pcw[match(budg$date, hist$date)],
+                       pcw = historical_quarterly$pcw[match(budg$date, historical_quarterly$date)],
                        pcw_g = q_a(pcw)/100)
 
 budg$pcw_g[is.na(budg$pcw_g)] = budg$cpiu_g[is.na(budg$pcw_g)]
@@ -39,39 +46,39 @@ for(i in 4:nrow(budg)){
 
 budg <- budg %>% mutate(health_ui = yptmd + yptmr + yptu,
                        health_ui = SMA(health_ui,4),
-                       gftfpnoCOLA = gftfp - health_ui, # temporarily take out medicaid, medicare, and ui
-                       gftfpnoCOLA = gftfpnoCOLA*(1-cola_rate), # take of the COLA portion
-                       gftfpnoCOLA = SMA(gftfpnoCOLA, 4), # smooth that out
-                       gftfp_adj = gftfpnoCOLA*(1+cola_rate), # add the cola back in
-                       gftfp_adj = gftfp_adj + health_ui,# add smoothed health back in.
-                       gftfp_unadj = gftfp, # storing the old one as "unadjusted"
-                       gftfp = gftfp_adj, # store the new one as the series to use
-                       gftfp_g = q_g(gftfp)) %>%
-        select(-gftfp_adj)
+                       spendingFederaltfpnoCOLA = spendingFederaltfp - health_ui, # temporarily take out medicaid, medicare, and ui
+                       spendingFederaltfpnoCOLA = spendingFederaltfpnoCOLA*(1-cola_rate), # take of the COLA portion
+                       spendingFederaltfpnoCOLA = SMA(spendingFederaltfpnoCOLA, 4), # smooth that out
+                       spendingFederaltfp_adj = spendingFederaltfpnoCOLA*(1+cola_rate), # add the cola back in
+                       spendingFederaltfp_adj = spendingFederaltfp_adj + health_ui,# add smoothed health back in.
+                       spendingFederaltfp_unadj = spendingFederaltfp, # storing the old one as "unadjusted"
+                       spendingFederaltfp = spendingFederaltfp_adj, # store the new one as the series to use
+                       spendingFederaltfp_g = q_g(spendingFederaltfp)) %>%
+        select(-spendingFederaltfp_adj)
 
                 
 # smooth all budget series except total social transfers, which we did above
-cc = c("gfrpt",  "gfrpri",  "gfrcp",  "gfrs", "yptmr",  "yptmd" ) #"gftfp",  
+cc = c("spendingFederalrpt",  "spendingFederalrpri",  "spendingFederalrcp",  "spendingFederalrs", "yptmr",  "yptmd" ) #"spendingFederaltfp",  
 budg[,cc] = sapply(budg[,cc], function(x) SMA(x, n=4))
 
 # take "q-o-q" growth rate
 budg[,c(paste0(cc, "_g"))] = lapply(budg[,cc], function(x) q_g(x))
 
 # construct alternative scenario for personal current taxes, under which the TCJA provisions for income taxes don't expire in 2025
-budg$gfrptb = budg$gfrpt # current law path
-budg$gfrptb_g = budg$gfrpt_g # current law growth
+budg$spendingFederalrptb = budg$spendingFederalrpt # current law path
+budg$spendingFederalrptb_g = budg$spendingFederalrpt_g # current law growth
 expdate = "2025-12-30"
 predate = "2025-09-30"
-budg$gfrpt_g[which(budg$date >= expdate)] = budg$gfrpt_g[which(budg$date == predate)]
+budg$spendingFederalrpt_g[which(budg$date >= expdate)] = budg$spendingFederalrpt_g[which(budg$date == predate)]
 
 postdates = which(budg$date >= predate)
 for(i in 2:length(postdates)){
-  budg$gfrpt[postdates[i]] = budg$gfrpt[postdates[i-1]]*(1 + budg$gfrpt_g[postdates[i]]/400)
+  budg$spendingFederalrpt[postdates[i]] = budg$spendingFederalrpt[postdates[i-1]]*(1 + budg$spendingFederalrpt_g[postdates[i]]/400)
 }
 
 # construct forecasts of state and local taxes growth
 aa <- plyr::rbind.fill(aa,econ_a)
-forward_aa <- which(aa$date > last_hist_date)
+forward_aa <- which(aa$date > last_historical_quarterly_date)
 taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
 taxpieces_gdp = paste0(taxpieces, "_gdp")
 aa[,taxpieces_gdp] = lapply(aa[,taxpieces], function(x) x/aa$gdp)
@@ -94,17 +101,17 @@ econ[,paste0(taxpieces, "_g")] = lapply(econ[,taxpieces], function(x) q_g(x))
 xx = Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, by = "date", all = TRUE),list(budg[,c("date", grep("_g", colnames(budg), value = T))], 
                                                                                  # aa[,c("date",grep("_g", colnames(aa), value = T))],
                                                                                  econ[,c("date", grep("_g", colnames(econ), value = T))], 
-                                                                                 hist))
+                                                                                 historical_quarterly))
 
-forward = which(!(xx$date %in% hist$date))
+forward = which(!(xx$date %in% historical_quarterly$date))
 
 #reattribute state unemployment from federal back to state
 #includes federal UI which we need to take out 768.8 [legislation total] from Q2 of state unemployment insurance
-xx$gftfbusx = xx$gftfbusx/1000 #translate from millions to billions
-xx$gftfp = xx$gftfp - xx$gftfbusx # + 768.8
-xx$gftfp[202] = xx$gftfp[202] + 768.8
+xx$spendingFederaltfbusx = xx$spendingFederaltfbusx/1000 #translate from millions to billions
+xx$spendingFederaltfp = xx$spendingFederaltfp - xx$spendingFederaltfbusx # + 768.8
+xx$spendingFederaltfp[202] = xx$spendingFederaltfp[202] + 768.8
 
-xx$gstfp = xx$gstfp + xx$gftfbusx # - 768.8
+xx$gstfp = xx$gstfp + xx$spendingFederaltfbusx # - 768.8
 xx$gstfp[202] = xx$gstfp[202] - 768.8
 
 # assume FMAP remains constant -- we still need the fmaps to do pre-1993 reallocation of grants
@@ -119,22 +126,22 @@ xx$gs_g[204] = 0.04
 xx <- xx %>% mutate(
   
   # Make special assumptions for projected growth rates
-  gf_g = ifelse((date > "2021-09-30"), gdppothq_g + jgdp_g, gf_g), # past cap expiration dates, CBO assumes that fed purchases just grow with inflation. we want to assume they grow with nominal potential (zero impact, essentially)
+  spendingFederal_g = ifelse((date > "2021-09-30"), gdppothq_g + jgdp_g, spendingFederal_g), # past cap expiration dates, CBO assumes that fed purchases just grow with inflation. we want to assume they grow with nominal potential (zero impact, essentially)
   
   gstfp_g = gs_g, # state and local transfers grow with state and local current expenditures
   gstfpnet_g =  gs_g, # state and local transfers grow with state and local current expenditures
-  gftfpnet_g = gftfp_g, # net federal transfers same as gross federal transfers
+  spendingFederaltfpnet_g = spendingFederaltfp_g, # net federal transfers same as gross federal transfers
 
-  gfeghhx_g = yptmd_g, # federal health grants to states grow with medicaid
-  gfeghdx_g = yptmd_g, # federal medicaid grants to states grow with medicaid
+  spendingFederaleghhx_g = yptmd_g, # federal health grants to states grow with medicaid
+  spendingFederaleghdx_g = yptmd_g, # federal medicaid grants to states grow with medicaid
   
-  gfeg_g = gf_g, # federal current grants to state and local gov'ts grow with federal purchases
-  gfeigx_g = gf_g, # federal capital grants to state and local gov'ts grow with federal purchases
+  spendingFederaleg_g = spendingFederal_g, # federal current grants to state and local gov'ts grow with federal purchases
+  spendingFederaleigx_g = spendingFederal_g, # federal capital grants to state and local gov'ts grow with federal purchases
   
   jgsi_g = jgs_g,
   jgse_g = jgs_g, # deflators for state & local investment, consumption grow with overall deflator
   
-  gfsub_g = gdppothq_g,
+  spendingFederalsub_g = gdppothq_g,
   gssub_g = gdppothq_g # subsidies grow with potential
   
   # yfptmd_g = yptmd_g,  # disaggregated medicaid components grow with the aggregate
@@ -142,11 +149,11 @@ xx <- xx %>% mutate(
 )
 
 # TEMPORARY ADJUSTMENT TO GROWTH RATES FOR FEDERAL GRANTS
-# xx$gfeg_g[xx$date == "2020-03-31"] = xx$gfeg_g[xx$date == "2019-12-31"][1]
-# xx$gfeigx_g[xx$date == "2020-03-31"] = xx$gfeg_g[xx$date == "2019-12-31"][1]
+# xx$spendingFederaleg_g[xx$date == "2020-03-31"] = xx$spendingFederaleg_g[xx$date == "2019-12-31"][1]
+# xx$spendingFederaleigx_g[xx$date == "2020-03-31"] = xx$spendingFederaleg_g[xx$date == "2019-12-31"][1]
 
 # generate forward values of components using current levels and projected growth rates. 
-comp2 = c("gdph", "gdppothq", "gdp","c", "yptmr","yptmd","g","gf", "gfeg","gfeigx","gfeghhx", "gfeghdx", "gs", "gfrpt","gfrpri","gfrcp","gfrs","gsrpt","gsrpri","gsrcp","gsrs","gftfp","gstfp","gdppotq","jgdp","jc","jgf","jgs","jgse", "jgsi", "gssub", "gfsub")
+comp2 = c("gdph", "gdppothq", "gdp","personalConsumptionNom", "yptmr","yptmd","g","spendingFederal", "spendingFederaleg","spendingFederaleigx","spendingFederaleghhx", "spendingFederaleghdx", "spendingState", "spendingFederalrpt","spendingFederalrpri","spendingFederalrcp","spendingFederalrs","gsrpt","gsrpri","gsrcp","gsrs","spendingFederaltfp","gstfp","gdppotq","jgdp","jc","jspendingFederal","jgs","jgse", "jgsi", "gssub", "spendingFederalsub")
 for(i in 1:length(comp2)){
   for(j in 1:length(forward)){
     xx[forward[j], comp2[i]] = xx[forward[j]-1, comp2[i]]*(1+xx[forward[j], paste0(comp2[i], "_g")])
@@ -157,41 +164,41 @@ for(i in 1:length(comp2)){
 xx <- xx %>%   mutate(
   
   # save some vars
-  gfsave = gf, 
-  gssave = gs, 
-  gfrptsave = gfrpt, # preserve current law personal taxes, levels
+  spendingFederalsave = spendingFederal, 
+  gssave = spendingState, 
+  spendingFederalrptsave = spendingFederalrpt, # preserve current law personal taxes, levels
   
   # fix units on some variables (millions -> billions)
-  gfeghhx = gfeghhx / 1000,
-  gfeghdx = gfeghdx / 1000,
-  gfeigx = gfeigx / 1000,
+  spendingFederaleghhx = spendingFederaleghhx / 1000,
+  spendingFederaleghdx = spendingFederaleghdx / 1000,
+  spendingFederaleigx = spendingFederaleigx / 1000,
   
   # Reattribute federal grants to states back to Federal government
   # Parse between those for consumption and investment and those for transfers (Medicaid)
   
   # federal medicaid grants to states
-  yfptmd = ifelse(is.na(gfeghdx), # if we don't have the medicaid data (pre-1993)'
+  yfptmd = ifelse(is.na(spendingFederaleghdx), # if we don't have the medicaid data (pre-1993)'
                   yptmd*fshare, # use the fmaps to estimate
-                  gfeghdx), # otherwise, use data for medicaid + prescription drugs transfers
+                  spendingFederaleghdx), # otherwise, use data for medicaid + prescription drugs transfers
   
   # state medicaid payments = total medicaid - federal medicaid grants
   ysptmd = yptmd - yfptmd,
-  gfegnet = gfeg - yfptmd, # federal grants to state and local net of medicaid grants
+  spendingFederalegnet = spendingFederaleg - yfptmd, # federal grants to state and local net of medicaid grants
   
   # Reattribute federal Medicaid grants to states back to federal government, away from state and local transfer payments
   gstfpnet = gstfp - yfptmd, # net state and local transfer payments = state and local transfer payments - medicaid transfers paid for by the federal government
-  gftfpnet = gftfp + yfptmd # net federal transfer payments = federal transfer payments + medicaid transfers paid for by the federal government
+  spendingFederaltfpnet = spendingFederaltfp + yfptmd # net federal transfer payments = federal transfer payments + medicaid transfers paid for by the federal government
   
   # we reattribute the capital grants later after calculating contributions. 
   
 ) 
 
 # projections of total tax and transfer pieces = projections of state & local plus federal tax and transfer pieces 
-xx$gtfp[forward] = xx$gftfp[forward] + xx$gstfp[forward] # social benefits = federal benefits + state and local benefits
-xx$yptx[forward] = xx$gfrpt[forward] + xx$gsrpt[forward] # alternative path
-xx$yptxb[forward] = xx$gfrptb[forward] + xx$gsrpt[forward] # current law
-xx$ytpi[forward] = xx$gsrpri[forward] + xx$gfrpri[forward]  #production and import taxes
-xx$grcsi[forward] = xx$gsrs[forward] + xx$gfrs[forward]  # payroll taxes
-xx$yctlg[forward] = xx$gsrcp[forward] + xx$gfrcp[forward] # corporate taxes
-xx$gsub[forward] = xx$gssub[forward] + xx$gfsub[forward] # subsidies
+xx$gtfp[forward] = xx$spendingFederaltfp[forward] + xx$gstfp[forward] # social benefits = federal benefits + state and local benefits
+xx$yptx[forward] = xx$spendingFederalrpt[forward] + xx$gsrpt[forward] # alternative path
+xx$yptxb[forward] = xx$spendingFederalrptb[forward] + xx$gsrpt[forward] # current law
+xx$ytpi[forward] = xx$gsrpri[forward] + xx$spendingFederalrpri[forward]  #production and import taxes
+xx$grcsi[forward] = xx$gsrs[forward] + xx$spendingFederalrs[forward]  # payroll taxes
+xx$yctlg[forward] = xx$gsrcp[forward] + xx$spendingFederalrcp[forward] # corporate taxes
+xx$gsub[forward] = xx$gssub[forward] + xx$spendingFederalsub[forward] # subsidies
 
