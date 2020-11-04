@@ -77,10 +77,10 @@ data4 <-
 
 # Write csv to current month's folder
 haver_raw_list <- 
-  list(usna = data1,
-       data2 = data2,
-       data3 = data3,
-       data4 = data4)
+  list(national_accounts_quarterly = data1,
+       economic_quarterly = data2,
+       national_accounts_annual = data3,
+       economic_annual = data4)
 
 # Write haver data to raw folder ------------------------------------------
 
