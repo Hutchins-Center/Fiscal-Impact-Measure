@@ -38,6 +38,8 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
+# Renv library
+/renv/library
 # Log files
 *.log
 

@@ -3,6 +3,16 @@
 source('src/functions.R')
 source('src/packages.R')
 
+# We will translate annual levels into quarterly values 
+# by imputing them to each of the four quarter in the year
+# and taking the 4-quarter moving average
+
+# All quarterly values are in seasonally-adjusted,
+# annual rates (SAAR), billions of dollars. 
+
+# Annual values are in annual rates, billions of dollars. 
+
+
 data1 <- read_xlsx("data/raw/data1.xlsx") %>% 
   mutate(date = as.Date(date, f = "%m/%d/%y")) %>% 
   as_tibble()
