@@ -223,6 +223,7 @@ xx <-
       
       # SOCIAL BENEFITS
       # Unemployment Insurance
+      # (REMOVE FOR NIPA CONSISTENCY)
       gftfbusx = gftfbusx / 1000, # Translate UI from millions to billions
       gftfp = gftfp - gftfbusx,
       gstfp = gstfp + gftfbusx,
@@ -376,6 +377,8 @@ forecastPeriod <- which(xx$date > last_hist_date)
 for(f in forecastPeriod){
   xx[f,components] = xx[f -1, components]  * (1 + xx[f, paste0(components, "_g")])
 }
+
+# AGGREGATE PROJECTIONS AT GOVT LEVEL
 # projections of total tax and transfer pieces = projections of state & local plus federal tax and transfer pieces 
 xx <-
   xx %>%
@@ -393,6 +396,7 @@ xx <-
       # Reattribute federal grants to states back to Federal government
       # Parse between those for consumption and investment and those for transfers (Medicaid)
       
+      ## TAKE OUT LINES THAT SUBTRACT FROM FEDERAL FOR NIPA CONSISTENT
       # federal medicaid grants to states
       yfptmd = if_else(is.na(gfeghdx), # if we don't have the medicaid data (pre-1993)'
                        yptmd*fshare, # use the fmaps to estimate
@@ -409,5 +413,3 @@ xx <-
       gftfpnet = gftfp + yfptmd 
       # we reattribute the capital grants later after calculating contributions. 
     )
-
-
