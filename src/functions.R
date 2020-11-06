@@ -8,9 +8,10 @@ source('src/mpcs.R')
 #' @param frequency can be annual or quarterly. Default is quarterly
 #'
 #' @return data frame
-pull_data <- function(series, database, start.date, frequency = "quarterly") {
+pull_data <- function(series, database, start.date, frequency) {
   q <- haver.data(series, database, eop.dates = T, start = as.Date(start.date, 
-                                                                   f = "%m-%d-%Y"))
+                                                                   f = "%m-%d-%Y"),
+                  frequency)
   q <- data.frame(date = as.Date(rownames(q)), q)
   
   for (j in 2:ncol(q)) {

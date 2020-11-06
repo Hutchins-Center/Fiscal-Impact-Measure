@@ -38,26 +38,21 @@ data2 <-
 
 # BEA NIPAs data, for regressions for state and local tax revenues
 
-### sERIES 3 ####
-series3 = c("GDP", "C", "CH", "GDPH", "JC", "JGDP", "JGF", "JGS", 
-            "PTGH", "PTGSH", "PTGFH", "YPTMR", "YPTMD", "GTFP", "YPOG", 
-            "YPTX", "YTPI", "YCTLG", "G", "GRCSI", "GDPH", "DC", "PTGFH", 
-            "PTGSH", "GF", "GS", "GFH", "GSH", "\tGFRPT", "GFRPRI", "GFRCP", 
-            "GFRS", "GFRPT", "\tGFRPRI", "\tGFRCP", "\tGFRS", "\tGFTFP", 
-            "\tGFEG", "\tGSRPT", "\tGSRPRI", "\tGSRCP", "\tGSRS", "\tGSTFP", 
-            "\tGSET", "YP", "GFSUB", "GSSUB")
-
-data3 = pull_data(series3, "usna", start = as.Date("1970-01-01"), 
-                  frequency = "annual") %>%
+data3 <- 
+  haver.data(names_usna$code, 'usna', start = as.Date('1970-01-01'), frequency = 'annual',
+             eop.dates = TRUE) %>%
+  data.frame(date = rownames(.), .) %>%
   as_tibble()
 
 ### sERIES 4 ####
 series4 = c("USPHPI", "CASUSXAM", "GDPPOT", "GDPPOTH")
 data4 <-
-  pull_data(series4,
+  haver.data(series4,
             "usecon",
-            start = START, 
-            frequency = "annual") %>%
+            start = as.Date('1970-01-1'), 
+            frequency = "annual",
+            eop.dates = TRUE) %>%
+  data.frame(date = rownames(.), .) %>%
   as_tibble()
 
 
