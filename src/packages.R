@@ -12,10 +12,10 @@ stRequired <- c("tidyverse", "stringr", "reshape2", "zoo", "quantmod",
                 "here")
 # The required packages
 for (stName in stRequired) {
-  # if (!(stName %in% stInstalled)) {
-  #   cat("****************** Installing ", stName, "****************** \n")
-  #   install.packages(stName)
-  # }
+  if (!(stName %in% stInstalled)) {
+    cat("****************** Installing ", stName, "****************** \n")
+    install.packages(stName)
+  }
   library(stName, character.only = TRUE)
 }
 

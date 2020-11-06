@@ -1,9 +1,6 @@
 ---
 title: "Economic and government transfer variables, actual and projected, 2007-2030"
-output:
-  html_document:
-    df_print: paged
-  pdf_document: default
+output: html_notebook
 ---
 
 
@@ -19,17 +16,15 @@ source('src/functions.R')
 
 ```{r}
 start <- "2006-12-31"
-
 fim <- readRDS('data/processed/fim.RDS') %>%
   filter(date >= start) %>%
   as_tibble() 
-
 ```
 
 # Projected Nominal Government Consumption and Investment
 
 ```{r consumption and investment}
-p <- fim %>%
+fim %>%
       mutate(
     across(where(is.numeric),
            ~ .x / gdp)
@@ -49,12 +44,11 @@ p <- fim %>%
        y = 'Percentage points',
        title =  'Quarterly fiscal impact  by components') +
   scale_color_brewer(name = '', palette = 'Paired') +
+    geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc()
-  ggplotly(p)
-
 ```
 ```{r health}
- p  <- fim %>%
+fim %>%
   mutate(
     across(where(is.numeric),
            ~ .x / gdp)
@@ -74,9 +68,8 @@ p <- fim %>%
        y = 'Percentage points',
        title =  'Quarterly fiscal impact  by components') +
   scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc()
-
-ggplotly(p)
 ```
 
 ```{r social benefits}
@@ -100,6 +93,7 @@ fim %>%
        y = 'Percentage points',
        title =  'Quarterly fiscal impact  by components') +
   scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc()
 ```
 ```{r tax}
@@ -123,6 +117,7 @@ fim %>%
        y = 'Percentage points',
        title =  'Quarterly fiscal impact  by components') +
   scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc()
 ```
 ```{r health consumption}
@@ -144,6 +139,7 @@ fim %>%
        y = 'Percentage points',
        title =  'Quarterly fiscal impact  by components') +
   scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   scale_x_date(date_breaks = '1 year', date_labels = "%y") +
   theme_hc()
 ```
@@ -167,7 +163,7 @@ fim %>%
        y = 'Percentage points',
        title =  'Quarterly fiscal impact  by components') +
   scale_color_brewer(name = '', palette = 'Paired') +
-  
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc()
 ```
 
@@ -175,7 +171,7 @@ fim %>%
 ## Levels
 
 
-```{r consumption and investment levels}
+```{r consumption and investment  levels}
 fim %>%
   select(date, federal_nom, state_local_nom) %>%
   pivot_longer(
@@ -192,7 +188,7 @@ fim %>%
        y = 'Percentage points',
        title =  'Quarterly fiscal impact  by components') +
   scale_color_brewer(name = '', palette = 'Paired') +
-    
+    geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc()
 ```
 
@@ -213,7 +209,7 @@ fim %>%
        y = 'Percentage points',
        title =  'Quarterly fiscal impact  by components') +
   scale_color_brewer(name = '', palette = 'Paired') +
-  
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc()
 ```
 
@@ -234,7 +230,7 @@ fim %>%
        y = 'Percentage points',
        title =  'Quarterly fiscal impact  by components') +
   scale_color_brewer(name = '', palette = 'Paired') +
-  
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc()
 ```
 
@@ -255,6 +251,6 @@ fim %>%
        y = 'Percentage points',
        title =  'Quarterly fiscal impact  by components') +
   scale_color_brewer(name = '', palette = 'Paired') +
-  
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc()
 ```
