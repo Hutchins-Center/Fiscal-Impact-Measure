@@ -4,6 +4,7 @@ source('src/functions.R')
 source('src/packages.R')
 
 # We will translate annual levels into quarterly values 
+<<<<<<< HEAD
 # by imputing them to each of the four quarter in the year
 # and taking the 4-quarter moving average
 
@@ -20,6 +21,32 @@ data2 <- read_xlsx("data/raw/data2.xlsx") %>%
   mutate(date = as.Date(date, f = "%m/%d/%y")) %>% 
   as_tibble()
 
+=======
+# by imputing them using a 4-quarter moving average
+
+
+# Haver data ------------------------------------------------------------------------------------------------------
+
+# Load U.S. national accounts and economic statistics data into the Global Environment
+haver_data_path <-
+  here('data/raw/haver/')
+haver_data_names <- 
+  haver_data_path  %>%
+  list.files() %>%
+  .[str_detect(., ".xlsx")]
+
+# Load raw Haver data into global environment
+START_DATE <- '1999-12-31'
+haver_data_names %>%  
+  purrr::map(function(file_name){ # iterate through each file name
+    assign(x = str_remove(file_name, ".xlsx"), # Remove file extension ".csv"
+           value = read_xlsx(paste0(haver_data_path, file_name)) %>%
+             filter(date > START_DATE) %>%
+             mutate(date = as.Date(date)),
+           envir = .GlobalEnv)
+  }) 
+# Merge quarterly and annual data 
+>>>>>>> parent of dc7c152... source mpc.R in functions.R
 hist <-
   merge(data1, data2,
         by = "date") %>% 
@@ -30,6 +57,7 @@ data3 <- read_xlsx("data/raw/data3.xlsx")
 data4 <- read_xlsx("data/raw/data4.xlsx") 
 
 aa <-
+<<<<<<< HEAD
   merge(data3, data4,
         by = "date")
 aa$hpx = aa$usphpi  #house price index of choice is the FHFA purchase only index, 1991 = 100, since that's what CBO forecasts
@@ -40,6 +68,38 @@ aa$hpx = aa$usphpi  #house price index of choice is the FHFA purchase only index
 
 
 # pull quarterly CBO economic projections data
+=======
+  left_join(national_accounts_annual,
+            economic_annual,
+            by = "date") %>%
+  # Use FHFA  purchase only housing price index since that's what CBO forecasts
+  mutate(hpx = usphpi)
+# CBO data -----------------------------------------------------------
+cbo_data_path <-
+  here('data/raw/cbo/')
+
+cbo_data_names <- 
+  cbo_data_path %>%
+  list.files() %>%
+  .[str_detect(., '.xlsx')]
+
+ cbo_data_names %>%
+  purrr::map(
+    function(file_name){
+      read_xlsx(paste0(cbo_data_path, file_name))
+    }
+  ) %>%
+  setNames(., c('budg',
+                'econ_a',
+                'econ')
+           ) %>%
+   map(
+     ~mutate(., date = as.Date(date))
+   )
+  
+  
+# Load raw quarterly CBO economic projections 
+>>>>>>> parent of dc7c152... source mpc.R in functions.R
 econ = read.csv("./data/raw/cbo_econ_proj_quarterly.csv", stringsAsFactors = F) %>% 
   as_tibble()
 econ$date = gsub("12/30/", "12/31/", econ$date)
