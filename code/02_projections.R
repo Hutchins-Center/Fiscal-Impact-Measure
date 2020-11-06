@@ -121,7 +121,6 @@ budg <-
 # 2.2.1 S&L Tax Growth -------------------------------------------------------------------------
 # construct forecasts of state and local taxes growth
 
-aa <- plyr::rbind.fill(aa, econ_a)
 taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
 aa <- aa %>%
   mutate(

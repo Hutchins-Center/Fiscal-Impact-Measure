@@ -24,4 +24,7 @@ for (stName in stRequired) {
 #   install.packages("Haver", repos = "http://www.haver.com/r/", 
 #     type = "win.binary")
 # }
-library(Haver)
+if(get_os() != 'osx'){
+  library(Haver)
+}
+
