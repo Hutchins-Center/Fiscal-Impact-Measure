@@ -8,10 +8,9 @@
 #' @param frequency can be annual or quarterly. Default is quarterly
 #'
 #' @return data frame
-pull_data <- function(series, database, start.date, frequency) {
+pull_data <- function(series, database, start.date, frequency = "quarterly") {
   q <- haver.data(series, database, eop.dates = T, start = as.Date(start.date, 
-                                                                   f = "%m-%d-%Y"),
-                  frequency)
+                                                                   f = "%m-%d-%Y"))
   q <- data.frame(date = as.Date(rownames(q)), q)
   
   for (j in 2:ncol(q)) {
