@@ -11,14 +11,6 @@ econ <-
   mutate(date =  gsub("12/30/", "12/31/", date)) %>%
   mutate(date = as.Date(date))
 
-comp = colnames(econ)[!colnames(econ) %in% "date"]
-# Annual 
-econ_a <-
-  read_xlsx(here('data/raw/cbo/cbo_econ_proj_annual.xlsx')) %>%
-  mutate(date = as.Date(paste0(calendar_date, "-12-31"), 
-                        f = "%Y-%m-%d")) %>%
-  filter(date > Sys.Date()) # keep annuals for current calendar year
-
 # Budget ----------------------------------------------------------------------------------------------
 budg <-
   read_xlsx(here('data/raw/cbo/cbo_budget_nipas_proj_annual.xlsx'))
@@ -41,7 +33,7 @@ haver_data_names <-
 haver_data_names %>%  
   purrr::map(function(file_name){ # iterate through each file name
     assign(x = str_remove(file_name, ".xlsx"), # Remove file extension ".csv"
-           value = read_xlsx(paste0(haver_data_path, file_name)) %>%
+           value = read_xlsx(paste0(haver_data_path, file_name), na = 'NA') %>%
              mutate(date = as.Date(date)),
            envir = .GlobalEnv)
   }) 

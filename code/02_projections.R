@@ -167,9 +167,8 @@ econ <-
     )
   ) %>%
   # S&L Taxes
- merge(aa %>%
+ left_join(hist %>%
           select(date, taxpieces),
-        by = 'date',
         all.x = F) %>%
   mutate(
     across(
