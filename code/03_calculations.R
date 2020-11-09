@@ -76,7 +76,7 @@ fim <-
 # Remove when NIPAS are updated or new economic projections are released (whichever comes first)
 
 #load add factor file
-add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v2.xlsx", 
+add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v4.xlsx", 
                           sheet = "FIM Add Factors") %>%
                   mutate(
                     date = as.Date(date)
@@ -84,7 +84,7 @@ add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v2.
  
 fim <-
   fim %>% 
-  full_join(add_factors,
+  full_join(add_factors %>% select(-federal_cgrants_override),
             by = "date") %>%
   mutate(across(
     .cols = starts_with('add_'),
@@ -93,7 +93,7 @@ fim <-
                      .x)
     )
   )
-
+fim$federal_cgrants[202:203] <- c(279.25, 286.92)
 # Add factors to categories
 covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies',
                       'federal_cgrants', 'state_health_outlays', 'state_social_benefits',

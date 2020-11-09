@@ -116,37 +116,6 @@ budg <-
                             gfrpt)
 )
 
-
-# 2.2 Economic (Annual) ------------------------------------------------------------------------------------------
-# 2.2.1 S&L Tax Growth -------------------------------------------------------------------------
-# construct forecasts of state and local taxes growth
-
-aa <- plyr::rbind.fill(aa, econ_a)
-taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
-aa <- aa %>%
-  mutate(
-    across(.cols  = taxpieces,
-           .fns   = ~ na.locf(. / gdp)
-    )
-  ) 
-
-# Translate into quarterly Seasonally Adjusted Annualized Rates levels 
-# by replicating over four quarters and smoothing
-
-firstDateEcon <- 
-  econ %>%
-  select(date) %>%
-  slice_head() %>%
-  pull()
-
-aa <- 
-  rbind(aa, aa, aa, aa) %>%
-  arrange(date) %>%
-  filter(date > firstDateEcon) %>% 
-  mutate(date = econ$date) %>% 
-  as_tibble()
-
-
 ## 3.1 Economic (Quarterly) ----------------------------------------------------------------------------------------------
 
 ### 3.1.1 ---------------------------------------------------------------------------
@@ -173,7 +142,7 @@ econ <-
   mutate(
     across(
       .cols = taxpieces,
-      .fns = ~ .x * gdp 
+      .fns = ~ na.locf(. / gdp) * gdp 
     )
   ) %>%
   # Growth rate of S&L Taxes
@@ -257,7 +226,8 @@ xx <-
 
 Q3_2020 <- "2020-09-30" 
 Q4_2020 <- "2020-12-31" 
-
+## Louise override CBO growth rate for S&L purchases for Q42020 through (& including) Q12022
+xx$gs_g[204:209] = c(0.0025,0.0025,0.0025,0.005,0.0075,0.01)
 
 # past cap expiration dates, CBO assumes that fed purchases just grow with inflation. 
 # we want to assume they grow with nominal potential (zero impact, essentially)
@@ -273,12 +243,7 @@ xx <- xx %>% mutate(
                    gf_g),
     # State & Local
       # Note: Louise said to override CBO growth rate for S&L purchases for Q3 and Q4 for 2020
-    gs_g = if_else(date == Q3_2020,
-                   -0.05,
-                   gs_g),
-    gs_g = if_else(date == Q4_2020,
-                   0.04,
-                   gs_g),
+
   # TRANSFERS
   
     # Federal
