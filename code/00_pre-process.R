@@ -39,7 +39,7 @@ haver_raw_list <-
 
 
 ## Exporting csv with the desired file names and into the right path
-output_csv <- function(data, names){ 
+output_xlsx <- function(data, names){ 
   folder_path <- "data/raw/haver/"
   write_xlsx(data, paste0(folder_path, names, ".xlsx"))
 }
@@ -47,4 +47,4 @@ output_csv <- function(data, names){
 
 list(data = haver_raw_list,
      names = names(haver_raw_list)) %>% 
-  purrr::pmap(output_csv) 
+  purrr::pmap(output_xlsx) 
