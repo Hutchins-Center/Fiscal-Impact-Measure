@@ -3,27 +3,29 @@
 source('src/functions.R')
 source('src/packages.R')
 
-# We will translate annual levels into quarterly values 
-<<<<<<< HEAD
-# by imputing them to each of the four quarter in the year
-# and taking the 4-quarter moving average
+# CBO projections -----------------------------------------------------------
+# Economic --------------------------------------------------------------------------------------------
+# Quarterly 
+econ <-
+  read_xlsx(here('data/raw/cbo/cbo_econ_proj_quarterly.xlsx')) %>%
+  mutate(date =  gsub("12/30/", "12/31/", date)) %>%
+  mutate(date = as.Date(date))
 
-# All quarterly values are in seasonally-adjusted,
-# annual rates (SAAR), billions of dollars. 
+comp = colnames(econ)[!colnames(econ) %in% "date"]
+# Annual 
+econ_a <-
+  read_xlsx(here('data/raw/cbo/cbo_econ_proj_annual.xlsx')) %>%
+  mutate(date = as.Date(paste0(calendar_date, "-12-31"), 
+                        f = "%Y-%m-%d")) %>%
+  filter(date > Sys.Date()) # keep annuals for current calendar year
 
-# Annual values are in annual rates, billions of dollars. 
+# Budget ----------------------------------------------------------------------------------------------
+budg <-
+  read_xlsx(here('data/raw/cbo/cbo_budget_nipas_proj_annual.xlsx'))
 
-
-data1 <- read_xlsx("data/raw/data1.xlsx") %>% 
-  mutate(date = as.Date(date, f = "%m/%d/%y")) %>% 
-  as_tibble()
-data2 <- read_xlsx("data/raw/data2.xlsx") %>% 
-  mutate(date = as.Date(date, f = "%m/%d/%y")) %>% 
-  as_tibble()
-
-=======
-# by imputing them using a 4-quarter moving average
-
+# Federal Medical Assistance Percentage (FMAP) --------------------------------------------------------------------
+fmap <-
+  read_xlsx(here('data/raw/nhe_fmap.xlsx'))
 
 # Haver data ------------------------------------------------------------------------------------------------------
 
@@ -36,91 +38,16 @@ haver_data_names <-
   .[str_detect(., ".xlsx")]
 
 # Load raw Haver data into global environment
-START_DATE <- '1999-12-31'
 haver_data_names %>%  
   purrr::map(function(file_name){ # iterate through each file name
     assign(x = str_remove(file_name, ".xlsx"), # Remove file extension ".csv"
            value = read_xlsx(paste0(haver_data_path, file_name)) %>%
-             filter(date > START_DATE) %>%
              mutate(date = as.Date(date)),
            envir = .GlobalEnv)
   }) 
 # Merge quarterly and annual data 
->>>>>>> parent of dc7c152... source mpc.R in functions.R
+# change hist and aa to haver quarterly and annual
 hist <-
-  merge(data1, data2,
-        by = "date") %>% 
-  as_tibble()
-
-
-data3 <- read_xlsx("data/raw/data3.xlsx")
-data4 <- read_xlsx("data/raw/data4.xlsx") 
-
-aa <-
-<<<<<<< HEAD
-  merge(data3, data4,
-        by = "date")
-aa$hpx = aa$usphpi  #house price index of choice is the FHFA purchase only index, 1991 = 100, since that's what CBO forecasts
-
-
-
-# Pull CBO data -----------------------------------------------------------
-
-
-# pull quarterly CBO economic projections data
-=======
-  left_join(national_accounts_annual,
-            economic_annual,
-            by = "date") %>%
-  # Use FHFA  purchase only housing price index since that's what CBO forecasts
-  mutate(hpx = usphpi)
-# CBO data -----------------------------------------------------------
-cbo_data_path <-
-  here('data/raw/cbo/')
-
-cbo_data_names <- 
-  cbo_data_path %>%
-  list.files() %>%
-  .[str_detect(., '.xlsx')]
-
- cbo_data_names %>%
-  purrr::map(
-    function(file_name){
-      read_xlsx(paste0(cbo_data_path, file_name))
-    }
-  ) %>%
-  setNames(., c('budg',
-                'econ_a',
-                'econ')
-           ) %>%
-   map(
-     ~mutate(., date = as.Date(date))
-   )
-  
-  
-# Load raw quarterly CBO economic projections 
->>>>>>> parent of dc7c152... source mpc.R in functions.R
-econ = read.csv("./data/raw/cbo_econ_proj_quarterly.csv", stringsAsFactors = F) %>% 
-  as_tibble()
-econ$date = gsub("12/30/", "12/31/", econ$date)
-econ$date = as.Date(econ$date, f = "%m/%d/%Y")
-comp = colnames(econ)[!colnames(econ) %in% "date"]
-
-# pull annual CBO economic projections data
-econ_a = read.csv("./data/raw/cbo_econ_proj_annual.csv", stringsAsFactors = F)
-econ_a$date = as.Date(paste0(econ_a$calendar_date, "-12-31"), 
-                      f = "%Y-%m-%d")
-econ_a = econ_a[econ_a$date > Sys.Date(), ]  # keep annuals for current calendar year
-
-# pull annual CBO budget projections, 'as they appear in the
-# NIPAS' budg =
-# read.csv('data/cbo_budget_nipas_proj_annual.csv',
-# stringsAsFactors = F)
-budg = read.csv("./data/raw/cbo_budget_nipas_proj_annual_new.csv", 
-                stringsAsFactors = F) %>% as_tibble()
-
-# pull annual FMAPS data, which come from CMS.gov, NHE by
-# type of service and source of funds. Annual data, later
-# translated to quarterly just as we do with the budget data.
-fmap = read.csv("./data/raw/nhe_fmap.csv", stringsAsFactors = F)
-
+  left_join(national_accounts,
+            economic_statistics,
+            by = "date") 
