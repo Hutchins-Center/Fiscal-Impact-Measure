@@ -231,7 +231,7 @@ xx$gs_g[204:209] = c(0.0025,0.0025,0.0025,0.005,0.0075,0.01)
 
 # past cap expiration dates, CBO assumes that fed purchases just grow with inflation. 
 # we want to assume they grow with nominal potential (zero impact, essentially)
-capExpiration <- "2020-09-30"
+capExpiration <- "2021-09-30"
 
 # Additional component calculations
 # Make special assumptions for projected growth rates
@@ -338,7 +338,7 @@ c(
 forecastPeriod <- which(xx$date > last_hist_date)
 
 for(f in forecastPeriod){
-  xx[f,components] = xx[f -1, components]  * (1 + xx[f, paste0(components, "_g")])
+  xx[f,components] = xx[f-1, components]  * (1 + xx[f, paste0(components, "_g")])
 }
 # projections of total tax and transfer pieces = projections of state & local plus federal tax and transfer pieces 
 xx <-
