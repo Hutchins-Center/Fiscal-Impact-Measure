@@ -27,7 +27,8 @@ last_hist_date <-
 
 last_proj_date <- last_hist_date + years(2)
 
-
+taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
+taxpieces_gdp = paste0(taxpieces, '_gdp')
 ## 2.1 Budget (Annual) ------------------------------------------------------------------------------------------
 
 
@@ -40,6 +41,8 @@ budg <-
   arrange(fy) %>%
   mutate(date = econ$date) %>%
   mutate(date = lag(date))
+
+
  
 ### 2.1.1 COLA Adjustments --------------------------------------------------------------------------------------
 
@@ -55,11 +58,13 @@ budg <- budg %>%
          pcw_g = q_a(pcw) / 100,
 #        Applicable cola rate is CPIW from Q3 of previous year
          cola_rate =
-           case_when(
-             month(date) == 3  ~ lag(cpiu_g, 2)
+           if_else(
+             month(date) == 3,
+             lag(cpiu_g, 2),
+             NULL
            )
   ) %>% 
-  # forward filling so each q has correct cola rate, 
+  # forecastPeriod filling so each q has correct cola rate, 
   fill(cola_rate)
 
 # Don't think this does anything  
@@ -120,6 +125,31 @@ budg <-
 
 ### 3.1.1 ---------------------------------------------------------------------------
 taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
+taxpieces_gdp = paste0(taxpieces, '_gdp')
+econ_a <-
+  read_xlsx('data/raw/cbo/cbo_econ_proj_annual.xlsx')  %>%
+  rename(date = calendar_date)
+
+aa <- left_join(econ_a,
+      hist %>% filter(month(date) == 12) %>% 
+        mutate(date = year(date)) %>%
+        select(date, taxpieces),
+      by = 'date')
+
+aa <-
+  bind_rows(aa, aa, aa, aa) %>%
+  arrange(date) %>%
+  mutate(date = econ$date)
+
+
+aa <- aa %>%
+  mutate(across(
+    .cols = all_of(taxpieces),
+    .fns = ~ na.locf(. / gdp),
+    .names = "{col}_gdp"
+  ))
+
+econ[,taxpieces] <- sapply(aa[,taxpieces_gdp], function(x) x*econ$gdp)
 
 econ <-
   econ %>%
@@ -136,23 +166,23 @@ econ <-
     )
   ) %>%
   # S&L Taxes
- left_join(hist %>%
-          select(date, taxpieces),
-        all.x = F) %>%
-  mutate(
-    across(
-      .cols = taxpieces,
-      .fns = ~ na.locf(. / gdp) * gdp 
-    )
-  ) %>%
+  # Commented out what I think we should be doing instead for state taxes
+ # left_join(hist %>%
+ #          select(date, taxpieces),
+ #        all.x = F) %>%
+ #  mutate(
+ #    across(
+ #      .cols = taxpieces_gdp,
+ #      .fns = ~ na.locf(. / gdp) * gdp 
+ #    )
+ #  ) %>%
   # Growth rate of S&L Taxes
-    mutate(
-      across(
-        .cols = taxpieces,
-        .fns = ~ q_g(.),
-        .names = "{.col}_g"
-      )
-    ) %>%
+    # mutate(
+    #   across(
+    #     .cols = taxpieces,
+    #     .fns = ~ q_g(.),
+    #     .names = "{.col}_g"
+    #   )
     as_tibble()
 ## 4 Merge growth rates and levels data frames ---------------------------------------------------------------------
 
@@ -287,7 +317,7 @@ xx <- xx %>% mutate(
 
 # 5 Forecast ----------------------------------------------------------------------------------------------------
 
-## Generate forward values of components using current levels and our projected growth rates. 
+## Generate forecastPeriod values of components using current levels and our projected growth rates. 
 
 components <-
 c(
@@ -345,14 +375,14 @@ xx <-
   xx %>%
     mutate(
       
-     
-      gtfp = gftfp + gstfp, # social benefits = federal benefits + state and local benefits
-      yptx = gfrpt + gsrpt, # alternative path
-      yptxb = gfrptCurrentLaw + gsrpt, # current law
-      ytpi = gsrpri + gfrpri,  #production and import taxes
-      grcsi = gsrs + gfrs,  # payroll taxes
-      yctlg = gsrcp + gfrcp, # corporate taxes
-      gsub = gssub + gfsub,
+      # 
+      # gtfp = gftfp + gstfp, # social benefits = federal benefits + state and local benefits
+      # yptx = gfrpt + gsrpt, # alternative path
+      # yptxb = gfrptCurrentLaw + gsrpt, # current law
+      # ytpi = gsrpri + gfrpri,  #production and import taxes
+      # grcsi = gsrs + gfrs,  # payroll taxes
+      # yctlg = gsrcp + gfrcp, # corporate taxes
+      # gsub = gssub + gfsub,
       
       
       # Reattribute federal grants to states back to Federal government
@@ -374,5 +404,11 @@ xx <-
       gftfpnet = gftfp + yfptmd 
       # we reattribute the capital grants later after calculating contributions. 
     )
-
+xx$gtfp[forecastPeriod] = xx$gftfp[forecastPeriod] + xx$gstfp[forecastPeriod] # social benefits = federal benefits + state and local benefits
+xx$yptx[forecastPeriod] = xx$gfrpt[forecastPeriod] + xx$gsrpt[forecastPeriod] # alternative path
+xx$yptxb[forecastPeriod] = xx$gfrptb[forecastPeriod] + xx$gsrpt[forecastPeriod] # current law
+xx$ytpi[forecastPeriod] = xx$gsrpri[forecastPeriod] + xx$gfrpri[forecastPeriod]  #production and import taxes
+xx$grcsi[forecastPeriod] = xx$gsrs[forecastPeriod] + xx$gfrs[forecastPeriod]  # payroll taxes
+xx$yctlg[forecastPeriod] = xx$gsrcp[forecastPeriod] + xx$gfrcp[forecastPeriod] # corporate taxes
+xx$gsub[forecastPeriod] = xx$gssub[forecastPeriod] + xx$gfsub[forecastPeriod] # subsidies
 
