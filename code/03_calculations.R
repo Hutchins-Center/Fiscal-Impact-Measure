@@ -484,5 +484,5 @@ results <-
 
 list(data = results, 
      names = names(results)) %>%
-  purrr::pmap(output_csv) 
+  purrr::pmap(output_xlsx) 
 

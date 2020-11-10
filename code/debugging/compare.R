@@ -1,3 +1,4 @@
+library(arsenal)
 xx_official <- read_excel("data/results/xx-official.xlsx", na = 'NA') %>%
   mutate(date = as.Date(date)) %>%
   select(-c(gfrptb_g, gsrpt_gdp, gsrpri_gdp, gsrcp_gdp, 

@@ -63,7 +63,7 @@ budg <- budg %>%
   fill(cola_rate)
 
 # Don't think this does anything  
-# budg$pcw_g[is.na(budg$pcw_g)] = budg$cpiu_g[is.na(budg$pcw_g)]
+budg$pcw_g[is.na(budg$pcw_g)] = budg$cpiu_g[is.na(budg$pcw_g)]
 
 budg <- 
   budg %>% mutate(health_ui = SMA(yptmd + yptmr + yptu, n = 4),

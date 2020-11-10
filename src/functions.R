@@ -100,5 +100,9 @@ output_csv <- function(data, names){
   write_csv(data, paste0(folder_path, names, '-', Sys.Date(), ".csv"))
 }
 
+output_xlsx <- function(data, names){ 
+  folder_path <- paste0("results/", thismonth, '/')
+  write_xlsx(data, paste0(folder_path, names, ".xlsx"))
+}
 
 source('src/mpcs.R')
