@@ -20,6 +20,23 @@
 # RStudio files
 .Rproj.user/
 
+# CSV files
+*.csv
+
+# Excel
+
+*.xlsx
+
+#PDF
+*.pdf
+
+#Word
+*.docx
+
+#Text
+*.txt
+
+
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
