@@ -72,3 +72,4 @@ data/processed/fim.rds
 *.csv
 .DS_Store
 *.rds
+code/.DS_Store

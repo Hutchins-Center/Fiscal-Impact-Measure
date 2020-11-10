@@ -352,6 +352,7 @@ xx <-
       ytpi = gsrpri + gfrpri,  #production and import taxes
       grcsi = gsrs + gfrs,  # payroll taxes
       yctlg = gsrcp + gfrcp, # corporate taxes
+      gsub = gssub + gfsub,
       
       
       # Reattribute federal grants to states back to Federal government
