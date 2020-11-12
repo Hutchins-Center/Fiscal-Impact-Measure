@@ -73,3 +73,4 @@ data/processed/fim.rds
 .DS_Store
 *.rds
 code/.DS_Store
+data/.DS_Store

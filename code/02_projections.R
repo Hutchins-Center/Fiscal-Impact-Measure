@@ -32,8 +32,8 @@ taxpieces_gdp = paste0(taxpieces, '_gdp')
 ## 2.1 Budget (Annual) ------------------------------------------------------------------------------------------
 
 
-# construct forecasts of federal taxes and transfers growth using CBO's annual budget/revenue projections 
-# as they appear in the NIPAs (except Medicaid and Medicare, which come straight from revenue projections)
+# construct forecasts of federal taxes and transfers growth using CBO's annual budget/revenue projections as they appear
+# in the NIPAs (except Medicaid and Medicare, which come straight from revenue projections)
 
 budg <- 
   # we use annual rates, so we can just replicate annual levesl for each q
@@ -46,10 +46,9 @@ budg <-
  
 ### 2.1.1 COLA Adjustments --------------------------------------------------------------------------------------
 
-# Adjust federal transfers to feature their january COLA-related bump; 
-# reattribute that growth to calendar quarter 1 before smoothing out the rest of the non-COLA related growth. 
-# SSA uses CPI-W to create COLAs; We use CBO's projection of CPI-U. 
-# This slightly affects the timing of total transfers, but not their levels
+# Adjust federal transfers to feature their january COLA-related bump; reattribute that growth to calendar quarter 1
+# before smoothing out the rest of the non-COLA related growth. SSA uses CPI-W to create COLAs; We use CBO's projection
+# of CPI-U. This slightly affects the timing of total transfers, but not their levels
 
 budg <- budg %>%
   mutate(cpiu = lag(econ$cpiu),
@@ -100,8 +99,8 @@ budg <-
 
 ### 2.1.2 Alternate tax scenario --------------------------------------------------------------------------------
 
-# Construct alternative scenario for personal current taxes, 
-# under which the TCJA provisions for income taxes don't expire in 2025
+# Construct alternative scenario for personal current taxes, under which the TCJA provisions for income taxes don't
+# expire in 2025
 
 expdate = "2025-12-30"
 predate = "2025-09-30"
@@ -259,8 +258,8 @@ Q4_2020 <- "2020-12-31"
 ## Louise override CBO growth rate for S&L purchases for Q42020 through (& including) Q12022
 xx$gs_g[204:209] = c(0.0025,0.0025,0.0025,0.005,0.0075,0.01)
 
-# past cap expiration dates, CBO assumes that fed purchases just grow with inflation. 
-# we want to assume they grow with nominal potential (zero impact, essentially)
+# past cap expiration dates, CBO assumes that fed purchases just grow with inflation. we want to assume they grow with
+# nominal potential (zero impact, essentially)
 capExpiration <- "2021-09-30"
 
 # Additional component calculations
