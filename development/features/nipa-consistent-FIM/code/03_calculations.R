@@ -17,10 +17,9 @@ fim <-
          ## Federal
          federal_nom = gf, # SPENDING
          ## GRANTS
-         federal_cgrants_gross  = gfeg,
          federal_health_grants = gfeghhx,
-         federal_medicaid_grants = yfptmd, 
-         federal_cgrants = federal_cgrants_gross - federal_medicaid_grants, # Federal (non-health) grants in aid to states
+         federal_medicaid_grants = 0, 
+         federal_cgrants = gfeg, # Federal (non-health) grants in aid to states
          federal_igrants = gfeigx, # Federal capital grants in aid to states, nominal
          pi_federal = q_g(jgf),
          ## State
@@ -47,10 +46,10 @@ fim <-
          corporate_taxes = yctlg,
          subsidies  = gsub,
          ## Federal
-         federal_medicaid = yfptmd,
-         federal_health_outlays = medicare + federal_medicaid,
+         federal_medicaid = 0,
+         federal_health_outlays = medicare,
          federal_unemployment_insurance = gftfbusx,
-         federal_social_benefits = gftfpnet - federal_health_outlays,
+         federal_social_benefits = gftfp - federal_health_outlays,
          federal_personal_taxes = gfrpt,
          federal_payroll_taxes = gfrs,
          federal_production_taxes  = gfrpri,
@@ -58,10 +57,10 @@ fim <-
          federal_corporate_taxes = gfrcp,
          federal_subsidies = gfsub,
          ## State
-         state_medicaid = medicaid - federal_medicaid,
+         state_medicaid = medicaid,
          state_health_outlays = state_medicaid,
          state_social_benefits_gross = gstfp,
-         state_social_benefits = state_social_benefits_gross - state_health_outlays - federal_medicaid_grants, # no medicare at state and local level
+         state_social_benefits = state_social_benefits_gross - state_health_outlays , # no medicare at state and local level
          state_personal_taxes = gsrpt,
          state_payroll_taxes = gsrs,
          state_production_taxes  = gsrpri,
