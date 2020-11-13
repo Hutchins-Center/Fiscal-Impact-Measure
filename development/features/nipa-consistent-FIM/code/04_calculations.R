@@ -336,8 +336,13 @@ fim <-
 
 
 # 4.6 Export data -------------------------------------------------------------------------------------------
+# Create folder for current month's update
+thismonth <- format(Sys.Date(), "%m-%Y")
+nipa_path <- 'development/features/nipa-consistent-FIM'
+dir.create(here(nipa_path, 'results', thismonth, 'data'))
 firstDate <- "1999-12-31"
-saveRDS(fim %>% filter(date > firstDate ), 'data/processed/fim.rds')
+saveRDS(fim %>% filter(date > firstDate ), here(nipa_path, 'results', thismonth, 'data',
+                                                'fim-processed.Rds'))
 # 4.6.1 Clean FIM data frame ----------------------------------------------------------------------------
 fim <-
   fim %>% 
@@ -375,12 +380,11 @@ fim_interactive <-
   
 
 # 4.6.3 Create CSV files --------------------------------------------------------------------------------
-
-# Create folder for current month's update
-thismonth <- format(Sys.Date(), "%m-%Y")
-dir.create(here('results/', thismonth))
-
 # Write csv to current month's folder
+output_nipa <- function(data, names){ 
+  write_xlsx(data, here(nipa_path, 'results', thismonth, 'data', paste0(names, '.xlsx')))
+}
+
 results <- 
   list(fim = fim,
                 fim_interactive = fim_interactive,
@@ -388,5 +392,5 @@ results <-
 
 list(data = results, 
      names = names(results)) %>%
-  purrr::pmap(output_xlsx) 
+  purrr::pmap(output_nipa) 
 

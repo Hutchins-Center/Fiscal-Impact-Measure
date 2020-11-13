@@ -14,14 +14,16 @@ fontsize: 9pt
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.width = 6.5, fig.height = 4.5, fig.align = "center")
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
-
+library(here)
 ```
 
 ```{r source, echo=FALSE, message=F, warning=FALSE, results='asis'}
-source("code/01_datapull.R", local = knitr::knit_global())
-source("code/02_projections.R", local = knitr::knit_global())
-source("code/03_calculations.R", local = knitr::knit_global())
-source("code/04_figures.R", local = knitr::knit_global())
+nipa_path <- 'development/features/nipa-consistent-FIM'
+source(here(nipa_path, 'code', '01_datapull.R'), local = knitr::knit_global())
+source(here(nipa_path, 'code', '02_wrangle.R'), local = knitr::knit_global())
+source(here(nipa_path, 'code', '03_projections.R'), local = knitr::knit_global())
+source(here(nipa_path, 'code', '04_calculations.R'), local = knitr::knit_global())
+source(here(nipa_path, 'code', '05_figures.R'), local = knitr::knit_global())
 ```
 
 ```{r figs, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
