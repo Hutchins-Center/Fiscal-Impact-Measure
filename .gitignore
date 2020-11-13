@@ -40,3 +40,10 @@ vignettes/*.pdf
 
 # Custom attributes of folders
 .DS_Store
+data/.DS_Store
+code/Fiscal-Impact-2020-11-13.log
+*.log
+data/.DS_Store
+*.xlsx
+*.pdf
+data/.DS_Store
