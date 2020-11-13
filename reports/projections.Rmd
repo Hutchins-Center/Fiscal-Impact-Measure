@@ -1,0 +1,256 @@
+---
+title: "Economic and government transfer variables, actual and projected, 2007-2030"
+output: html_notebook
+---
+
+
+```{r, setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 6.5, fig.height = 4.5, fig.align = "center", warnings = FALSE, message = FALSE, cache  = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r}
+source('src/packages.R')
+source('src/functions.R')
+```
+
+```{r}
+start <- "2006-12-31"
+fim <- readRDS('data/processed/fim.RDS') %>%
+  filter(date >= start) %>%
+  as_tibble() 
+```
+
+# Projected Nominal Government Consumption and Investment
+
+```{r consumption and investment}
+fim %>%
+      mutate(
+    across(where(is.numeric),
+           ~ .x / gdp)
+  ) %>%
+  select(date, federal_nom, state_local_nom) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             color =  name)
+         ) +
+  geom_line() +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_color_brewer(name = '', palette = 'Paired') +
+    geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc()
+```
+```{r health}
+fim %>%
+  mutate(
+    across(where(is.numeric),
+           ~ .x / gdp)
+  ) %>%
+  select(date, medicare, medicaid) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             color =  name)
+         ) +
+  geom_line() +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc()
+```
+
+```{r social benefits}
+fim %>%
+  mutate(
+    across(where(is.numeric),
+           ~ .x / gdp)
+  ) %>%
+  select(date, social_benefits) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             color =  name)
+         ) +
+  geom_line() +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc()
+```
+```{r tax}
+fim %>%
+  mutate(
+    across(where(is.numeric),
+           ~ .x / gdp)
+  ) %>%
+  select(date, personal_taxes, payroll_taxes, production_taxes, corporate_taxes) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             color =  name)
+         ) +
+  geom_line() +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc()
+```
+```{r health consumption}
+fim %>%
+  mutate(health_outlays_mpc = mpc_health_outlays_CRN19(health_outlays),
+         social_benefits_mpc = mpc_social_benefits_CRN19(social_benefits)) %>%
+    select(date, health_outlays_mpc, social_benefits_mpc) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             color =  name)
+         ) +
+  geom_line() +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  scale_x_date(date_breaks = '1 year', date_labels = "%y") +
+  theme_hc()
+```
+
+```{r taxes consumption}
+fim %>%
+  mutate(corporate_taxes_mpc = mpc_corporate_taxes_CRN19(corporate_taxes),
+         noncorporate_taxes_mpc = mpc_noncorp_taxes_CRN19(noncorp_taxes)) %>%
+    select(date, corporate_taxes_mpc, noncorporate_taxes_mpc) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             color =  name)
+         ) +
+  geom_line() +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc()
+```
+
+
+## Levels
+
+
+```{r consumption and investment  levels}
+fim %>%
+  select(date, federal_nom, state_local_nom) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             color =  name)
+         ) +
+  geom_line() +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_color_brewer(name = '', palette = 'Paired') +
+    geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc()
+```
+
+```{r health levels}
+fim %>%
+  select(date, medicare, medicaid) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             color =  name)
+         ) +
+  geom_line() +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc()
+```
+
+```{r social benefits levels}
+fim %>%
+  select(date, social_benefits) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             color =  name)
+         ) +
+  geom_line() +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc()
+```
+
+```{r tax levels}
+fim %>%
+  select(date, personal_taxes, payroll_taxes, production_taxes, corporate_taxes) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             color =  name)
+         ) +
+  geom_line() +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly fiscal impact  by components') +
+  scale_color_brewer(name = '', palette = 'Paired') +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc()
+```

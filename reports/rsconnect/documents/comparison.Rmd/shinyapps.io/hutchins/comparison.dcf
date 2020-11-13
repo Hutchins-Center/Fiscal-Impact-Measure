@@ -5,8 +5,8 @@ account: hutchins
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2749056
-bundleId: 3750194
+bundleId: 3750136
 url: https://hutchins.shinyapps.io/comparison/
-when: 1602878836.92173
+when: 1602877518.35683
 asMultiple: FALSE
 asStatic: FALSE

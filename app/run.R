@@ -1,0 +1,1 @@
+runApp('app')

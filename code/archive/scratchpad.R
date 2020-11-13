@@ -107,3 +107,47 @@ plot_histogram(fim_diff)
 
 
 
+# Projections v2
+
+#replace mm with xx next time
+forecast <- map(components, ~ xx %>%
+                  mutate(
+                    !!.x := if_else(!!quo(date) > last_hist_date,
+                                    (1 + !!as.name(paste0(.x, "_g"))),
+                                    !!as.name(.x))
+                  )
+)  %>%
+  #check  if work
+  reduce(left_join) %>%
+  filter(date >= last_hist_date) %>%
+  select(date, ends_with('proj'), gfrptCurrentLaw) %>%
+  mutate(
+    across(.cols = c('gdp_proj', 'gs_proj'),
+           .fns = ~cumprod(.x)
+    )
+  ) %>%
+  rename_with(., 
+              ~gsub("_proj",  "", .x, fixed = TRUE)
+  ) %>%
+  # Forecast total tax and transfers
+  mutate(#personalTaxCurrent = gfrptCurrentLaw + gsrpt,
+    personalTaxAlternative = gfrpt + gsrpt,
+    ## Production and Imports
+    ytpi = gfrpri + gsrpri,
+    ## Payroll taxes
+    grcsi = gsrs + gfrs,
+    ## Corporate taxes
+    yctlg =  gsrcp + gfrcp,
+    
+    # TRANSFERS
+    # Social Benefits
+    gtfp = gftfp + gstfp,
+    # Subsidies
+    gsub = gfsub + gssub
+  )
+
+map(components, ~ xx %>%
+      filter())
+
+
+
