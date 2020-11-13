@@ -12,10 +12,12 @@
 
 library('here')
 thismonth <- format(Sys.Date(), "%m-%Y")
-dir.create('results/', thismonth)
+nipa_path <- 'development/features/nipa-consistent-FIM'
+dir.create(here(nipa_path, 'results', thismonth))
 ## Fiscal Impact
-rmarkdown::render('code/Fiscal-Impact.RMD',
-                  output_file = here('results',
+rmarkdown::render(here(nipa_path, 'code', 'fim-nipa.RMD'),
+                  output_file = here(nipa_path, 
+                                     'results',
                                      thismonth,
                                      paste0('Fiscal-Impact-', Sys.Date(), '.pdf')
                                      )
