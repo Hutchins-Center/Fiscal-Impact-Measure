@@ -24,8 +24,9 @@ rmarkdown::render(here(nipa_path, 'code', 'fim-nipa.RMD'),
                   )
 
 ## Fiscal Impact Expanded
-rmarkdown::render('code/Fiscal-Impact-Expanded.RMD',
-                  output_file = here('results',
+rmarkdown::render(here(nipa_path, 'code', 'fim-nipa-expanded.RMD'),
+                  output_file = here(nipa_path,
+                                     'results',
                                      thismonth,
                                      paste0('Fiscal-Impact-Expanded-',
                                             Sys.Date(),
