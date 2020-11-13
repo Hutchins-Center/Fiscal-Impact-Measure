@@ -12,9 +12,8 @@ source('src/functions.R')
 START <- "01-01-1970"
 
 # Quarterly -------------------------------------------------------------------------------------------------------
-
+haver.path("//ESDATA01/DLX/DATA/")
 # BEA NIPAs 
-
 names_usna <- read_excel("data/auxilliary/haver_names.xlsx")
 data1 <-
   pull_data(names_usna$code,
@@ -23,6 +22,7 @@ data1 <-
   as_tibble()
 
 # Economic Statistics
+
 data2 <-
   pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ"), 
             "usecon",
