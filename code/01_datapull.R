@@ -1,120 +1,45 @@
-#========================
-# Section 0: setup
-#========================
-rm(list=ls())           # Clear the workspace
-
-# turn off scientific notation except for big numbers
+# 0.0 Source ----------------------------------------------------------------------------------------------------------
+## Source custom  functions and packages
+source('src/functions.R')
+source('src/packages.R')
 options(scipen = 9)
+# CBO projections -----------------------------------------------------------
+# Economic --------------------------------------------------------------------------------------------
+# Quarterly 
+econ <-
+  read_xlsx(here('data/raw/cbo/cbo_econ_proj_quarterly.xlsx')) %>%
+  mutate(date =  gsub("12/30/", "12/31/", date)) %>%
+  mutate(date = as.Date(date))
 
-## Packages ########
-mPackages <- installed.packages()
-# Details of installed packages
-stInstalled <- rownames( mPackages )
-# Isolate thep package names
-stRequired <- c('tidyverse','stringr','reshape2', 'zoo', 'quantmod', 'rmarkdown', 'TTR',
-   'data.table', 'lubridate', 'Hmisc', 'ggplot2')
-#  The required packages
+# Budget ----------------------------------------------------------------------------------------------
+budg <-
+  read_xlsx(here('data/raw/cbo/cbo_budget_nipas_proj_annual.xlsx'))
 
-for ( stName in stRequired ){
-  if ( !( stName %in% stInstalled ) ){
-    cat('****************** Installing ', stName, '****************** \n')
-    install.packages( stName )
-  }
-  library( stName, character.only=TRUE )
-}
+# Federal Medical Assistance Percentage (FMAP) --------------------------------------------------------------------
+fmap <-
+  read_xlsx(here('data/raw/nhe_fmap.xlsx'))
 
-# since Haver is a proprietary package, load it separately
-if (!('Haver' %in% stInstalled) ){
-  install.packages('Haver', repos = "http://www.haver.com/r/", type = "win.binary")
-}
-library(Haver)
+# Haver data ------------------------------------------------------------------------------------------------------
 
-#####start here#####
+# Load U.S. national accounts and economic statistics data into the Global Environment
+haver_data_path <-
+  here('data/raw/haver/')
+haver_data_names <- 
+  haver_data_path  %>%
+  list.files() %>%
+  .[str_detect(., ".xlsx")]
 
-# define some helper functions
-# function to pull haver data 
-#' Title
-#'
-#' @param series variables to search for in Haver
-#' @param database Haver name
-#' @param start.date 
-#' @param frequency can be annual or quarterly. Default is quarterly
-#'
-#' @return data frame
-pull_data <- function(series, database, start.date, frequency = "quarterly"){
-  q <- haver.data(series, database, eop.dates = T, start = as.Date(start.date, f = "%m-%d-%Y"))
-  q <- data.frame(date = as.Date(rownames(q)), q)
-  
-  for (j in 2:ncol(q)) {
-    for (k in 4:nrow(q)) {
-      if (is.na(q[k,j])){
-        q[k,j]=mean(q[c(k-1,k-2,k-3),j]) # if the data is missing on unreported, use the 3-qtr moving average
-        
-      }
-    }
-  }
-  q
-}
-
-# function to calculate quarterly annualized growth rates
-#' Title
-#'
-#' @param x is a time series object
-#'
-#' @return annualized quarterly growth rate
-#' @export
-#'
-#' @examples
-q_a = function(x){
-  j=c()
-  for(i in 2:length(x)){
-    j[i] = (((x[i]/x[i-1])^4)-1)*100
-  }
-  j[1] = 0
-  j
-}
-
-# function to calculate quarter-over-quarter growth rate
-q_g = function(x){
-  j=c()
-  for(i in 2:length(x)){
-    j[i] = (((x[i]/x[i-1]))-1)
-  }
-  j[1] = j[2]
-  j
-}
-
-# NOTE: All quarterly values are in seasonally-adjusted, annual rates (SAAR), billions of dollars. Annual values are in annual rates, billions of dollars. We will translate annual levels into quarterly values by imputing them to each of the four quarters in the year and taking the 4-quarter moving average. 
-
-# pull quarterly BEA NIPAs data
-series1 = c("GDP", "C","CH","GDPH","JC", "JGDP", "JGF", "JGS","JGSE", "JGSI", "PTGH","PTGSH","PTGFH", "YPTMR", "YPTMD", "YPTU", "GTFP", "YPOG", "YPTX", "YTPI", "YCTLG", "G","GRCSI", "GDPH", "DC",	"PTGFH", "PTGSH", "GF", "GS", "GFH", "GSH", "	GFRPT", "GFRPRI", "GFRCP", "GFRS","GFRPT","	GFRPRI","	GFRCP","	GFRS","	GFTFP","	GFEG","	GSRPT","	GSRPRI","	GSRCP","	GSRS","	GSTFP","	GSET", "GFEGHHX", "GFEGHDX", "GFEIGX", "GFSUB", "GSSUB", "GSUB", " GFTFBUSX")
-data1 = pull_data(series1, "usna", start.date = "01-01-1970")
-metadata1 = cbind(haver.metadata(series1, "usna")$code, haver.metadata(series1, "usna")$descriptor) # use this for reference
-data2 = pull_data(c("PCW", "GDPPOTHQ","GDPPOTQ", "RECESSQ"), "usecon", "01-01-1970")
-hist = merge(data1, data2, by = "date")
-
-# pull annual BEA NIPAs data, for regressions for state and local tax revenues
-series3 = c("GDP", "C","CH","GDPH","JC", "JGDP", "JGF", "JGS", "PTGH","PTGSH","PTGFH", "YPTMR", "YPTMD", "GTFP", "YPOG", "YPTX", "YTPI", "YCTLG", "G", "GRCSI", "GDPH", "DC",	"PTGFH", "PTGSH", "GF", "GS", "GFH", "GSH", "	GFRPT", "GFRPRI", "GFRCP", "GFRS","GFRPT","	GFRPRI","	GFRCP","	GFRS","	GFTFP","	GFEG","	GSRPT","	GSRPRI","	GSRCP","	GSRS","	GSTFP","	GSET", "YP", "GFSUB", "GSSUB")
-series4 = c("USPHPI", "CASUSXAM","GDPPOT", "GDPPOTH")
-data3 = pull_data(series3, "usna", start = as.Date("1970-01-01"), frequency = "annual")
-data4 = pull_data(series4, "usecon", start = as.Date("1970-01-01"), frequency = "annual")
-aa = merge(data3, data4, by = "date")
-aa$hpx = aa$usphpi #house price index of choice is the FHFA purchase only index, 1991 = 100, since that's what CBO forecasts
-
-# pull quarterly CBO economic projections data
-econ = read.csv('./data/cbo_econ_proj_quarterly.csv', stringsAsFactors = F)
-econ$date = gsub("12/30/", "12/31/", econ$date)
-econ$date = as.Date(econ$date, f = "%m/%d/%Y")
-comp = colnames(econ)[!colnames(econ) %in% "date"]
-
-# pull annual CBO economic projections data
-econ_a = read.csv('./data/cbo_econ_proj_annual.csv', stringsAsFactors = F)
-econ_a$date = as.Date(paste0(econ_a$calendar_date, "-12-31"), f="%Y-%m-%d")
-econ_a = econ_a[econ_a$date > Sys.Date(),] # keep annuals for current calendar year
-
-# pull annual CBO budget projections, "as they appear in the NIPAS"
-# budg = read.csv('data/cbo_budget_nipas_proj_annual.csv', stringsAsFactors = F)
-budg = read.csv('./data/cbo_budget_nipas_proj_annual_new.csv', stringsAsFactors = F)
-
-# pull annual FMAPS data, which come from CMS.gov, NHE by type of service and source of funds. Annual data, later translated to quarterly just as we do with the budget data.  
-fmap = read.csv('./data/nhe_fmap.csv', stringsAsFactors = F)
+# Load raw Haver data into global environment
+haver_data_names %>%  
+  purrr::map(function(file_name){ # iterate through each file name
+    assign(x = str_remove(file_name, ".xlsx"), # Remove file extension ".csv"
+           value = read_xlsx(paste0(haver_data_path, file_name), na = 'NA') %>%
+             mutate(date = as.Date(date)),
+           envir = .GlobalEnv)
+  }) 
+# Merge quarterly and annual data 
+# change hist and aa to haver quarterly and annual
+hist <-
+  left_join(national_accounts,
+            economic_statistics,
+            by = "date") 

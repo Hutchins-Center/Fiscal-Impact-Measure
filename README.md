@@ -1,4 +1,3 @@
-
 ![Logo of the project](https://github.com/Hutchins-Center/Fiscal-Impact-Measure/blob/master/images/HC_NEW_BROOKINGS_RGB.jpg)
 
 # Fiscal Impact Measure
@@ -39,20 +38,18 @@ branch. Pull requests are warmly welcome.
 ## Links
 
 Relevant links for using this code:
-- [Repository](https://github.com/Hutchins-Center/Fiscal-Impact-Measure)
-- [Issue tracker](https://github.com/Hutchins-Center/Fiscal-Impact-Measure/issues)
+- Repository: https://github.com/Hutchins-Center/Fiscal-Impact-Measure
+- Issue tracker: https://github.com/Hutchins-Center/Fiscal-Impact-Measure/issues
   - In case of sensitive bugs, please contact malcalakovalski@brookings.edu
     directly instead of using issue tracker. We value your effort
     to improve this project!
 - Relavant resources for understanding and extending code:
   - Version control: https://www.sas.upenn.edu/~jesusfv/Chapter_HPC_5_Git.pdf
                      https://swcarpentry.github.io/git-novice/
-  - [Metaprogramming](https://adv-r.hadley.nz/#)
-  - [Programming and Non-Standard Evaluation with dplyr](https://shipt.tech/https-shipt-tech-advanced-programming-and-non-standard-evaluation-with-dplyr-e043f89deb3d)
+  - Metaprogramming: https://adv-r.hadley.nz/#
+  - Programming and Non-Standard Evaluation with dplyr: https://shipt.tech/https-shipt-tech-advanced-programming-and-non-standard-evaluation-with-dplyr-e043f89deb3d
 - Related literature:
-  - [Fiscal effect measure](https://www.federalreserve.gov/econres/feds/files/2017061pap.pdf)
-  - [Measuring Fiscal Impetus](https://www.chicagofed.org/publications/economic-perspectives/2014/3q-mcgranahan-berman)
-  - [A Guide to the National Income and Production Accounts of the United State](http://piketty.pse.ens.fr/files/capitalisback/CountryData/USA/Methodo/NIPA%20Guide.pdf)
+  -  Fiscal effect measure: https://www.federalreserve.gov/econres/feds/files/2017061pap.pdf
 
 
 ## License
