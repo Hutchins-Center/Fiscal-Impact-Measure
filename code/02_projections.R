@@ -156,7 +156,7 @@ econ <-
   mutate(jgf =  gf/gfh,
          jgs = gs/gsh,
          jc = c/ch)  %>%
-  # Growth rate of implicit price deflators
+  # Growth rates
   mutate(
     across(
       .cols = where(is.numeric),
@@ -405,7 +405,7 @@ xx <-
     )
 xx$gtfp[forecastPeriod] = xx$gftfp[forecastPeriod] + xx$gstfp[forecastPeriod] # social benefits = federal benefits + state and local benefits
 xx$yptx[forecastPeriod] = xx$gfrpt[forecastPeriod] + xx$gsrpt[forecastPeriod] # alternative path
-xx$yptxb[forecastPeriod] = xx$gfrptb[forecastPeriod] + xx$gsrpt[forecastPeriod] # current law
+xx$yptxb[forecastPeriod] = xx$gfrptCurrentLaw[forecastPeriod] + xx$gsrpt[forecastPeriod] # current law
 xx$ytpi[forecastPeriod] = xx$gsrpri[forecastPeriod] + xx$gfrpri[forecastPeriod]  #production and import taxes
 xx$grcsi[forecastPeriod] = xx$gsrs[forecastPeriod] + xx$gfrs[forecastPeriod]  # payroll taxes
 xx$yctlg[forecastPeriod] = xx$gsrcp[forecastPeriod] + xx$gfrcp[forecastPeriod] # corporate taxes

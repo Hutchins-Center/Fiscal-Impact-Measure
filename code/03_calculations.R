@@ -84,7 +84,8 @@ add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v4.
  
 fim <-
   fim %>% 
-  full_join(add_factors %>% select(-federal_cgrants_override),
+  full_join(add_factors %>% select(-federal_cgrants_override) %>%
+              filter(date > last_hist_date),
             by = "date") %>%
   mutate(across(
     .cols = starts_with('add_'),
@@ -93,30 +94,59 @@ fim <-
                      .x)
     )
   )
-fim$federal_cgrants[202:203] <- c(279.25, 286.92)
+
 # Add factors to categories
-covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies',
-                      'federal_cgrants', 'state_health_outlays', 'state_social_benefits',
-                      'state_noncorp_taxes', 'state_corporate_taxes')
-fim[ ,covidLegislation] <- fim[ ,covidLegislation] + fim[ ,paste0('add_', covidLegislation)]
+# covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies',
+#                       'federal_cgrants', 'state_health_outlays', 'state_social_benefits',
+#                       'state_noncorp_taxes', 'state_corporate_taxes')
+# fim[ ,covidLegislation] <- fim[ ,covidLegislation] + fim[ ,paste0('add_', covidLegislation)]
 
 # New Totals
 fim <- 
   fim %>%
-  mutate(
-    # new totals
-    health_outlays  = state_health_outlays  + federal_health_outlays ,
-    social_benefits  = state_social_benefits  + federal_social_benefits ,
-    noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
-    corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
-    subsidies   = state_subsidies + federal_subsidies,
-    # state_local_nom = add_state_expenditures + state_local_nom,
-    # federal_nom = add_federal_nom + federal_nom,
-    federal_cgrants = add_federal_cgrants + federal_cgrants,
-    federal_cgrants = if_else(date == Q2_2020,
-                              181.51,
-                              federal_cgrants)
-  )
+  # mutate(
+  #   # new totals
+  #   health_outlays  = state_health_outlays  + federal_health_outlays ,
+  #   social_benefits  = state_social_benefits  + federal_social_benefits ,
+  #   noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
+  #   corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
+  #   subsidies   = state_subsidies + federal_subsidies,
+  #   # state_local_nom = add_state_expenditures + state_local_nom,
+  #   # federal_nom = add_federal_nom + federal_nom,
+  #   federal_cgrants = add_federal_cgrants + federal_cgrants
+  #   # federal_cgrants = if_else(date == Q2_2020,
+  #   #                           181.51,
+  #   #                           federal_cgrants)
+  # )
+mutate(
+  
+  #calculate new variables by adding the add factors
+  state_health_outlays  = state_health_outlays + add_state_health_outlays,
+  state_social_benefits  = state_social_benefits + add_state_social_benefits,
+  state_noncorp_taxes  =  state_noncorp_taxes + add_state_noncorp_taxes,
+  state_corporate_taxes  = state_corporate_taxes + add_state_corporate_taxes,
+  
+  federal_health_outlays  = federal_health_outlays + add_federal_health_outlays,
+  federal_social_benefits  = federal_social_benefits + add_federal_social_benefits,
+  # federal_noncorp_taxes  = federal_noncorp_taxes + add_federal_noncorp_taxes,
+  # federal_corporate_taxes  = federal_corporate_taxes + add_federal_corporate_taxes,
+  federal_subsidies  = federal_subsidies + add_federal_subsidies,
+  federal_cgrants = federal_cgrants + add_federal_cgrants,
+  
+  #new category totals
+  health_outlays  = state_health_outlays  + federal_health_outlays ,
+  social_benefits  = state_social_benefits  + federal_social_benefits ,
+  noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
+  corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
+  subsidies   = state_subsidies + federal_subsidies,
+  # state_local_nom = add_state_expenditures + state_local_nom,
+  # federal_nom = add_federal_nom + federal_nom,
+  
+)
+
+
+federal_cgrants_override = add_factors$federal_cgrants_override[1:2]
+fim$federal_cgrants[202:203] <- federal_cgrants_override #Manually entering value for Q2 2020 since add factors start in Q3
 
 # 4.3 Contribution of purchases and grants -------------------------------------------------------------------------------------
 
@@ -152,8 +182,8 @@ fim <-
   fim %>%
     mutate(
       across(
-        .cols = tts, 
-        .fns =  ~ .x - lag(.x) * (1 + pi_pce + gdppoth),
+        .cols = all_of(tts), 
+        .fns =  ~ . - lag(.) * (1 + pi_pce + gdppoth),
         .names = "{.col}_net"
       )
     ) %>%
@@ -164,62 +194,6 @@ tt <- paste0(tt, "_net") # rename for efficiency
 
 # 4.5 MPCs ----------------------------------------------------------------------------------------------
 
-### 4.5.1 Pre-COVID -----------------------------------------------------------------------------------------
-
-mpc_health_outlays = function(x){
-  0.9 * rollapply(x, width = 4, mean, fill = NA, align =  'right')
-}
-
-mpc_social_benefits = function(x){
-  0.9 * rollapply(x, width = 4, mean, fill = NA, align =  'right')
-}
-
-mpc_noncorp_taxes = function(x){
-  j = NA
-  for(i in 8:length(x)){
-    if(is.na(x[i-7])){
-      j[i] = NA
-    } else{
-      lagstart = i-7
-      lagend = i-2
-      lags = lagstart:lagend
-      j[i] = -0.6*(0.2*x[i]+0.2*x[i-1]+(0.6*mean(x[lags]))) 
-    }
-  }
-  j
-}
-
-mpc_corporate_taxes = function(x){
-  j = NA
-  for(i in 12:length(x)){
-    if(is.na(x[i-11])){
-      j[i] = NA
-    } else{
-      lagstart = i-11
-      lagend = i
-      lags = lagstart:lagend
-      j[i] = -0.4*mean(x[lags]) # distributes out to the MPC applied evenly over 12 quarters
-    }
-  }
-  j
-}
-
-mpc_subsidies = function(x){
-  j = NA
-  for(i in 12:length(x)){
-    if(is.na(x[i-11])){
-      j[i] = NA
-    } else{
-      lagstart = i-11
-      lagend = i
-      lags = lagstart:lagend
-      j[i] = 0.45*(0.11*x[i]+0.095*x[i-1]+0.09*x[i-2]+0.085*x[i-3]+0.08*x[i-4]+0.08*x[i-5]+0.08*x[i-6]+0.08*x[i-7]+0.075*x[i-8]+0.075*x[i-9]+0.075*x[i-10]+0.075*x[i-11]) 
-    }
-  }
-  j
-}
-
-
 #######
 
 # Take tax and transfer category totals, net of counterfactual taxes, multiply by MPC's
@@ -229,101 +203,28 @@ noncorp = grep("noncorp", tts, value=T)
 corporate = grep("corporate", tts, value=T)
 subsidies = grep("subsidies", tts, value=T)
 
-### 4.5.2 Post-COVID ---------------------------------------------------------------------------------------------
-
-#Same as pre-covid
-mpc_noncorp_taxes_CRN19 =  function(x){
-  j = NA
-  for(i in 8:length(x)){
-    if(is.na(x[i-7])){
-      j[i] = NA
-    } else{
-      lagstart = i-7
-      lagend = i-2
-      lags = lagstart:lagend
-      j[i] = -0.6*(0.2*x[i]+0.2*x[i-1]+(0.6*mean(x[lags]))) 
-    }
-  }
-  j
-}
-
-
-#Same as pre-covid
-mpc_health_outlays_CRN19 = function(x){
-   0.9 * rollapply(x, width = 4, mean, fill = NA, align =  'right')
-}
-
-#FIX
-mpc_social_benefits_CRN19 = function(x){
-  j = NA
-  for(i in 8:length(x)){
-    if(is.na(x[i-7])){
-      j[i] = NA
-    } else{
-      j[i] = 0.86*(0.2879*x[i]+0.2498*x[i-1]+0.19*x[i-2]+0.19*x[i-3] + 0.0253*x[i-4] + 0.0253*x[i-5] + 0.0159*x[i-6] + 0.0159*x[i-7]) # distributes out to 40 percent of the -0.6 MPC applied in first two quarters and the remainder evenly over last 5
-    }
-  }
-  j
-}
-
-#Same as pre-covid
-mpc_noncorp_taxes_CRN19 =  function(x){
-  j = NA
-  for(i in 8:length(x)){
-    if(is.na(x[i-7])){
-      j[i] = NA
-    } else{
-      lagstart = i-7
-      lagend = i-2
-      lags = lagstart:lagend
-      j[i] = -0.6*(0.2*x[i]+0.2*x[i-1]+(0.6*mean(x[lags]))) 
-    }
-  }
-  j
-}
-
-#Same as pre-covid
-mpc_corporate_taxes_CRN19 = function(x){
-  j = NA
-  for(i in 12:length(x)){
-    if(is.na(x[i-11])){
-      j[i] = NA
-    } else{
-      lagstart = i-11
-      lagend = i
-      lags = lagstart:lagend
-      j[i] = -0.40*mean(x[lags]) 
-    }
-  }
-  j
-}
-
 # Translate Taxes & Transfers into Consumption --------------------------------------------------------------------
-
+covid_start <- as.Date('2020-06-30')
 ## Dates for new MPCs
-mpc_lag <- fim %>% 
-  select(date) %>%
-  slice(
-    which(date == last_hist_date) - 11
-  )
 
 nlag <- 12
 mpc_lag <-
   fim %>%
   select(date) %>%
   slice(
-    which(date == last_hist_date) - (nlag - 1)
+    which(date == covid_start) - (nlag - 1)
   )
-Q4_2021 <- "2021-12-31"
+
 
 ## CALCULATE MPCS
+covid_end <- as.Date('2025-12-31')
 fim <-
   fim %>% 
     ## HEALTH OUTLAYS
     mutate(
       across(
         .cols = all_of(health),
-        .fns = ~ if_else(date >= mpc_lag & date <= Q4_2021,
+        .fns = ~ if_else(date >= covid_start & date <= covid_end,
                          mpc_health_outlays_CRN19(.x),
                          mpc_health_outlays(.x)),
         .names = "{.col}_xmpc"
@@ -333,7 +234,7 @@ fim <-
     mutate(
       across(
         .cols = all_of(social_benefits),
-        .fns = ~ if_else(date >= mpc_lag & date <= Q4_2021,
+        .fns = ~ if_else(date >= covid_start & date <= covid_end,
                          mpc_social_benefits_CRN19(.x),
                          mpc_social_benefits(.x)
         ),
@@ -344,7 +245,7 @@ fim <-
     mutate(
       across(
         .cols = all_of(corporate),
-        .fns = ~ if_else(date >= mpc_lag & date <= Q4_2021,
+        .fns = ~ if_else(date >= covid_start & date <= covid_end,
                          mpc_corporate_taxes_CRN19(.x),
                          mpc_corporate_taxes(.x)
         ),
@@ -355,7 +256,7 @@ fim <-
     mutate(
       across(
         .cols = all_of(noncorp),
-        .fns = ~ if_else(date >= mpc_lag & date <= Q4_2021,
+        .fns = ~ if_else(date >= covid_start & date <= covid_end,
                          mpc_noncorp_taxes_CRN19(.x),
                          mpc_noncorp_taxes(.x)
         ),
@@ -366,7 +267,7 @@ fim <-
     mutate(
       across(
         .cols = all_of(subsidies),
-        .fns = ~ if_else(date >= mpc_lag & date <= Q4_2021,
+        .fns = ~ if_else(date >= covid_start & date <= covid_end,
                          mpc_subsidies(.x),
                          mpc_subsidies(.x)
         ),
@@ -377,17 +278,20 @@ fim <-
 
 # Sum up transfers net taxes
 
+govt_taxes_transfers <- paste0(tt, "_xmpc")
+state_taxes_transfers <- paste0("state_", tt, "_xmpc")
+federal_taxes_transfers <- paste0("federal_", tt, "_xmpc")
 fim <-
   fim %>%
   mutate(
     transfers_net_taxes = rowSums(
-      select(., paste0(tt, "_xmpc")), na.rm = TRUE
+      select(., .dots = all_of(govt_taxes_transfers)), na.rm = TRUE
     ),
     state_transfers_net_taxes = rowSums(
-      select(., paste0("state_", tt, "_xmpc")), na.rm = TRUE
+      select(., .dots = all_of(state_taxes_transfers)), na.rm = TRUE
     ),
     federal_transfers_net_taxes = rowSums(
-      select(., paste0("federal_", tt, "_xmpc")), na.rm = TRUE
+      select(., .dots = all_of(federal_taxes_transfers)), na.rm = TRUE
     )
   )
 
@@ -396,11 +300,12 @@ fim <-
 
 ## Calulate the taxes, transfers, and subsidies FIM
 
+tts <-  c("taxes_transfers", "state_taxes_transfers", "federal_taxes_transfers",
+          "health", "social_benefits", "noncorp",
+          "corporate", "state_subsidies", "federal_subsidies",
+          "subsidies")
 contributionTTS <- paste0(
-  c('health', 'social_benefits', 
-    'taxes_transfers', 'federal_taxes_transfers', 'state_taxes_transfers',
-    'corporate', 'noncorp',
-    'subsidies', 'federal_subsidies', 'state_subsidies'),
+  tts,
   '_cont'
 )
 
@@ -418,7 +323,7 @@ fim <-
         .names = "{.col}_cont"
       )
     ) %>%
-  rename(!!set_names(paste0(net, "_cont"), contributionTTS)) %>%
+  setnames(paste0(net, "_cont"), contributionTTS) %>%
   ## Add contribution of subsidies to contribution of taxes and transfers
   mutate(
     taxes_transfers_cont = taxes_transfers_cont + subsidies_cont,

@@ -59,7 +59,6 @@ mpc_subsidies = function(x){
 
 
 ### 4.5.2 Post-COVID ---------------------------------------------------------------------------------------------
-
 #Same as pre-covid
 mpc_noncorp_taxes_CRN19 =  function(x){
   j = NA
@@ -79,7 +78,7 @@ mpc_noncorp_taxes_CRN19 =  function(x){
 
 #Same as pre-covid
 mpc_health_outlays_CRN19 = function(x){
-  0.9 * rollapply(x, width = 4, mean, fill = NA, align =  'right')
+  0.9*c(SMA(x, n=4))
 }
 
 #FIX
@@ -110,6 +109,10 @@ mpc_noncorp_taxes_CRN19 =  function(x){
   }
   j
 }
+
+
+
+
 
 #Same as pre-covid
 mpc_corporate_taxes_CRN19 = function(x){

@@ -2,7 +2,7 @@
 ## Source custom  functions and packages
 source('src/functions.R')
 source('src/packages.R')
-
+options(scipen = 9)
 # CBO projections -----------------------------------------------------------
 # Economic --------------------------------------------------------------------------------------------
 # Quarterly 

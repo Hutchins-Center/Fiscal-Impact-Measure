@@ -30,6 +30,34 @@ add_factors_temp <-
   select(date, starts_with('add')) %>%
   filter(date >= '2020-09-30')
 summary(comparedf(fim_official, 
-                  fim_temp))
-summary(comparedf(add_factors_official, add_factors_temp))        
+                  fim_temp, tol.num.val = 0.5))
+summary(comparedf(add_factors_official, add_factors_temp))    
+
+# Grants ----------------------------------------------------------------------------------------------------------
+
+summary(comparedf(
+  fim_official %>%
+  select(date, contains('grants')),
+  fim_temp %>%
+  select(date, contains('grants'))
+)
+        )
+
+summary(comparedf(
+  fim_official %>%
+    select(date, contains('xmpc')),
+  fim_temp %>%
+    select(date, contains('xmpc'))
+)
+)
+
+summary(
+  comparedf(
+    fim %>% filter(date > covid_end) %>% select(date,contains('xmpc')), 
+    fim_MPCold2 %>% select(date, contains('xmpc'))
+    )
+  )
+
+
+
         
