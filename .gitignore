@@ -44,6 +44,7 @@ data/.DS_Store
 code/Fiscal-Impact-2020-11-13.log
 *.log
 data/.DS_Store
-*.xlsx
+
 *.pdf
 data/.DS_Store
+.DS_Store
