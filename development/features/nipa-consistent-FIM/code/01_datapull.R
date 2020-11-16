@@ -33,7 +33,7 @@ haver_data_names <-
 haver_data_names %>%  
   purrr::map(function(file_name){ # iterate through each file name
     assign(x = str_remove(file_name, ".xlsx"), # Remove file extension ".csv"
-           value = read_xlsx(paste0(haver_data_path, file_name), na = 'NA') %>%
+           value = read_xlsx(paste0(haver_data_path, "/",file_name), na = 'NA') %>%
              mutate(date = as.Date(date)),
            envir = .GlobalEnv)
   }) 
