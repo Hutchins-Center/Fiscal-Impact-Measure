@@ -14,7 +14,7 @@ START <- "01-01-1970"
 # Quarterly -------------------------------------------------------------------------------------------------------
 
 # BEA NIPAs 
-
+haver.path("//ESDATA01/DLX/DATA/")
 names_usna <- read_excel("data/auxilliary/haver_names.xlsx")
 data1 <-
   pull_data(names_usna$code,
