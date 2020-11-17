@@ -5,10 +5,10 @@ mPackages <- installed.packages()
 # Details of installed packages
 stInstalled <- rownames(mPackages)
 # Isolate thep package names
-stRequired <- c("tidyverse", "stringr", "reshape2", "zoo", "quantmod", 
-                "rmarkdown", "TTR", "data.table", "lubridate", "Hmisc", 
+stRequired <- c("tidyverse", "reshape2", 'zoo',
+                "rmarkdown", "TTR", "data.table", "lubridate",
                 "magrittr", 'readxl', 'writexl', 'ggplot2', 'ggthemes',
-                'ggtext', 'grid', 'gridExtra',  'wesanderson', 'tinytex',
+                'ggtext',  'gridExtra',  'wesanderson', 'tinytex',
                 "here")
 # The required packages
 for (stName in stRequired) {
