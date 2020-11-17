@@ -1,4 +1,3 @@
-
 # define some helper functions function to pull haver data
 #' Title
 #'
@@ -80,11 +79,20 @@ growthRate <- function(x, period) {
 # )^4)-1)*100 ) }
 
 
+#' Title
+#'
+#' @param .data data frame with components needed to calculate contributions
+#' @param var federal_nom, state_local_nom, federal_cgrants, federal_igrants
+#'
+#' @return contribution of var to real gdp growth
+#' @export
+#'
+#' @examples
 contribution <- function(.data, var){
-  var <- ensym(var)
-  var_string <- rlang::as_string(enexpr(var))
-  deflator_string <- paste0(var_string, "_pi")
-  deflator <- rlang::sym(deflator_string)
+  var <- ensym(var) # quote expression
+  var_string <- rlang::as_string(enexpr(var)) # convert quoted expression to string
+  deflator_string <- paste0(var_string, "_pi") # create string with the name of relevant deflator
+  deflator <- rlang::sym(deflator_string) # convert deflator string to symbol
   
   ## Calculate contribution
   .data %>%
@@ -92,12 +100,6 @@ contribution <- function(.data, var){
       "{{ var }}_cont" := 400 * ({{ var }} - (1  + !!(deflator) + gdppoth) * lag({{ var }}) ) / lag(gdp)
     ) %>%
     select(date, !!paste0(var_string, "_cont"))
-}
-
-
-output_csv <- function(data, names){ 
-  folder_path <- paste0("results/", thismonth, '/')
-  write_csv(data, paste0(folder_path, names, '-', Sys.Date(), ".csv"))
 }
 
 output_xlsx <- function(data, names){ 
