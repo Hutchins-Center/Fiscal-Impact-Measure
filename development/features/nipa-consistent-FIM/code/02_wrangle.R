@@ -212,7 +212,7 @@ xx <-
     
     # SOCIAL BENEFITS
     # Unemployment Insurance
-    gftfbusx = gftfbusx / 1000, # Translate UI from millions to billions
+    # gftfbusx = gftfbusx / 1000,  Translate UI from millions to billions
     
     # Leave allocation of UI spending as is.
     # gftfp = gftfp - gftfbusx,
