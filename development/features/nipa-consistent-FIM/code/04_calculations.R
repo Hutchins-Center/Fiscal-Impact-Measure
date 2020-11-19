@@ -83,7 +83,7 @@ add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v5.
 
 fim <-
   fim %>%
-  full_join(add_factors %>% select(-federal_cgrants_override) %>%
+  full_join(add_factors %>% 
               filter(date > last_hist_date),
             by = "date") %>%
   mutate(across(
