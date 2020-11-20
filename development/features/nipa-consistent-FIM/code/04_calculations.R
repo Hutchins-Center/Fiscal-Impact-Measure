@@ -45,10 +45,12 @@ fim <-
          noncorp_taxes = personal_taxes + production_taxes + payroll_taxes, # alternative
          corporate_taxes = yctlg,
          subsidies  = gsub,
+         rebate_checks = gftfpe,
          ## Federal
          federal_medicaid = 0,
          federal_health_outlays = medicare,
          federal_unemployment_insurance = gftfbusx,
+         federal_rebate_checks = rebate_checks,
          federal_social_benefits = gftfp - federal_health_outlays,
          federal_personal_taxes = gfrpt,
          federal_payroll_taxes = gfrs,
@@ -66,7 +68,9 @@ fim <-
          state_production_taxes  = gsrpri,
          state_noncorp_taxes = state_personal_taxes + state_payroll_taxes + state_production_taxes,
          state_corporate_taxes = gsrcp,
-         state_subsidies = gssub
+         state_subsidies = gssub,
+         state_unemployment_insurance = 0,
+         state_rebate_checks = 0
          )
 
 # 5.2 Add-ons  ------------------------------------------------------------------------------------------
@@ -76,7 +80,7 @@ fim <-
 
 #load add factor file
 add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v5.xlsx",
-                          sheet = "NIPA Add Factors") %>%
+                          sheet = "FIM Add Factors") %>%
                   mutate(
                     date = as.Date(date)
                   )
@@ -95,6 +99,8 @@ fim <-
   )
 # 
 # # Add factors to categories
+# 
+# #QUESTION FOR LOUISE: do we need to change add factor calculation for ui and rebate
 covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies',
                       'federal_cgrants', 'state_health_outlays', 'state_social_benefits',
                       'state_noncorp_taxes', 'state_corporate_taxes')
@@ -167,12 +173,17 @@ fim <-
   
 # 4.4 Counterfactual Taxes and Transfers -------------------------------------------------------------------------------
 
+fim %<>%
+  mutate(social_benefits = social_benefits - rebate_checks - unemployment_insurance,
+         federal_social_benefits = federal_social_benefits - federal_rebate_checks - federal_unemployment_insurance,
+         state_social_benefits = state_social_benefits - state_rebate_checks - state_unemployment_insurance)
 ## Category totals
-tt = c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes")
+tt = c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes",
+       'rebate_checks', 'unemployment_insurance')
 ## Category totals by level of government
 tts = c(tt, paste0("federal_", tt), paste0("state_", tt)) # totals and disaggregations by level of goverment
 
-
+# Question for Louise: should net social benefits exclude ui and rebate checks? what about ppp? 
 # Calculate "net" taxes and transfers by subtracting counterfactual from realized 
 fim <-  
   fim %>%
@@ -237,6 +248,25 @@ fim <-
         .names = "{.col}_xmpc"
       )
     ) %>%
+  mutate(
+    across(
+      .cols = all_of(unemployemtnt_insurance),
+      .fns = ~ mpc_ui_CRN19(.x),
+      .names = "{.col}_xmpc"
+    )
+  ) %>%
+  mutate(
+    across(
+      .cols = all_of(rebate_checks),
+      .fns = ~ mpc_rebate_CRN19(.x),
+      .names = "{.col}_xmpc"
+    )
+  ) %>%
+  ## UNEMPLOYMENT INSURANCE
+  ## 
+  ## 
+  ## 
+  ## REBATE CHECKS
     ## CORPORATE TAXES
     mutate(
       across(
@@ -305,6 +335,7 @@ contributionTTS <- paste0(
   '_cont'
 )
 
+# add ui and rebate, exclude these from social benefits for now
 net <- c("transfers_net_taxes", "state_transfers_net_taxes", "federal_transfers_net_taxes",
          "health_outlays_net_xmpc", "social_benefits_net_xmpc", "noncorp_taxes_net_xmpc",
          "corporate_taxes_net_xmpc", "state_subsidies_net_xmpc", "federal_subsidies_net_xmpc",
