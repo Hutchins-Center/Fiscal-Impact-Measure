@@ -328,4 +328,24 @@ fim %>%
   theme_hc()
 ```
 
+### Social Benefits
+```{r subsidies}
+fim %>%
+  select(date, subsidies_cont, state_subsidies_cont, federal_subsidies_cont) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill =  name)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Levels',
+       title =  'Taxes, transfers, and subsidies')   + 
+  scale_fill_discrete(name = '') +
+  theme_hc()
+```
 

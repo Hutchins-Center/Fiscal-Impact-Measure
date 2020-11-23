@@ -46,10 +46,12 @@ fim <-
          noncorp_taxes = personal_taxes + production_taxes + payroll_taxes, # alternative
          corporate_taxes = yctlg,
          subsidies  = gsub,
+         rebate_checks = if_else(is.na(gftfpe), 0, gftfpe),
          ## Federal
          federal_medicaid = yfptmd,
          federal_health_outlays = medicare + federal_medicaid,
          federal_unemployment_insurance = gftfbusx,
+         federal_rebate_checks = rebate_checks,
          federal_social_benefits = gftfpnet - federal_health_outlays,
          federal_personal_taxes = gfrpt,
          federal_payroll_taxes = gfrs,
@@ -61,6 +63,8 @@ fim <-
          state_medicaid = medicaid - federal_medicaid,
          state_health_outlays = state_medicaid,
          state_social_benefits_gross = gstfp,
+         state_unemployment_insurance = unemployment_insurance - federal_unemployment_insurance,
+         state_rebate_checks = 0,
          state_social_benefits = state_social_benefits_gross - state_health_outlays - federal_medicaid_grants, # no medicare at state and local level
          state_personal_taxes = gsrpt,
          state_payroll_taxes = gsrs,
@@ -76,7 +80,7 @@ fim <-
 # Remove when NIPAS are updated or new economic projections are released (whichever comes first)
 
 #load add factor file
-add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v4.xlsx", 
+add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v5.xlsx", 
                           sheet = "FIM Add Factors") %>%
                   mutate(
                     date = as.Date(date)
@@ -84,7 +88,7 @@ add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v4.
  
 fim <-
   fim %>% 
-  full_join(add_factors %>% select(-federal_cgrants_override) %>%
+  full_join(add_factors %>% select(-ends_with('override')) %>%
               filter(date > last_hist_date),
             by = "date") %>%
   mutate(across(
@@ -147,6 +151,26 @@ mutate(
 
 federal_cgrants_override = add_factors$federal_cgrants_override[1:2]
 fim$federal_cgrants[202:203] <- federal_cgrants_override #Manually entering value for Q2 2020 since add factors start in Q3
+#load add factor file
+override <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v5.xlsx", 
+                          sheet = "FIM Add Factors") %>%
+  select(date, ends_with('override'), -federal_cgrants_override) %>%
+  mutate(date = as_date(date)) %>%
+  filter(date > last_hist_date) 
+
+fim %<>% left_join(override, by = 'date') %>%
+  mutate(unemployment_insurance = if_else(date > last_hist_date,
+                                          unemployment_insurance_override,
+                                          unemployment_insurance),
+         federal_unemployment_insurance = if_else(date > last_hist_date,
+                                                  federal_unemployment_insurance_override,
+                                                  federal_unemployment_insurance),
+         state_unemployment_insurance = if_else(date > last_hist_date,
+                                                state_unemployment_insurance_override,
+                                                state_unemployment_insurance)
+         )
+
+  
 
 # 4.3 Contribution of purchases and grants -------------------------------------------------------------------------------------
 
@@ -163,16 +187,23 @@ fim <-
 # Sum up purchases, taking out the federal grants contribution from state and local and adding it back to federal. 
 fim <-
   fim %>%
-    mutate(federal_cont_0 = federal_nom_cont,
-           federal_cont = federal_nom_cont + federal_cgrants_cont + federal_igrants_cont,
-           state_local_cont_0 = state_local_nom_cont,
-           state_local_cont = state_local_nom_cont - (federal_cgrants_cont + federal_igrants_cont),
+    mutate(federal_cont_ex_grants = federal_nom_cont,
+           federal_grants_cont = federal_cgrants_cont + federal_igrants_cont,
+           federal_cont = federal_nom_cont + federal_grants_cont,
+           state_local_cont_ex_grants = state_local_nom_cont,
+           state_local_cont = state_local_nom_cont - federal_grants_cont,
            purchases_cont = federal_cont + state_local_cont)
   
 # 4.4 Counterfactual Taxes and Transfers -------------------------------------------------------------------------------
 
+fim %<>%
+  mutate(social_benefits = social_benefits - federal_rebate_checks - unemployment_insurance,
+         federal_social_benefits = federal_social_benefits - federal_rebate_checks - federal_unemployment_insurance,
+         state_social_benefits = state_social_benefits - state_unemployment_insurance)
 ## Category totals
-tt = c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes")
+tt = c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes",
+       'rebate_checks', 'unemployment_insurance')
+
 ## Category totals by level of government
 tts = c(tt, paste0("federal_", tt), paste0("state_", tt)) # totals and disaggregations by level of goverment
 
@@ -205,6 +236,14 @@ subsidies = grep("subsidies", tts, value=T)
 
 # Translate Taxes & Transfers into Consumption --------------------------------------------------------------------
 covid_start <- as.Date('2020-06-30')
+
+unemployment_insurance <- paste0(c('unemployment_insurance', 'state_unemployment_insurance',
+                                  'federal_unemployment_insurance'),
+                                '_net')
+
+rebate_checks <-
+  paste0(c('rebate_checks', 'state_rebate_checks', 'federal_rebate_checks'), '_net')
+
 ## Dates for new MPCs
 
 nlag <- 12
@@ -235,12 +274,26 @@ fim <-
       across(
         .cols = all_of(social_benefits),
         .fns = ~ if_else(date >= covid_start & date <= covid_end,
-                         mpc_social_benefits_CRN19(.x),
+                         mpc_social_benefits(.x),
                          mpc_social_benefits(.x)
         ),
         .names = "{.col}_xmpc"
       )
     ) %>%
+  mutate(
+    across(
+      .cols = all_of(unemployment_insurance),
+      .fns = ~ mpc_ui_CRN19(.x),
+      .names = "{.col}_xmpc"
+    )
+  ) %>%
+  mutate(
+    across(
+      .cols = all_of(rebate_checks),
+      .fns = ~ mpc_rebate_CRN19(.x),
+      .names = "{.col}_xmpc"
+    )
+  )  %>%
     ## CORPORATE TAXES
     mutate(
       across(
@@ -275,8 +328,16 @@ fim <-
       )
     )
 
+# Add rebate and ui back into social benefits
+# 
+fim %<>% 
+  mutate(social_benefits_net_xmpc = social_benefits_net_xmpc + unemployment_insurance_net_xmpc + rebate_checks_net_xmpc,
+         state_social_benefits_net_xmpc = state_social_benefits_net_xmpc + state_unemployment_insurance_net_xmpc + state_rebate_checks_net_xmpc,
+         federal_social_benefits_net_xmpc = federal_social_benefits_net_xmpc + federal_unemployment_insurance_net_xmpc + federal_rebate_checks_net_xmpc)
 
 # Sum up transfers net taxes
+tt = paste0(c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes"),
+            '_net')
 
 govt_taxes_transfers <- paste0(tt, "_xmpc")
 state_taxes_transfers <- paste0("state_", tt, "_xmpc")
@@ -323,13 +384,14 @@ fim <-
         .names = "{.col}_cont"
       )
     ) %>%
-  setnames(paste0(net, "_cont"), contributionTTS) %>%
+  setnames(paste0(net, "_cont"), contributionTTS) #%>%
   ## Add contribution of subsidies to contribution of taxes and transfers
-  mutate(
-    taxes_transfers_cont = taxes_transfers_cont + subsidies_cont,
-    federal_taxes_transfers_cont = federal_taxes_transfers_cont + federal_subsidies_cont,
-    state_taxes_transfers_cont = state_taxes_transfers_cont + state_subsidies_cont
-  )
+  # I think this is double counting
+# mutate(
+  #   taxes_transfers_cont = taxes_transfers_cont + subsidies_cont,
+  #   federal_taxes_transfers_cont = federal_taxes_transfers_cont + federal_subsidies_cont,
+  #   state_taxes_transfers_cont = state_taxes_transfers_cont + state_subsidies_cont
+  # )
 
 # We forecast two years ahead
 ####change to 6 quarters ahead for COVID19 as of August 3rd 2020

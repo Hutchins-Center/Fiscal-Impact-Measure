@@ -9,7 +9,7 @@ stRequired <- c("tidyverse", "reshape2", 'zoo',
                 "rmarkdown", "TTR", "data.table", "lubridate",
                 "magrittr", 'readxl', 'writexl', 'ggplot2', 'ggthemes',
                 'ggtext',  'gridExtra',  'wesanderson', 'tinytex',
-                "here", 'tidylog')
+                "here")
 # The required packages
 for (stName in stRequired) {
   if (!(stName %in% stInstalled)) {
