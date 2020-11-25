@@ -254,7 +254,7 @@ fim %>%
 
 ```{r transfers}
 fim %>%
-  select(date, health_cont, social_benefits_cont) %>%
+  select(date, ) %>%
   pivot_longer(
     where(
       is.numeric
