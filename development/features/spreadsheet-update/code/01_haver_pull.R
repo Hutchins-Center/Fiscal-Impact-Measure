@@ -26,7 +26,11 @@ data1 <- data1 %>% mutate(
   gftfpe = gftfpe * 1000,
   gftfpp = gftfpp * 1000,
   gftfpv = gftfpv * 1000,
-  gsubl = (gfsubg + gfsube + gfsubk) * 1000,
+  gfsubp = gfsubp * 1000,
+  gfsubg = gfsubg * 1000,
+  gfsube = gfsube * 1000,
+  gfsubk = gfsubk * 1000,
+  gsubl = (gfsubg + gfsube + gfsubk),
   gfegl = (gfegc + gfege + gfegv ) * 1000
 ) %>% select(-c(gfegc, gfege, gfegv))
 
