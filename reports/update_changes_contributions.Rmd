@@ -96,7 +96,7 @@ previous %>%
              fill = key)
          ) +
   geom_col(position = 'dodge') +
-  labs(x = '',
+  labs(x = '', 
        y = 'Percentage points',
        title =  'Quarterly Fiscal Impact, Four Quarter Moving Average') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
@@ -399,4 +399,26 @@ previous %>%
   theme_hc() +
   theme(plot.title.position = 'plot')
 ```
-
+```{r social-benefits}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, social_benefits_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of S&L Subsidies') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```

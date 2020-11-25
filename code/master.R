@@ -4,3 +4,9 @@ source('code/02_projections.R')
 source('code/03_calculations.R')
 source('code/04_figures.R')
 source('code/05_renderFigures.R')
+
+# NO ADDONS
+source('code/01_datapull.R')
+source('code/02_projections.R')
+source('code/03_calculations_noaddons.R')
+source('code/04_figures.R')
