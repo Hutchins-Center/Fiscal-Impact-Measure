@@ -39,7 +39,7 @@ previous_path <- glue::glue('results/{ previous_month }-{previous_year }')
 
 previous <- read_excel(glue('{previous_path}/fim-{previous_month}-{previous_year}.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
-  filter(date >= last_hist_date & date <=last_proj_date) %>%
+  filter(date >= '2017-12-31' & date <= last_proj_date)  %>%
   select(-contains(c('add', 'override')))
 
 update_month <- month(Sys.Date())
@@ -49,7 +49,7 @@ update_path <- glue::glue('results/{ update_month }-{update_year }')
 # update <- read_excel(glue('{update_path}/fim-{update_month}-{update_year}.xlsx'), na = "NA")
 update <- read_excel(glue('{update_path}/fim.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
-  filter(date >= last_hist_date & date <= last_proj_date) %>%
+  filter(date >= '2017-12-31' & date <= last_proj_date) %>%
   select(-contains(c('add', 'override')))
 ```
 

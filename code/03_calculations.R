@@ -235,7 +235,7 @@ noncorp = grep("noncorp", tts, value=T)
 corporate = grep("corporate", tts, value=T)
 subsidies = grep("subsidies", tts, value=T)
 
-# Translate Taxes & Transfers into Consumption --------------------------------------------------------------------
+1# Translate Taxes & Transfers into Consumption --------------------------------------------------------------------
 covid_start <- as.Date('2020-06-30')
 
 unemployment_insurance <- paste0(c('unemployment_insurance', 'state_unemployment_insurance',
@@ -397,7 +397,11 @@ fim <-
 # We forecast two years ahead
 ####change to 6 quarters ahead for COVID19 as of August 3rd 2020
 #last_proj_date = fim$date[which(fim$date == last_hist_date) + 8]
-
+fim %<>%
+  mutate(social_benefits = social_benefits + unemployment_insurance,
+         federal_social_benefits = federal_social_benefits + federal_unemployment_insurance + rebate_checks,
+         state_social_benefits = state_social_benefits + state_unemployment_insurance 
+  )
 
 # 4.6 Export data -------------------------------------------------------------------------------------------
 firstDate <- "1999-12-31"
