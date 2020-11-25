@@ -1,0 +1,527 @@
+---
+title: "Fiscal Impact Update: Changes in Contributions Relative to Previous Update"
+author: " Manuel Alcala Kovalski, Tyler Powell, Kadija Yilla"
+date: "`r Sys.Date()`"
+output: html_document
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  echo = FALSE,
+  fig.align = 'center',
+  warnings = FALSE,
+  message = FALSE,
+  cache = TRUE
+)
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r source}
+source('src/packages.R')
+library('glue')
+```
+
+
+```{r pull data, warnings = FALSE, message = FALSE, hide = TRUE, include = FALSE}
+last_hist_date <- as.Date("2020-09-30")
+last_proj_date <- last_hist_date + years(2) + months(7)
+
+previous_month <- month(Sys.Date() - months(1))
+previous_year <- year(Sys.Date() - months(1)) 
+previous_path <- glue::glue('results/{ previous_month }-{previous_year }')
+
+previous <- read_excel(glue('{previous_path}/fim-{previous_month}-{previous_year}.xlsx'), na = "NA") %>%
+  mutate(date = as_date(date)) %>%
+  filter(date >= '2017-12-31' & date <=last_proj_date) %>%
+  select(-contains(c('add', 'override')))
+
+update_month <- month(Sys.Date())
+update_year <- year(Sys.Date())
+update_path <- glue::glue('results/{ update_month }-{update_year }')
+      
+# update <- read_excel(glue('{update_path}/fim-{update_month}-{update_year}.xlsx'), na = "NA")
+update <- read_excel(glue('{update_path}/fim.xlsx'), na = "NA") %>%
+  mutate(date = as_date(date)) %>%
+  filter(date >= '2017-12-31' & date <= last_proj_date) %>%
+  select(-contains(c('add', 'override')))
+```
+
+
+## Purchases and Grants
+
+```{r purchases-federal}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, federal_nom, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Federal Purchases') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r purchases-state}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, state_local_nom, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'S&L Purchases') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r cgrants}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, federal_cgrants, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Consumption Grants') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r igrants}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, federal_igrants, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Investment Grants') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+## Taxes and Transfers
+```{r personal-tax}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, personal_taxes, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Personal Taxes') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+```{r corporate-tax}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, corporate_taxes, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Corporate Taxes') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+```{r production-taxes}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, production_taxes, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Production Taxes') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+```{r payroll-taxes}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, payroll_taxes, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Payroll Taxes') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+# Transfers
+```{r health-outlays}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, health_outlays, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Health Outlays') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r subsidies}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, subsidies, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Subsidies') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r subsidies_federal}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, federal_subsidies, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Federal Subsidies') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r subsidies_state}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, state_subsidies, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'S&L Subsidies') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r social-benefits}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, social_benefits, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'S&L Social Benefits') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+```{r federal-social-benefits}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, federal_social_benefits, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Federal Social Benefits') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r statesocial-benefits}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, state_social_benefits, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'S&L Social Benefits') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+
+```{r unemployment_insurance}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, unemployment_insurance, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Unemployment Insurance') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r federal_unemployment_insurance}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, federal_unemployment_insurance, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Federal Unemployment Insurance') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+
+
+```{r state_unemployment_insurance}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, state_unemployment_insurance, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'State Unemployment Insurance') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+
+```{r rebate_checks}
+previous %>%
+  mutate(key = 'previous') %>%
+  bind_rows(update %>% mutate(key = 'update')) %>%
+  select(date, rebate_checks, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +
+  labs(x = '',
+       y = '',
+       title =  'Rebate Checks') +
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
+  geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
