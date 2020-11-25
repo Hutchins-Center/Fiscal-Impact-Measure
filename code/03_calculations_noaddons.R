@@ -372,9 +372,7 @@ dir.create(here('results/', thismonth))
 
 # Write csv to current month's folder
 results <- 
-  list(fim_noaddons = fim,
-       fim_interactive = fim_interactive,
-       xx = xx)
+  list(fim_noaddons = fim)
 
 list(data = results, 
      names = names(results)) %>%
