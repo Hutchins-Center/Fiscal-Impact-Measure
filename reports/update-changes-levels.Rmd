@@ -101,6 +101,7 @@ previous %>%
        y = '',
        title =  'S&L Purchases') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+    geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc() +
   theme(plot.title.position = 'plot')
 ```
@@ -124,7 +125,8 @@ previous %>%
   labs(x = '',
        y = '',
        title =  'Consumption Grants') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
+    geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc() +
   theme(plot.title.position = 'plot')
 ```
@@ -174,6 +176,7 @@ previous %>%
        y = '',
        title =  'Personal Taxes') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+    geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc() +
   theme(plot.title.position = 'plot')
 ```
@@ -197,6 +200,7 @@ previous %>%
        y = '',
        title =  'Corporate Taxes') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+    geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc() +
   theme(plot.title.position = 'plot')
 ```
@@ -220,6 +224,7 @@ previous %>%
        y = '',
        title =  'Production Taxes') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+    geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc() +
   theme(plot.title.position = 'plot')
 ```
@@ -243,6 +248,7 @@ previous %>%
        y = '',
        title =  'Payroll Taxes') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
+    geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc() +
   theme(plot.title.position = 'plot')
 ```
@@ -366,12 +372,13 @@ previous %>%
   geom_col(position = 'dodge') +
   labs(x = '',
        y = '',
-       title =  'S&L Social Benefits') +
+       title =  'Social Benefits') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
   geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc() +
   theme(plot.title.position = 'plot')
 ```
+
 ```{r federal-social-benefits}
 previous %>%
   mutate(key = 'previous') %>%
@@ -397,7 +404,7 @@ previous %>%
   theme(plot.title.position = 'plot')
 ```
 
-```{r statesocial-benefits}
+```{r state-social-benefits}
 previous %>%
   mutate(key = 'previous') %>%
   bind_rows(update %>% mutate(key = 'update')) %>%
