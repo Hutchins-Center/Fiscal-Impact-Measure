@@ -366,7 +366,7 @@ previous %>%
   geom_col(position = 'dodge') +
   labs(x = '',
        y = '',
-       title =  'S&L Social Benefits') +
+       title =  'Social Benefits') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +
   geom_vline(xintercept  = last_hist_date, linetype =  'dotted') +
   theme_hc() +
@@ -397,7 +397,7 @@ previous %>%
   theme(plot.title.position = 'plot')
 ```
 
-```{r statesocial-benefits}
+```{r state-social-benefits}
 previous %>%
   mutate(key = 'previous') %>%
   bind_rows(update %>% mutate(key = 'update')) %>%

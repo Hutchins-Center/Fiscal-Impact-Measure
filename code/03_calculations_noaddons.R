@@ -333,9 +333,9 @@ fim <-
   fim %>% 
   mutate(fim_bars = federal_cont + state_local_cont + taxes_transfers_cont,
          fim_bars_ma = SMA(na.locf(fim_bars, na.rm = F), n = 4)) %>% 
-  filter(date <= as.Date(last_proj_date)) %>%
-  select(date, fim_bars, fim_bars_ma, state_local_cont, federal_cont, taxes_transfers_cont, 
-         subsidies_cont, recession, everything())
+  filter(date <= as.Date('2025-12-31')) %>%
+  select(date, state_health_outlays, state_social_benefits,
+         state_noncorp_taxes, state_corporate_)
 # 4.6.2 Website interactive ----------------------------------------------------------------------------------
 firstDate <- "1999-12-31"
 
