@@ -173,7 +173,7 @@ previous %>%
   geom_col(position = 'dodge') +
   labs(x = '',
        y = 'Percentage points',
-       title =  'Contribution of Federal Purchases') +
+       title =  'Contribution of Federal Purchases Without Grants') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +      geom_vline(xintercept  = last_hist_date, linetype =  'dotted') + 
   theme_hc() +
   theme(plot.title.position = 'plot')
@@ -417,7 +417,7 @@ previous %>%
   geom_col(position = 'dodge') +
   labs(x = '',
        y = 'Percentage points',
-       title =  'Contribution of S&L Subsidies') +
+       title =  'Contribution of Social Benefits') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) +      geom_vline(xintercept  = last_hist_date, linetype =  'dotted') + 
   theme_hc() +
   theme(plot.title.position = 'plot')
