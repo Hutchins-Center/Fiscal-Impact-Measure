@@ -1,0 +1,119 @@
+---
+title: "NIPA Consistent FIM Check"
+author: "Manuel Alcalá Kovalski"
+date: "12/2/2020"
+output:
+  rmarkdown::html_vignette:
+    toc: yes
+    toc_depth: 3
+vignette: |
+  %\VignetteIndexEntry{The comparedf function for NIPA}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r include = FALSE}
+knitr::opts_chunk$set(eval = TRUE, message = FALSE, results = 'asis', comment='', warning = FALSE)
+options(width = 120)
+```
+
+```{r}
+source('src/packages.R')
+```
+
+# Contributions to Percent Change in Real Gross Domestic Product (NIPA)
+First, we want to load Table 1.1.2. "Contributions to Percent Change in Real Gross Domestic Product" from [BEA](https://apps.bea.gov/iTable/iTable.cfm?reqid=19&step=3&isuri=1&nipa_table_list=2&categories=survey) for quarterly data between 2018 and 2020. 
+```{r}
+library(bea.R)
+beaKey <- '6937C372-8AEE-4BFD-B991-1A469B942C41'
+
+beaSpecs <- list(
+	'UserID' = beaKey ,
+	'Method' = 'GetData',
+	'datasetname' = 'NIPA',
+	'TableName' = 'T10102',
+	'Frequency' = 'Q',
+	'Year' = '2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020'
+)
+
+nipa_contributions <-
+  beaGet(beaSpecs,  asTable = TRUE, asWide = FALSE) %>%
+  as_tibble()
+library(kableExtra)
+paged_table(nipa_contributions, options(row.print = 11))
+```
+In order to compare our methodology to the BEA's, we need to look at "Government consumption expenditures and gross investment" (Line item 22) and its subcomponents: Federal (Line item 23) and State and local (Line item 26). 
+
+```{r nipa-condensed}
+nipa_contributions <-
+  nipa_contributions %>%
+  select(TimePeriod, LineDescription, DataValue) %>%
+  filter(LineDescription %in% c('Government consumption expenditures and gross investment', 'Federal', 'State and local')
+  ) %>%  
+  mutate(TimePeriod = as.yearqtr(TimePeriod)) %>%
+  rename(date = TimePeriod) %>%
+  pivot_wider(names_from = LineDescription, values_from = DataValue) %>%
+  column_to_rownames(var = 'date')
+
+paged_table(nipa_contributions, options(rows.print = 11, max.print = 11))
+```
+
+
+```{r, include = FALSE}
+source(here('development', 'features', 'nipa-consistent-FIM', 'code', '01_datapull.R'))
+source(here('development', 'features', 'nipa-consistent-FIM', 'code', '02_wrangle.R'))
+source(here('development', 'features', 'nipa-consistent-FIM', 'code', '03_projections.R'))
+source(here('development', 'features', 'nipa-consistent-FIM', 'code', '04_calculations.R'))
+source(here('development', 'features', 'nipa-consistent-FIM', 'code', '05_figures.R'))
+
+fim_nipa <- fim
+
+```
+
+
+```{r}
+
+fim_reduced <-
+  fim_nipa %>%
+  mutate(date = as.yearqtr(date)) %>%
+  select(date, purchases_cont, federal_purchases_cont, state_local_purchases_cont) %>%
+  filter(date >= '2010 Q1' & date <= '2020 Q3') %>%
+  column_to_rownames(var = 'date')
+  
+
+```
+
+```{r}
+paged_table(fim_reduced, options(digits = 2))
+```
+
+```{r, results = 'asis', include = FALSE}
+library('arsenal')
+```
+
+# Comparison 
+Differences between the NIPA consistent FIM and the BEA data are tolerated up to 0.06 due to potential rounding errors.
+
+The differences deteced table (all the way at the bottom) in the summary below shows that our estimates match the BEA's except for 2020 Q2 and 2020 Q3.
+
+In particular, our estimates for the contribution of Federal and State & Local purchases for 2020 Q2 are both 0.2 lower than BEA. Similarily, our 2020 Q3 estimate is 0.11 lower for both Federal and State. 
+```{r, results = 'markup'}
+
+
+contributions_comparison <-
+  comparedf(fim_reduced , 
+            nipa_contributions,
+            tol.vars = c(purchases_cont = 'Government consumption expenditures and gross investment',
+                             federal_purchases_cont = "Federal",
+                             state_local_purchases_cont = "State and local"),
+            tol.num.val = 0.01
+) 
+
+```
+
+```{r}
+summary(contributions_comparison)
+
+```
+
+

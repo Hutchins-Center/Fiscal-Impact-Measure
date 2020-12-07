@@ -235,7 +235,7 @@ noncorp = grep("noncorp", tts, value=T)
 corporate = grep("corporate", tts, value=T)
 subsidies = grep("subsidies", tts, value=T)
 
-1# Translate Taxes & Transfers into Consumption --------------------------------------------------------------------
+# Translate Taxes & Transfers into Consumption --------------------------------------------------------------------
 covid_start <- as.Date('2020-06-30')
 
 unemployment_insurance <- paste0(c('unemployment_insurance', 'state_unemployment_insurance',

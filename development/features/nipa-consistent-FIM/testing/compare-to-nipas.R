@@ -28,7 +28,7 @@ summary(
     fim_nipa_state %>%
     mutate(state_social_benefits = state_social_benefits + state_health_outlays),
                   bea_state,
-                  tol.num.val = 0.1)
+                  tol.num.val = 0)
   )
 
 
@@ -49,7 +49,7 @@ summary(
     fim_nipa_federal %>%
       mutate(federal_social_benefits = federal_social_benefits + federal_health_outlays),
     bea_federal,
-    tol.num.val = 0.1)
+    tol.num.val = 0)
 )
 
 

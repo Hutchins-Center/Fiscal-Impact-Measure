@@ -1,0 +1,1575 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+  \usepackage{amssymb}
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={NIPA Consistent FIM Check},
+  pdfauthor={Manuel Alcalá Kovalski},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{NIPA Consistent FIM Check}
+\author{Manuel Alcalá Kovalski}
+\date{12/2/2020}
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{source}\NormalTok{(}\StringTok{\textquotesingle{}src/packages.R\textquotesingle{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{contributions-to-percent-change-in-real-gross-domestic-product-nipa}{%
+\section{Contributions to Percent Change in Real Gross Domestic Product
+(NIPA)}\label{contributions-to-percent-change-in-real-gross-domestic-product-nipa}}
+
+First, we want to load Table 1.1.2. ``Contributions to Percent Change in
+Real Gross Domestic Product'' from
+\href{https://apps.bea.gov/iTable/iTable.cfm?reqid=19\&step=3\&isuri=1\&nipa_table_list=2\&categories=survey}{BEA}
+for quarterly data between 2018 and 2020.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(bea.R)}
+\NormalTok{beaKey }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{}6937C372{-}8AEE{-}4BFD{-}B991{-}1A469B942C41\textquotesingle{}}
+
+\NormalTok{beaSpecs }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+    \StringTok{\textquotesingle{}UserID\textquotesingle{}} \OtherTok{=}\NormalTok{ beaKey ,}
+    \StringTok{\textquotesingle{}Method\textquotesingle{}} \OtherTok{=} \StringTok{\textquotesingle{}GetData\textquotesingle{}}\NormalTok{,}
+    \StringTok{\textquotesingle{}datasetname\textquotesingle{}} \OtherTok{=} \StringTok{\textquotesingle{}NIPA\textquotesingle{}}\NormalTok{,}
+    \StringTok{\textquotesingle{}TableName\textquotesingle{}} \OtherTok{=} \StringTok{\textquotesingle{}T10102\textquotesingle{}}\NormalTok{,}
+    \StringTok{\textquotesingle{}Frequency\textquotesingle{}} \OtherTok{=} \StringTok{\textquotesingle{}Q\textquotesingle{}}\NormalTok{,}
+    \StringTok{\textquotesingle{}Year\textquotesingle{}} \OtherTok{=} \StringTok{\textquotesingle{}2018, 2019, 2020\textquotesingle{}}
+\NormalTok{)}
+
+\NormalTok{nipa\_contributions }\OtherTok{\textless{}{-}}
+  \FunctionTok{beaGet}\NormalTok{(beaSpecs,  }\AttributeTok{asTable =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{asWide =} \ConstantTok{FALSE}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{as\_tibble}\NormalTok{()}
+\FunctionTok{library}\NormalTok{(kableExtra)}
+\FunctionTok{paged\_table}\NormalTok{(nipa\_contributions)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{tabular}{l|l|l|l|l|l|l|l|r}
+\hline
+TableName & SeriesCode & LineNumber & LineDescription & TimePeriod & METRIC\_NAME & CL\_UNIT & UNIT\_MULT & DataValue\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2018Q1 & Fisher Quantity Index & Percent change, annual rate & 0 & 3.80\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2018Q2 & Fisher Quantity Index & Percent change, annual rate & 0 & 2.70\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2018Q3 & Fisher Quantity Index & Percent change, annual rate & 0 & 2.10\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2018Q4 & Fisher Quantity Index & Percent change, annual rate & 0 & 1.30\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2019Q1 & Fisher Quantity Index & Percent change, annual rate & 0 & 2.90\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2019Q2 & Fisher Quantity Index & Percent change, annual rate & 0 & 1.50\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2019Q3 & Fisher Quantity Index & Percent change, annual rate & 0 & 2.60\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2019Q4 & Fisher Quantity Index & Percent change, annual rate & 0 & 2.40\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2020Q1 & Fisher Quantity Index & Percent change, annual rate & 0 & -5.00\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2020Q2 & Fisher Quantity Index & Percent change, annual rate & 0 & -31.40\\
+\hline
+T10102 & A191RL & 1 & Gross domestic product & 2020Q3 & Fisher Quantity Index & Percent change, annual rate & 0 & 33.10\\
+\hline
+T10102 & A009RY & 10 & Structures & 2018Q1 & Quantity Contributions & Level & 0 & 0.60\\
+\hline
+T10102 & A009RY & 10 & Structures & 2018Q2 & Quantity Contributions & Level & 0 & 0.15\\
+\hline
+T10102 & A009RY & 10 & Structures & 2018Q3 & Quantity Contributions & Level & 0 & -0.19\\
+\hline
+T10102 & A009RY & 10 & Structures & 2018Q4 & Quantity Contributions & Level & 0 & -0.40\\
+\hline
+T10102 & A009RY & 10 & Structures & 2019Q1 & Quantity Contributions & Level & 0 & 0.24\\
+\hline
+T10102 & A009RY & 10 & Structures & 2019Q2 & Quantity Contributions & Level & 0 & 0.05\\
+\hline
+T10102 & A009RY & 10 & Structures & 2019Q3 & Quantity Contributions & Level & 0 & 0.11\\
+\hline
+T10102 & A009RY & 10 & Structures & 2019Q4 & Quantity Contributions & Level & 0 & -0.16\\
+\hline
+T10102 & A009RY & 10 & Structures & 2020Q1 & Quantity Contributions & Level & 0 & -0.11\\
+\hline
+T10102 & A009RY & 10 & Structures & 2020Q2 & Quantity Contributions & Level & 0 & -1.11\\
+\hline
+T10102 & A009RY & 10 & Structures & 2020Q3 & Quantity Contributions & Level & 0 & -0.47\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2018Q1 & Quantity Contributions & Level & 0 & 0.57\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2018Q2 & Quantity Contributions & Level & 0 & 0.15\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2018Q3 & Quantity Contributions & Level & 0 & 0.35\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2018Q4 & Quantity Contributions & Level & 0 & 0.54\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2019Q1 & Quantity Contributions & Level & 0 & 0.12\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2019Q2 & Quantity Contributions & Level & 0 & -0.23\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2019Q3 & Quantity Contributions & Level & 0 & -0.10\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2019Q4 & Quantity Contributions & Level & 0 & -0.10\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2020Q1 & Quantity Contributions & Level & 0 & -0.91\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2020Q2 & Quantity Contributions & Level & 0 & -2.03\\
+\hline
+T10102 & Y033RY & 11 & Equipment & 2020Q3 & Quantity Contributions & Level & 0 & 3.19\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2018Q1 & Quantity Contributions & Level & 0 & 0.38\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2018Q2 & Quantity Contributions & Level & 0 & 0.52\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2018Q3 & Quantity Contributions & Level & 0 & 0.19\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2018Q4 & Quantity Contributions & Level & 0 & 0.52\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2019Q1 & Quantity Contributions & Level & 0 & 0.20\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2019Q2 & Quantity Contributions & Level & 0 & 0.19\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2019Q3 & Quantity Contributions & Level & 0 & 0.24\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2019Q4 & Quantity Contributions & Level & 0 & 0.21\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2020Q1 & Quantity Contributions & Level & 0 & 0.11\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2020Q2 & Quantity Contributions & Level & 0 & -0.53\\
+\hline
+T10102 & Y001RY & 12 & Intellectual property products & 2020Q3 & Quantity Contributions & Level & 0 & 0.34\\
+\hline
+T10102 & A011RY & 13 & Residential & 2018Q1 & Quantity Contributions & Level & 0 & -0.13\\
+\hline
+T10102 & A011RY & 13 & Residential & 2018Q2 & Quantity Contributions & Level & 0 & -0.07\\
+\hline
+T10102 & A011RY & 13 & Residential & 2018Q3 & Quantity Contributions & Level & 0 & -0.22\\
+\hline
+T10102 & A011RY & 13 & Residential & 2018Q4 & Quantity Contributions & Level & 0 & -0.21\\
+\hline
+T10102 & A011RY & 13 & Residential & 2019Q1 & Quantity Contributions & Level & 0 & -0.06\\
+\hline
+T10102 & A011RY & 13 & Residential & 2019Q2 & Quantity Contributions & Level & 0 & -0.08\\
+\hline
+T10102 & A011RY & 13 & Residential & 2019Q3 & Quantity Contributions & Level & 0 & 0.17\\
+\hline
+T10102 & A011RY & 13 & Residential & 2019Q4 & Quantity Contributions & Level & 0 & 0.22\\
+\hline
+T10102 & A011RY & 13 & Residential & 2020Q1 & Quantity Contributions & Level & 0 & 0.68\\
+\hline
+T10102 & A011RY & 13 & Residential & 2020Q2 & Quantity Contributions & Level & 0 & -1.60\\
+\hline
+T10102 & A011RY & 13 & Residential & 2020Q3 & Quantity Contributions & Level & 0 & 2.17\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2018Q1 & Quantity Contributions & Level & 0 & 0.41\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2018Q2 & Quantity Contributions & Level & 0 & -0.94\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2018Q3 & Quantity Contributions & Level & 0 & 1.58\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2018Q4 & Quantity Contributions & Level & 0 & 0.23\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2019Q1 & Quantity Contributions & Level & 0 & 0.21\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2019Q2 & Quantity Contributions & Level & 0 & -0.97\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2019Q3 & Quantity Contributions & Level & 0 & -0.09\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2019Q4 & Quantity Contributions & Level & 0 & -0.82\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2020Q1 & Quantity Contributions & Level & 0 & -1.34\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2020Q2 & Quantity Contributions & Level & 0 & -3.50\\
+\hline
+T10102 & A014RY & 14 & Change in private inventories & 2020Q3 & Quantity Contributions & Level & 0 & 6.55\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2018Q1 & Quantity Contributions & Level & 0 & 0.29\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2018Q2 & Quantity Contributions & Level & 0 & 0.25\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2018Q3 & Quantity Contributions & Level & 0 & -1.83\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2018Q4 & Quantity Contributions & Level & 0 & -0.27\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2019Q1 & Quantity Contributions & Level & 0 & 0.55\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2019Q2 & Quantity Contributions & Level & 0 & -0.79\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2019Q3 & Quantity Contributions & Level & 0 & 0.04\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2019Q4 & Quantity Contributions & Level & 0 & 1.52\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2020Q1 & Quantity Contributions & Level & 0 & 1.13\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2020Q2 & Quantity Contributions & Level & 0 & 0.62\\
+\hline
+T10102 & A019RY & 15 & Net exports of goods and services & 2020Q3 & Quantity Contributions & Level & 0 & -3.18\\
+\hline
+T10102 & A020RY & 16 & Exports & 2018Q1 & Quantity Contributions & Level & 0 & 0.34\\
+\hline
+T10102 & A020RY & 16 & Exports & 2018Q2 & Quantity Contributions & Level & 0 & 0.24\\
+\hline
+T10102 & A020RY & 16 & Exports & 2018Q3 & Quantity Contributions & Level & 0 & -0.66\\
+\hline
+T10102 & A020RY & 16 & Exports & 2018Q4 & Quantity Contributions & Level & 0 & 0.34\\
+\hline
+T10102 & A020RY & 16 & Exports & 2019Q1 & Quantity Contributions & Level & 0 & 0.22\\
+\hline
+T10102 & A020RY & 16 & Exports & 2019Q2 & Quantity Contributions & Level & 0 & -0.54\\
+\hline
+T10102 & A020RY & 16 & Exports & 2019Q3 & Quantity Contributions & Level & 0 & 0.10\\
+\hline
+T10102 & A020RY & 16 & Exports & 2019Q4 & Quantity Contributions & Level & 0 & 0.39\\
+\hline
+T10102 & A020RY & 16 & Exports & 2020Q1 & Quantity Contributions & Level & 0 & -1.12\\
+\hline
+T10102 & A020RY & 16 & Exports & 2020Q2 & Quantity Contributions & Level & 0 & -9.51\\
+\hline
+T10102 & A020RY & 16 & Exports & 2020Q3 & Quantity Contributions & Level & 0 & 4.95\\
+\hline
+T10102 & A253RY & 17 & Goods & 2018Q1 & Quantity Contributions & Level & 0 & 0.11\\
+\hline
+T10102 & A253RY & 17 & Goods & 2018Q2 & Quantity Contributions & Level & 0 & 0.67\\
+\hline
+T10102 & A253RY & 17 & Goods & 2018Q3 & Quantity Contributions & Level & 0 & -0.71\\
+\hline
+T10102 & A253RY & 17 & Goods & 2018Q4 & Quantity Contributions & Level & 0 & 0.34\\
+\hline
+T10102 & A253RY & 17 & Goods & 2019Q1 & Quantity Contributions & Level & 0 & 0.31\\
+\hline
+T10102 & A253RY & 17 & Goods & 2019Q2 & Quantity Contributions & Level & 0 & -0.74\\
+\hline
+T10102 & A253RY & 17 & Goods & 2019Q3 & Quantity Contributions & Level & 0 & 0.23\\
+\hline
+T10102 & A253RY & 17 & Goods & 2019Q4 & Quantity Contributions & Level & 0 & 0.19\\
+\hline
+T10102 & A253RY & 17 & Goods & 2020Q1 & Quantity Contributions & Level & 0 & -0.20\\
+\hline
+T10102 & A253RY & 17 & Goods & 2020Q2 & Quantity Contributions & Level & 0 & -6.56\\
+\hline
+T10102 & A253RY & 17 & Goods & 2020Q3 & Quantity Contributions & Level & 0 & 4.88\\
+\hline
+T10102 & A646RY & 18 & Services & 2018Q1 & Quantity Contributions & Level & 0 & 0.23\\
+\hline
+T10102 & A646RY & 18 & Services & 2018Q2 & Quantity Contributions & Level & 0 & -0.43\\
+\hline
+T10102 & A646RY & 18 & Services & 2018Q3 & Quantity Contributions & Level & 0 & 0.05\\
+\hline
+T10102 & A646RY & 18 & Services & 2018Q4 & Quantity Contributions & Level & 0 & 0.00\\
+\hline
+T10102 & A646RY & 18 & Services & 2019Q1 & Quantity Contributions & Level & 0 & -0.08\\
+\hline
+T10102 & A646RY & 18 & Services & 2019Q2 & Quantity Contributions & Level & 0 & 0.20\\
+\hline
+T10102 & A646RY & 18 & Services & 2019Q3 & Quantity Contributions & Level & 0 & -0.13\\
+\hline
+T10102 & A646RY & 18 & Services & 2019Q4 & Quantity Contributions & Level & 0 & 0.20\\
+\hline
+T10102 & A646RY & 18 & Services & 2020Q1 & Quantity Contributions & Level & 0 & -0.92\\
+\hline
+T10102 & A646RY & 18 & Services & 2020Q2 & Quantity Contributions & Level & 0 & -2.95\\
+\hline
+T10102 & A646RY & 18 & Services & 2020Q3 & Quantity Contributions & Level & 0 & 0.07\\
+\hline
+T10102 & A021RY & 19 & Imports & 2018Q1 & Quantity Contributions & Level & 0 & -0.05\\
+\hline
+T10102 & A021RY & 19 & Imports & 2018Q2 & Quantity Contributions & Level & 0 & 0.01\\
+\hline
+T10102 & A021RY & 19 & Imports & 2018Q3 & Quantity Contributions & Level & 0 & -1.17\\
+\hline
+T10102 & A021RY & 19 & Imports & 2018Q4 & Quantity Contributions & Level & 0 & -0.61\\
+\hline
+T10102 & A021RY & 19 & Imports & 2019Q1 & Quantity Contributions & Level & 0 & 0.33\\
+\hline
+T10102 & A021RY & 19 & Imports & 2019Q2 & Quantity Contributions & Level & 0 & -0.25\\
+\hline
+T10102 & A021RY & 19 & Imports & 2019Q3 & Quantity Contributions & Level & 0 & -0.06\\
+\hline
+T10102 & A021RY & 19 & Imports & 2019Q4 & Quantity Contributions & Level & 0 & 1.13\\
+\hline
+T10102 & A021RY & 19 & Imports & 2020Q1 & Quantity Contributions & Level & 0 & 2.25\\
+\hline
+T10102 & A021RY & 19 & Imports & 2020Q2 & Quantity Contributions & Level & 0 & 10.13\\
+\hline
+T10102 & A021RY & 19 & Imports & 2020Q3 & Quantity Contributions & Level & 0 & -8.12\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2018Q1 & Quantity Contributions & Level & 0 & 1.40\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2018Q2 & Quantity Contributions & Level & 0 & 2.13\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2018Q3 & Quantity Contributions & Level & 0 & 1.79\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2018Q4 & Quantity Contributions & Level & 0 & 1.05\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2019Q1 & Quantity Contributions & Level & 0 & 1.25\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2019Q2 & Quantity Contributions & Level & 0 & 2.47\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2019Q3 & Quantity Contributions & Level & 0 & 1.83\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2019Q4 & Quantity Contributions & Level & 0 & 1.07\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2020Q1 & Quantity Contributions & Level & 0 & -4.75\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2020Q2 & Quantity Contributions & Level & 0 & -24.01\\
+\hline
+T10102 & DPCERY & 2 & Personal consumption expenditures & 2020Q3 & Quantity Contributions & Level & 0 & 25.22\\
+\hline
+T10102 & A255RY & 20 & Goods & 2018Q1 & Quantity Contributions & Level & 0 & -0.19\\
+\hline
+T10102 & A255RY & 20 & Goods & 2018Q2 & Quantity Contributions & Level & 0 & 0.01\\
+\hline
+T10102 & A255RY & 20 & Goods & 2018Q3 & Quantity Contributions & Level & 0 & -1.08\\
+\hline
+T10102 & A255RY & 20 & Goods & 2018Q4 & Quantity Contributions & Level & 0 & -0.39\\
+\hline
+T10102 & A255RY & 20 & Goods & 2019Q1 & Quantity Contributions & Level & 0 & 0.34\\
+\hline
+T10102 & A255RY & 20 & Goods & 2019Q2 & Quantity Contributions & Level & 0 & -0.01\\
+\hline
+T10102 & A255RY & 20 & Goods & 2019Q3 & Quantity Contributions & Level & 0 & -0.08\\
+\hline
+T10102 & A255RY & 20 & Goods & 2019Q4 & Quantity Contributions & Level & 0 & 1.15\\
+\hline
+T10102 & A255RY & 20 & Goods & 2020Q1 & Quantity Contributions & Level & 0 & 1.36\\
+\hline
+T10102 & A255RY & 20 & Goods & 2020Q2 & Quantity Contributions & Level & 0 & 7.32\\
+\hline
+T10102 & A255RY & 20 & Goods & 2020Q3 & Quantity Contributions & Level & 0 & -7.67\\
+\hline
+T10102 & A656RY & 21 & Services & 2018Q1 & Quantity Contributions & Level & 0 & 0.13\\
+\hline
+T10102 & A656RY & 21 & Services & 2018Q2 & Quantity Contributions & Level & 0 & 0.00\\
+\hline
+T10102 & A656RY & 21 & Services & 2018Q3 & Quantity Contributions & Level & 0 & -0.09\\
+\hline
+T10102 & A656RY & 21 & Services & 2018Q4 & Quantity Contributions & Level & 0 & -0.23\\
+\hline
+T10102 & A656RY & 21 & Services & 2019Q1 & Quantity Contributions & Level & 0 & -0.01\\
+\hline
+T10102 & A656RY & 21 & Services & 2019Q2 & Quantity Contributions & Level & 0 & -0.24\\
+\hline
+T10102 & A656RY & 21 & Services & 2019Q3 & Quantity Contributions & Level & 0 & 0.02\\
+\hline
+T10102 & A656RY & 21 & Services & 2019Q4 & Quantity Contributions & Level & 0 & -0.03\\
+\hline
+T10102 & A656RY & 21 & Services & 2020Q1 & Quantity Contributions & Level & 0 & 0.90\\
+\hline
+T10102 & A656RY & 21 & Services & 2020Q2 & Quantity Contributions & Level & 0 & 2.80\\
+\hline
+T10102 & A656RY & 21 & Services & 2020Q3 & Quantity Contributions & Level & 0 & -0.46\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2018Q1 & Quantity Contributions & Level & 0 & 0.26\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2018Q2 & Quantity Contributions & Level & 0 & 0.50\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2018Q3 & Quantity Contributions & Level & 0 & 0.44\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2018Q4 & Quantity Contributions & Level & 0 & -0.16\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2019Q1 & Quantity Contributions & Level & 0 & 0.43\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2019Q2 & Quantity Contributions & Level & 0 & 0.86\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2019Q3 & Quantity Contributions & Level & 0 & 0.37\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2019Q4 & Quantity Contributions & Level & 0 & 0.42\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2020Q1 & Quantity Contributions & Level & 0 & 0.22\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2020Q2 & Quantity Contributions & Level & 0 & 0.77\\
+\hline
+T10102 & A822RY & 22 & Government consumption expenditures and gross investment & 2020Q3 & Quantity Contributions & Level & 0 & -0.76\\
+\hline
+T10102 & A823RY & 23 & Federal & 2018Q1 & Quantity Contributions & Level & 0 & 0.12\\
+\hline
+T10102 & A823RY & 23 & Federal & 2018Q2 & Quantity Contributions & Level & 0 & 0.23\\
+\hline
+T10102 & A823RY & 23 & Federal & 2018Q3 & Quantity Contributions & Level & 0 & 0.29\\
+\hline
+T10102 & A823RY & 23 & Federal & 2018Q4 & Quantity Contributions & Level & 0 & 0.12\\
+\hline
+T10102 & A823RY & 23 & Federal & 2019Q1 & Quantity Contributions & Level & 0 & 0.09\\
+\hline
+T10102 & A823RY & 23 & Federal & 2019Q2 & Quantity Contributions & Level & 0 & 0.58\\
+\hline
+T10102 & A823RY & 23 & Federal & 2019Q3 & Quantity Contributions & Level & 0 & 0.31\\
+\hline
+T10102 & A823RY & 23 & Federal & 2019Q4 & Quantity Contributions & Level & 0 & 0.26\\
+\hline
+T10102 & A823RY & 23 & Federal & 2020Q1 & Quantity Contributions & Level & 0 & 0.10\\
+\hline
+T10102 & A823RY & 23 & Federal & 2020Q2 & Quantity Contributions & Level & 0 & 1.17\\
+\hline
+T10102 & A823RY & 23 & Federal & 2020Q3 & Quantity Contributions & Level & 0 & -0.38\\
+\hline
+T10102 & A824RY & 24 & National defense & 2018Q1 & Quantity Contributions & Level & 0 & -0.02\\
+\hline
+T10102 & A824RY & 24 & National defense & 2018Q2 & Quantity Contributions & Level & 0 & 0.21\\
+\hline
+T10102 & A824RY & 24 & National defense & 2018Q3 & Quantity Contributions & Level & 0 & 0.20\\
+\hline
+T10102 & A824RY & 24 & National defense & 2018Q4 & Quantity Contributions & Level & 0 & 0.24\\
+\hline
+T10102 & A824RY & 24 & National defense & 2019Q1 & Quantity Contributions & Level & 0 & 0.22\\
+\hline
+T10102 & A824RY & 24 & National defense & 2019Q2 & Quantity Contributions & Level & 0 & 0.17\\
+\hline
+T10102 & A824RY & 24 & National defense & 2019Q3 & Quantity Contributions & Level & 0 & 0.22\\
+\hline
+T10102 & A824RY & 24 & National defense & 2019Q4 & Quantity Contributions & Level & 0 & 0.26\\
+\hline
+T10102 & A824RY & 24 & National defense & 2020Q1 & Quantity Contributions & Level & 0 & -0.01\\
+\hline
+T10102 & A824RY & 24 & National defense & 2020Q2 & Quantity Contributions & Level & 0 & 0.18\\
+\hline
+T10102 & A824RY & 24 & National defense & 2020Q3 & Quantity Contributions & Level & 0 & 0.17\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2018Q1 & Quantity Contributions & Level & 0 & 0.14\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2018Q2 & Quantity Contributions & Level & 0 & 0.01\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2018Q3 & Quantity Contributions & Level & 0 & 0.08\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2018Q4 & Quantity Contributions & Level & 0 & -0.12\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2019Q1 & Quantity Contributions & Level & 0 & -0.13\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2019Q2 & Quantity Contributions & Level & 0 & 0.41\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2019Q3 & Quantity Contributions & Level & 0 & 0.09\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2019Q4 & Quantity Contributions & Level & 0 & 0.00\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2020Q1 & Quantity Contributions & Level & 0 & 0.11\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2020Q2 & Quantity Contributions & Level & 0 & 0.98\\
+\hline
+T10102 & A825RY & 25 & Nondefense & 2020Q3 & Quantity Contributions & Level & 0 & -0.55\\
+\hline
+T10102 & A829RY & 26 & State and local & 2018Q1 & Quantity Contributions & Level & 0 & 0.13\\
+\hline
+T10102 & A829RY & 26 & State and local & 2018Q2 & Quantity Contributions & Level & 0 & 0.27\\
+\hline
+T10102 & A829RY & 26 & State and local & 2018Q3 & Quantity Contributions & Level & 0 & 0.15\\
+\hline
+T10102 & A829RY & 26 & State and local & 2018Q4 & Quantity Contributions & Level & 0 & -0.28\\
+\hline
+T10102 & A829RY & 26 & State and local & 2019Q1 & Quantity Contributions & Level & 0 & 0.34\\
+\hline
+T10102 & A829RY & 26 & State and local & 2019Q2 & Quantity Contributions & Level & 0 & 0.28\\
+\hline
+T10102 & A829RY & 26 & State and local & 2019Q3 & Quantity Contributions & Level & 0 & 0.06\\
+\hline
+T10102 & A829RY & 26 & State and local & 2019Q4 & Quantity Contributions & Level & 0 & 0.16\\
+\hline
+T10102 & A829RY & 26 & State and local & 2020Q1 & Quantity Contributions & Level & 0 & 0.12\\
+\hline
+T10102 & A829RY & 26 & State and local & 2020Q2 & Quantity Contributions & Level & 0 & -0.40\\
+\hline
+T10102 & A829RY & 26 & State and local & 2020Q3 & Quantity Contributions & Level & 0 & -0.38\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2018Q1 & Quantity Contributions & Level & 0 & 0.45\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2018Q2 & Quantity Contributions & Level & 0 & 0.88\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2018Q3 & Quantity Contributions & Level & 0 & 0.60\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2018Q4 & Quantity Contributions & Level & 0 & 0.53\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2019Q1 & Quantity Contributions & Level & 0 & 0.52\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2019Q2 & Quantity Contributions & Level & 0 & 1.57\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2019Q3 & Quantity Contributions & Level & 0 & 0.87\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2019Q4 & Quantity Contributions & Level & 0 & 0.12\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2020Q1 & Quantity Contributions & Level & 0 & 0.03\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2020Q2 & Quantity Contributions & Level & 0 & -2.06\\
+\hline
+T10102 & DGDSRY & 3 & Goods & 2020Q3 & Quantity Contributions & Level & 0 & 9.49\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2018Q1 & Quantity Contributions & Level & 0 & 0.29\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2018Q2 & Quantity Contributions & Level & 0 & 0.50\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2018Q3 & Quantity Contributions & Level & 0 & 0.23\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2018Q4 & Quantity Contributions & Level & 0 & 0.17\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2019Q1 & Quantity Contributions & Level & 0 & 0.07\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2019Q2 & Quantity Contributions & Level & 0 & 0.85\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2019Q3 & Quantity Contributions & Level & 0 & 0.44\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2019Q4 & Quantity Contributions & Level & 0 & 0.22\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2020Q1 & Quantity Contributions & Level & 0 & -0.93\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2020Q2 & Quantity Contributions & Level & 0 & 0.00\\
+\hline
+T10102 & DDURRY & 4 & Durable goods & 2020Q3 & Quantity Contributions & Level & 0 & 5.20\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2018Q1 & Quantity Contributions & Level & 0 & 0.16\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2018Q2 & Quantity Contributions & Level & 0 & 0.39\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2018Q3 & Quantity Contributions & Level & 0 & 0.37\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2018Q4 & Quantity Contributions & Level & 0 & 0.36\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2019Q1 & Quantity Contributions & Level & 0 & 0.45\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2019Q2 & Quantity Contributions & Level & 0 & 0.71\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2019Q3 & Quantity Contributions & Level & 0 & 0.43\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2019Q4 & Quantity Contributions & Level & 0 & -0.10\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2020Q1 & Quantity Contributions & Level & 0 & 0.97\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2020Q2 & Quantity Contributions & Level & 0 & -2.05\\
+\hline
+T10102 & DNDGRY & 5 & Nondurable goods & 2020Q3 & Quantity Contributions & Level & 0 & 4.29\\
+\hline
+T10102 & DSERRY & 6 & Services & 2018Q1 & Quantity Contributions & Level & 0 & 0.95\\
+\hline
+T10102 & DSERRY & 6 & Services & 2018Q2 & Quantity Contributions & Level & 0 & 1.25\\
+\hline
+T10102 & DSERRY & 6 & Services & 2018Q3 & Quantity Contributions & Level & 0 & 1.19\\
+\hline
+T10102 & DSERRY & 6 & Services & 2018Q4 & Quantity Contributions & Level & 0 & 0.52\\
+\hline
+T10102 & DSERRY & 6 & Services & 2019Q1 & Quantity Contributions & Level & 0 & 0.73\\
+\hline
+T10102 & DSERRY & 6 & Services & 2019Q2 & Quantity Contributions & Level & 0 & 0.90\\
+\hline
+T10102 & DSERRY & 6 & Services & 2019Q3 & Quantity Contributions & Level & 0 & 0.96\\
+\hline
+T10102 & DSERRY & 6 & Services & 2019Q4 & Quantity Contributions & Level & 0 & 0.96\\
+\hline
+T10102 & DSERRY & 6 & Services & 2020Q1 & Quantity Contributions & Level & 0 & -4.78\\
+\hline
+T10102 & DSERRY & 6 & Services & 2020Q2 & Quantity Contributions & Level & 0 & -21.95\\
+\hline
+T10102 & DSERRY & 6 & Services & 2020Q3 & Quantity Contributions & Level & 0 & 15.73\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2018Q1 & Quantity Contributions & Level & 0 & 1.83\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2018Q2 & Quantity Contributions & Level & 0 & -0.19\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2018Q3 & Quantity Contributions & Level & 0 & 1.72\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2018Q4 & Quantity Contributions & Level & 0 & 0.69\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2019Q1 & Quantity Contributions & Level & 0 & 0.71\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2019Q2 & Quantity Contributions & Level & 0 & -1.04\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2019Q3 & Quantity Contributions & Level & 0 & 0.34\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2019Q4 & Quantity Contributions & Level & 0 & -0.64\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2020Q1 & Quantity Contributions & Level & 0 & -1.56\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2020Q2 & Quantity Contributions & Level & 0 & -8.77\\
+\hline
+T10102 & A006RY & 7 & Gross private domestic investment & 2020Q3 & Quantity Contributions & Level & 0 & 11.78\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2018Q1 & Quantity Contributions & Level & 0 & 1.42\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2018Q2 & Quantity Contributions & Level & 0 & 0.76\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2018Q3 & Quantity Contributions & Level & 0 & 0.14\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2018Q4 & Quantity Contributions & Level & 0 & 0.46\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2019Q1 & Quantity Contributions & Level & 0 & 0.50\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2019Q2 & Quantity Contributions & Level & 0 & -0.07\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2019Q3 & Quantity Contributions & Level & 0 & 0.42\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2019Q4 & Quantity Contributions & Level & 0 & 0.17\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2020Q1 & Quantity Contributions & Level & 0 & -0.23\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2020Q2 & Quantity Contributions & Level & 0 & -5.27\\
+\hline
+T10102 & A007RY & 8 & Fixed investment & 2020Q3 & Quantity Contributions & Level & 0 & 5.23\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2018Q1 & Quantity Contributions & Level & 0 & 1.55\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2018Q2 & Quantity Contributions & Level & 0 & 0.82\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2018Q3 & Quantity Contributions & Level & 0 & 0.36\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2018Q4 & Quantity Contributions & Level & 0 & 0.66\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2019Q1 & Quantity Contributions & Level & 0 & 0.56\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2019Q2 & Quantity Contributions & Level & 0 & 0.01\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2019Q3 & Quantity Contributions & Level & 0 & 0.25\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2019Q4 & Quantity Contributions & Level & 0 & -0.04\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2020Q1 & Quantity Contributions & Level & 0 & -0.91\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2020Q2 & Quantity Contributions & Level & 0 & -3.67\\
+\hline
+T10102 & A008RY & 9 & Nonresidential & 2020Q3 & Quantity Contributions & Level & 0 & 3.06\\
+\hline
+\end{tabular}
+
+In order to compare our methodology to the BEA's, we need to look at
+``Government consumption expenditures and gross investment'' (Line item
+22) and its subcomponents: Federal (Line item 23) and State and local
+(Line item 26).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{nipa\_contributions }\SpecialCharTok{\%\textless{}\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(TimePeriod, LineDescription, DataValue) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(LineDescription }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}Government consumption expenditures and gross investment\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Federal\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}State and local\textquotesingle{}}\NormalTok{)}
+\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}  
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{TimePeriod =} \FunctionTok{as.yearqtr}\NormalTok{(TimePeriod)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_wider}\NormalTok{(}\AttributeTok{names\_from =}\NormalTok{ LineDescription, }\AttributeTok{values\_from =}\NormalTok{ DataValue)}
+  
+\FunctionTok{paged\_table}\NormalTok{(nipa\_contributions)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{tabular}{l|r|r|r}
+\hline
+TimePeriod & Government consumption expenditures and gross investment & Federal & State and local\\
+\hline
+2018 Q1 & 0.26 & 0.12 & 0.13\\
+\hline
+2018 Q2 & 0.50 & 0.23 & 0.27\\
+\hline
+2018 Q3 & 0.44 & 0.29 & 0.15\\
+\hline
+2018 Q4 & -0.16 & 0.12 & -0.28\\
+\hline
+2019 Q1 & 0.43 & 0.09 & 0.34\\
+\hline
+2019 Q2 & 0.86 & 0.58 & 0.28\\
+\hline
+2019 Q3 & 0.37 & 0.31 & 0.06\\
+\hline
+2019 Q4 & 0.42 & 0.26 & 0.16\\
+\hline
+2020 Q1 & 0.22 & 0.10 & 0.12\\
+\hline
+2020 Q2 & 0.77 & 1.17 & -0.40\\
+\hline
+2020 Q3 & -0.76 & -0.38 & -0.38\\
+\hline
+\end{tabular}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fim }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{date =} \FunctionTok{as.yearqtr}\NormalTok{(date)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(date }\SpecialCharTok{\textgreater{}=} \StringTok{\textquotesingle{}2018 Q1\textquotesingle{}} \SpecialCharTok{\&}\NormalTok{ date }\SpecialCharTok{\textless{}=} \StringTok{\textquotesingle{}2020 Q3\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(date, fim\_bars, federal\_cont, state\_local\_cont) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{paged\_table}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{tabular}{l|r|r|r}
+\hline
+date & fim\_bars & federal\_cont & state\_local\_cont\\
+\hline
+2018 Q1 & 0.2940449 & 0.0877420 & 0.1651340\\
+\hline
+2018 Q2 & 0.7133847 & 0.4297577 & 0.0722578\\
+\hline
+2018 Q3 & 0.4609231 & 0.2109925 & 0.2262143\\
+\hline
+2018 Q4 & -0.1287625 & 0.2371229 & -0.3937263\\
+\hline
+2019 Q1 & 0.5095737 & -0.1472996 & 0.5780487\\
+\hline
+2019 Q2 & 0.9103006 & 0.3571801 & 0.5028837\\
+\hline
+2019 Q3 & 0.6941990 & 0.3494500 & 0.0242558\\
+\hline
+2019 Q4 & 0.7733289 & 0.2127036 & 0.2037446\\
+\hline
+2020 Q1 & 0.3747326 & -0.0679152 & 0.2893119\\
+\hline
+2020 Q2 & 14.5885686 & 7.4179723 & -6.9774431\\
+\hline
+2020 Q3 & 3.7710863 & -0.6167607 & -0.3627439\\
+\hline
+\end{tabular}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fim }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{yq =} \FunctionTok{as.yearqtr}\NormalTok{(date, }\AttributeTok{format =} \StringTok{\textquotesingle{}\%Y{-}\%q\textquotesingle{}}\NormalTok{ )) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(yq)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{tabular}{l}
+\hline
+yq\\
+\hline
+1970 Q1\\
+\hline
+1970 Q2\\
+\hline
+1970 Q3\\
+\hline
+1970 Q4\\
+\hline
+1971 Q1\\
+\hline
+1971 Q2\\
+\hline
+1971 Q3\\
+\hline
+1971 Q4\\
+\hline
+1972 Q1\\
+\hline
+1972 Q2\\
+\hline
+1972 Q3\\
+\hline
+1972 Q4\\
+\hline
+1973 Q1\\
+\hline
+1973 Q2\\
+\hline
+1973 Q3\\
+\hline
+1973 Q4\\
+\hline
+1974 Q1\\
+\hline
+1974 Q2\\
+\hline
+1974 Q3\\
+\hline
+1974 Q4\\
+\hline
+1975 Q1\\
+\hline
+1975 Q2\\
+\hline
+1975 Q3\\
+\hline
+1975 Q4\\
+\hline
+1976 Q1\\
+\hline
+1976 Q2\\
+\hline
+1976 Q3\\
+\hline
+1976 Q4\\
+\hline
+1977 Q1\\
+\hline
+1977 Q2\\
+\hline
+1977 Q3\\
+\hline
+1977 Q4\\
+\hline
+1978 Q1\\
+\hline
+1978 Q2\\
+\hline
+1978 Q3\\
+\hline
+1978 Q4\\
+\hline
+1979 Q1\\
+\hline
+1979 Q2\\
+\hline
+1979 Q3\\
+\hline
+1979 Q4\\
+\hline
+1980 Q1\\
+\hline
+1980 Q2\\
+\hline
+1980 Q3\\
+\hline
+1980 Q4\\
+\hline
+1981 Q1\\
+\hline
+1981 Q2\\
+\hline
+1981 Q3\\
+\hline
+1981 Q4\\
+\hline
+1982 Q1\\
+\hline
+1982 Q2\\
+\hline
+1982 Q3\\
+\hline
+1982 Q4\\
+\hline
+1983 Q1\\
+\hline
+1983 Q2\\
+\hline
+1983 Q3\\
+\hline
+1983 Q4\\
+\hline
+1984 Q1\\
+\hline
+1984 Q2\\
+\hline
+1984 Q3\\
+\hline
+1984 Q4\\
+\hline
+1985 Q1\\
+\hline
+1985 Q2\\
+\hline
+1985 Q3\\
+\hline
+1985 Q4\\
+\hline
+1986 Q1\\
+\hline
+1986 Q2\\
+\hline
+1986 Q3\\
+\hline
+1986 Q4\\
+\hline
+1987 Q1\\
+\hline
+1987 Q2\\
+\hline
+1987 Q3\\
+\hline
+1987 Q4\\
+\hline
+1988 Q1\\
+\hline
+1988 Q2\\
+\hline
+1988 Q3\\
+\hline
+1988 Q4\\
+\hline
+1989 Q1\\
+\hline
+1989 Q2\\
+\hline
+1989 Q3\\
+\hline
+1989 Q4\\
+\hline
+1990 Q1\\
+\hline
+1990 Q2\\
+\hline
+1990 Q3\\
+\hline
+1990 Q4\\
+\hline
+1991 Q1\\
+\hline
+1991 Q2\\
+\hline
+1991 Q3\\
+\hline
+1991 Q4\\
+\hline
+1992 Q1\\
+\hline
+1992 Q2\\
+\hline
+1992 Q3\\
+\hline
+1992 Q4\\
+\hline
+1993 Q1\\
+\hline
+1993 Q2\\
+\hline
+1993 Q3\\
+\hline
+1993 Q4\\
+\hline
+1994 Q1\\
+\hline
+1994 Q2\\
+\hline
+1994 Q3\\
+\hline
+1994 Q4\\
+\hline
+1995 Q1\\
+\hline
+1995 Q2\\
+\hline
+1995 Q3\\
+\hline
+1995 Q4\\
+\hline
+1996 Q1\\
+\hline
+1996 Q2\\
+\hline
+1996 Q3\\
+\hline
+1996 Q4\\
+\hline
+1997 Q1\\
+\hline
+1997 Q2\\
+\hline
+1997 Q3\\
+\hline
+1997 Q4\\
+\hline
+1998 Q1\\
+\hline
+1998 Q2\\
+\hline
+1998 Q3\\
+\hline
+1998 Q4\\
+\hline
+1999 Q1\\
+\hline
+1999 Q2\\
+\hline
+1999 Q3\\
+\hline
+1999 Q4\\
+\hline
+2000 Q1\\
+\hline
+2000 Q2\\
+\hline
+2000 Q3\\
+\hline
+2000 Q4\\
+\hline
+2001 Q1\\
+\hline
+2001 Q2\\
+\hline
+2001 Q3\\
+\hline
+2001 Q4\\
+\hline
+2002 Q1\\
+\hline
+2002 Q2\\
+\hline
+2002 Q3\\
+\hline
+2002 Q4\\
+\hline
+2003 Q1\\
+\hline
+2003 Q2\\
+\hline
+2003 Q3\\
+\hline
+2003 Q4\\
+\hline
+2004 Q1\\
+\hline
+2004 Q2\\
+\hline
+2004 Q3\\
+\hline
+2004 Q4\\
+\hline
+2005 Q1\\
+\hline
+2005 Q2\\
+\hline
+2005 Q3\\
+\hline
+2005 Q4\\
+\hline
+2006 Q1\\
+\hline
+2006 Q2\\
+\hline
+2006 Q3\\
+\hline
+2006 Q4\\
+\hline
+2007 Q1\\
+\hline
+2007 Q2\\
+\hline
+2007 Q3\\
+\hline
+2007 Q4\\
+\hline
+2008 Q1\\
+\hline
+2008 Q2\\
+\hline
+2008 Q3\\
+\hline
+2008 Q4\\
+\hline
+2009 Q1\\
+\hline
+2009 Q2\\
+\hline
+2009 Q3\\
+\hline
+2009 Q4\\
+\hline
+2010 Q1\\
+\hline
+2010 Q2\\
+\hline
+2010 Q3\\
+\hline
+2010 Q4\\
+\hline
+2011 Q1\\
+\hline
+2011 Q2\\
+\hline
+2011 Q3\\
+\hline
+2011 Q4\\
+\hline
+2012 Q1\\
+\hline
+2012 Q2\\
+\hline
+2012 Q3\\
+\hline
+2012 Q4\\
+\hline
+2013 Q1\\
+\hline
+2013 Q2\\
+\hline
+2013 Q3\\
+\hline
+2013 Q4\\
+\hline
+2014 Q1\\
+\hline
+2014 Q2\\
+\hline
+2014 Q3\\
+\hline
+2014 Q4\\
+\hline
+2015 Q1\\
+\hline
+2015 Q2\\
+\hline
+2015 Q3\\
+\hline
+2015 Q4\\
+\hline
+2016 Q1\\
+\hline
+2016 Q2\\
+\hline
+2016 Q3\\
+\hline
+2016 Q4\\
+\hline
+2017 Q1\\
+\hline
+2017 Q2\\
+\hline
+2017 Q3\\
+\hline
+2017 Q4\\
+\hline
+2018 Q1\\
+\hline
+2018 Q2\\
+\hline
+2018 Q3\\
+\hline
+2018 Q4\\
+\hline
+2019 Q1\\
+\hline
+2019 Q2\\
+\hline
+2019 Q3\\
+\hline
+2019 Q4\\
+\hline
+2020 Q1\\
+\hline
+2020 Q2\\
+\hline
+2020 Q3\\
+\hline
+2020 Q4\\
+\hline
+2021 Q1\\
+\hline
+2021 Q2\\
+\hline
+2021 Q3\\
+\hline
+2021 Q4\\
+\hline
+2022 Q1\\
+\hline
+2022 Q2\\
+\hline
+2022 Q3\\
+\hline
+\end{tabular}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fim\_reduced }\OtherTok{\textless{}{-}}
+\NormalTok{  fim }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{yq =} \FunctionTok{as.yearqtr}\NormalTok{(date, }\AttributeTok{format =} \StringTok{\textquotesingle{}\%Y{-}\%q\textquotesingle{}}\NormalTok{ )) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(yq)}
+\FunctionTok{library}\NormalTok{(}\StringTok{\textquotesingle{}arsenal\textquotesingle{}}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(}\FunctionTok{comparedf}\NormalTok{(fim\_reduced, nipa\_contributions,}
+                \AttributeTok{tol.vars =} \FunctionTok{c}\NormalTok{(}\AttributeTok{fim\_bars =} \StringTok{\textquotesingle{}Government consumption expenditures and gross investment\textquotesingle{}}\NormalTok{,}
+                             \AttributeTok{federal\_cont =} \StringTok{"Federal"}\NormalTok{, }
+                             \AttributeTok{state\_local\_cont =} \StringTok{"State and local"}\NormalTok{)}
+\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in tweakcolnames(by.x, by.y, colnames(x), colnames(y), control):
+## Variable tolerance 'fim_bars' not found in colnames of x
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in tweakcolnames(by.x, by.y, colnames(x), colnames(y), control):
+## Variable tolerance 'federal_cont' not found in colnames of x
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in tweakcolnames(by.x, by.y, colnames(x), colnames(y), control):
+## Variable tolerance 'state_local_cont' not found in colnames of x
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## 
+## Table: Summary of data.frames
+## 
+## version   arg                   ncol   nrow
+## --------  -------------------  -----  -----
+## x         fim_reduced              1    211
+## y         nipa_contributions       4     11
+## 
+## 
+## 
+## Table: Summary of overall comparison
+## 
+## statistic                                                      value
+## ------------------------------------------------------------  ------
+## Number of by-variables                                             0
+## Number of non-by variables in common                               0
+## Number of variables compared                                       0
+## Number of variables in x but not y                                 1
+## Number of variables in y but not x                                 4
+## Number of variables compared with some values unequal              0
+## Number of variables compared with all values equal                 0
+## Number of observations in common                                  11
+## Number of observations in x but not y                            200
+## Number of observations in y but not x                              0
+## Number of observations with some compared variables unequal        0
+## Number of observations with all compared variables equal          11
+## Number of values unequal                                           0
+## 
+## 
+## 
+## Table: Variables not shared
+## 
+## version   variable                                                    position  class   
+## --------  ---------------------------------------------------------  ---------  --------
+## x         yq                                                                 1  yearqtr 
+## y         TimePeriod                                                         1  yearqtr 
+## y         Government consumption expenditures and gross investment           2  numeric 
+## y         Federal                                                            3  numeric 
+## y         State and local                                                    4  numeric 
+## 
+## 
+## 
+## Table: Other variables not compared
+## 
+## |                                |
+## |:-------------------------------|
+## |No other variables not compared |
+## 
+## 
+## 
+## Table: Observations not shared
+## 
+## version    ..row.names..   observation
+## --------  --------------  ------------
+## x                     12            12
+## x                     13            13
+## x                     14            14
+## x                     15            15
+## x                     16            16
+## x                     17            17
+## x                     18            18
+## x                     19            19
+## x                     20            20
+## x                     21            21
+## x                     22            22
+## x                     23            23
+## x                     24            24
+## x                     25            25
+## x                     26            26
+## x                     27            27
+## x                     28            28
+## x                     29            29
+## x                     30            30
+## x                     31            31
+## x                     32            32
+## x                     33            33
+## x                     34            34
+## x                     35            35
+## x                     36            36
+## x                     37            37
+## x                     38            38
+## x                     39            39
+## x                     40            40
+## x                     41            41
+## x                     42            42
+## x                     43            43
+## x                     44            44
+## x                     45            45
+## x                     46            46
+## x                     47            47
+## x                     48            48
+## x                     49            49
+## x                     50            50
+## x                     51            51
+## x                     52            52
+## x                     53            53
+## x                     54            54
+## x                     55            55
+## x                     56            56
+## x                     57            57
+## x                     58            58
+## x                     59            59
+## x                     60            60
+## x                     61            61
+## x                     62            62
+## x                     63            63
+## x                     64            64
+## x                     65            65
+## x                     66            66
+## x                     67            67
+## x                     68            68
+## x                     69            69
+## x                     70            70
+## x                     71            71
+## x                     72            72
+## x                     73            73
+## x                     74            74
+## x                     75            75
+## x                     76            76
+## x                     77            77
+## x                     78            78
+## x                     79            79
+## x                     80            80
+## x                     81            81
+## x                     82            82
+## x                     83            83
+## x                     84            84
+## x                     85            85
+## x                     86            86
+## x                     87            87
+## x                     88            88
+## x                     89            89
+## x                     90            90
+## x                     91            91
+## x                     92            92
+## x                     93            93
+## x                     94            94
+## x                     95            95
+## x                     96            96
+## x                     97            97
+## x                     98            98
+## x                     99            99
+## x                    100           100
+## x                    101           101
+## x                    102           102
+## x                    103           103
+## x                    104           104
+## x                    105           105
+## x                    106           106
+## x                    107           107
+## x                    108           108
+## x                    109           109
+## x                    110           110
+## x                    111           111
+## x                    112           112
+## x                    113           113
+## x                    114           114
+## x                    115           115
+## x                    116           116
+## x                    117           117
+## x                    118           118
+## x                    119           119
+## x                    120           120
+## x                    121           121
+## x                    122           122
+## x                    123           123
+## x                    124           124
+## x                    125           125
+## x                    126           126
+## x                    127           127
+## x                    128           128
+## x                    129           129
+## x                    130           130
+## x                    131           131
+## x                    132           132
+## x                    133           133
+## x                    134           134
+## x                    135           135
+## x                    136           136
+## x                    137           137
+## x                    138           138
+## x                    139           139
+## x                    140           140
+## x                    141           141
+## x                    142           142
+## x                    143           143
+## x                    144           144
+## x                    145           145
+## x                    146           146
+## x                    147           147
+## x                    148           148
+## x                    149           149
+## x                    150           150
+## x                    151           151
+## x                    152           152
+## x                    153           153
+## x                    154           154
+## x                    155           155
+## x                    156           156
+## x                    157           157
+## x                    158           158
+## x                    159           159
+## x                    160           160
+## x                    161           161
+## x                    162           162
+## x                    163           163
+## x                    164           164
+## x                    165           165
+## x                    166           166
+## x                    167           167
+## x                    168           168
+## x                    169           169
+## x                    170           170
+## x                    171           171
+## x                    172           172
+## x                    173           173
+## x                    174           174
+## x                    175           175
+## x                    176           176
+## x                    177           177
+## x                    178           178
+## x                    179           179
+## x                    180           180
+## x                    181           181
+## x                    182           182
+## x                    183           183
+## x                    184           184
+## x                    185           185
+## x                    186           186
+## x                    187           187
+## x                    188           188
+## x                    189           189
+## x                    190           190
+## x                    191           191
+## x                    192           192
+## x                    193           193
+## x                    194           194
+## x                    195           195
+## x                    196           196
+## x                    197           197
+## x                    198           198
+## x                    199           199
+## x                    200           200
+## x                    201           201
+## x                    202           202
+## x                    203           203
+## x                    204           204
+## x                    205           205
+## x                    206           206
+## x                    207           207
+## x                    208           208
+## x                    209           209
+## x                    210           210
+## x                    211           211
+## 
+## 
+## 
+## Table: Differences detected by variable
+## 
+## |                                    |
+## |:-----------------------------------|
+## |No differences detected by variable |
+## 
+## 
+## 
+## Table: Differences detected
+## 
+## |                        |
+## |:-----------------------|
+## |No differences detected |
+## 
+## 
+## 
+## Table: Non-identical attributes
+## 
+## |                            |
+## |:---------------------------|
+## |No non-identical attributes |
+\end{verbatim}
+
+\end{document}

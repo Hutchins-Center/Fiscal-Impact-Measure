@@ -125,6 +125,7 @@ contribution_nipas <- function(.data, var){
     select(date, !!paste0(var_string, "_cont"))
 }
 
+
 output_xlsx <- function(data, names){ 
   folder_path <- paste0("results/", thismonth, '/')
   write_xlsx(data, paste0(folder_path, names, ".xlsx"))
