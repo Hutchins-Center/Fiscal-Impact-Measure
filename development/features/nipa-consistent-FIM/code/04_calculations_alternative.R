@@ -79,91 +79,91 @@ fim <-
 # Remove when NIPAS are updated or new economic projections are released (whichever comes first)
 
 #load add factor file
-add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v5.xlsx",
-                          sheet = "FIM Add Factors") %>%
-  mutate(
-    date = as.Date(date)
-  )
-
-fim <-
-  fim %>%
-  full_join(add_factors %>% 
-              filter(date > last_hist_date),
-            by = "date") %>%
-  mutate(across(
-    .cols = starts_with('add_'),
-    .fns = ~ if_else(is.na(.x),
-                     0,
-                     .x)
-  )
-  )
+# add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v5.xlsx",
+#                           sheet = "FIM Add Factors") %>%
+#   mutate(
+#     date = as.Date(date)
+#   )
 # 
-# # Add factors to categories
+# fim <-
+#   fim %>%
+#   full_join(add_factors %>% 
+#               filter(date > last_hist_date),
+#             by = "date") %>%
+#   mutate(across(
+#     .cols = starts_with('add_'),
+#     .fns = ~ if_else(is.na(.x),
+#                      0,
+#                      .x)
+#   )
+#   )
+# # 
+# # # Add factors to categories
+# # 
+# # #QUESTION FOR LOUISE: do we need to change add factor calculation for ui and rebate
+# covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies',
+#                       'federal_cgrants', 'state_health_outlays', 'state_social_benefits',
+#                       'state_noncorp_taxes', 'state_corporate_taxes')
+# fim[ ,covidLegislation] <- fim[ ,covidLegislation] + fim[ ,paste0('add_', covidLegislation)]
 # 
-# #QUESTION FOR LOUISE: do we need to change add factor calculation for ui and rebate
-covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies',
-                      'federal_cgrants', 'state_health_outlays', 'state_social_benefits',
-                      'state_noncorp_taxes', 'state_corporate_taxes')
-fim[ ,covidLegislation] <- fim[ ,covidLegislation] + fim[ ,paste0('add_', covidLegislation)]
-
-# # New Totals
-fim <-
-  fim %>%
-  # mutate(
-  #   # new totals
-  #   health_outlays  = state_health_outlays  + federal_health_outlays ,
-  #   social_benefits  = state_social_benefits  + federal_social_benefits ,
-  #   noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
-  #   corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
-  #   subsidies   = state_subsidies + federal_subsidies,
-  #   # state_local_nom = add_state_expenditures + state_local_nom,
-  #   # federal_nom = add_federal_nom + federal_nom,
-  #   federal_cgrants = add_federal_cgrants + federal_cgrants
-  #   # federal_cgrants = if_else(date == Q2_2020,
-#   #                           181.51,
-#   #                           federal_cgrants)
+# # # New Totals
+# fim <-
+#   fim %>%
+#   # mutate(
+#   #   # new totals
+#   #   health_outlays  = state_health_outlays  + federal_health_outlays ,
+#   #   social_benefits  = state_social_benefits  + federal_social_benefits ,
+#   #   noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
+#   #   corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
+#   #   subsidies   = state_subsidies + federal_subsidies,
+#   #   # state_local_nom = add_state_expenditures + state_local_nom,
+#   #   # federal_nom = add_federal_nom + federal_nom,
+#   #   federal_cgrants = add_federal_cgrants + federal_cgrants
+#   #   # federal_cgrants = if_else(date == Q2_2020,
+# #   #                           181.51,
+# #   #                           federal_cgrants)
+# # )
+# mutate(
+#   
+#   #calculate new variables by adding the add factors
+#   state_health_outlays  = state_health_outlays + add_state_health_outlays,
+#   state_social_benefits  = state_social_benefits + add_state_social_benefits,
+#   state_noncorp_taxes  =  state_noncorp_taxes + add_state_noncorp_taxes,
+#   state_corporate_taxes  = state_corporate_taxes + add_state_corporate_taxes,
+#   
+#   federal_health_outlays  = federal_health_outlays + add_federal_health_outlays,
+#   federal_social_benefits  = federal_social_benefits + add_federal_social_benefits,
+#   # federal_noncorp_taxes  = federal_noncorp_taxes + add_federal_noncorp_taxes,
+#   # federal_corporate_taxes  = federal_corporate_taxes + add_federal_corporate_taxes,
+#   federal_subsidies  = federal_subsidies + add_federal_subsidies,
+#   federal_cgrants = federal_cgrants + add_federal_cgrants,
+#   
+#   #new category totals
+#   health_outlays  = state_health_outlays  + federal_health_outlays ,
+#   social_benefits  = state_social_benefits  + federal_social_benefits ,
+#   noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
+#   corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
+#   subsidies   = state_subsidies + federal_subsidies,
+#   # state_local_nom = add_state_expenditures + state_local_nom,
+#   # federal_nom = add_federal_nom + federal_nom,
+#   
 # )
-mutate(
-  
-  #calculate new variables by adding the add factors
-  state_health_outlays  = state_health_outlays + add_state_health_outlays,
-  state_social_benefits  = state_social_benefits + add_state_social_benefits,
-  state_noncorp_taxes  =  state_noncorp_taxes + add_state_noncorp_taxes,
-  state_corporate_taxes  = state_corporate_taxes + add_state_corporate_taxes,
-  
-  federal_health_outlays  = federal_health_outlays + add_federal_health_outlays,
-  federal_social_benefits  = federal_social_benefits + add_federal_social_benefits,
-  # federal_noncorp_taxes  = federal_noncorp_taxes + add_federal_noncorp_taxes,
-  # federal_corporate_taxes  = federal_corporate_taxes + add_federal_corporate_taxes,
-  federal_subsidies  = federal_subsidies + add_federal_subsidies,
-  federal_cgrants = federal_cgrants + add_federal_cgrants,
-  
-  #new category totals
-  health_outlays  = state_health_outlays  + federal_health_outlays ,
-  social_benefits  = state_social_benefits  + federal_social_benefits ,
-  noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
-  corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
-  subsidies   = state_subsidies + federal_subsidies,
-  # state_local_nom = add_state_expenditures + state_local_nom,
-  # federal_nom = add_federal_nom + federal_nom,
-  
-)
-
-
-federal_cgrants_override = add_factors$federal_cgrants_override[1:2]
-fim$federal_cgrants[202:203] <- federal_cgrants_override #Manually entering value for Q2 2020 since add factors start in Q3
-
-ui_override <- c(337800,
-                 244000,
-                 152000,
-                 44000,
-                 44000,
-                 44000,
-                 44000,
-                 44000,
-                 44000) / 1000
-fim$unemployment_insurance[204:211] <- ui_override 
-fim$federal_unemployment_insurance[204:211] <- ui_override
+# 
+# 
+# federal_cgrants_override = add_factors$federal_cgrants_override[1:2]
+# fim$federal_cgrants[202:203] <- federal_cgrants_override #Manually entering value for Q2 2020 since add factors start in Q3
+# 
+# ui_override <- c(337800,
+#                  244000,
+#                  152000,
+#                  44000,
+#                  44000,
+#                  44000,
+#                  44000,
+#                  44000,
+#                  44000) / 1000
+# fim$unemployment_insurance[204:211] <- ui_override 
+# fim$federal_unemployment_insurance[204:211] <- ui_override
 # 4.3 Contribution of purchases and grants -------------------------------------------------------------------------------------
 
 ## Calculate contributions
@@ -204,7 +204,7 @@ fim <-
   mutate(
     across(
       .cols = all_of(tts), 
-      .fns =  ~ . - lag(.) * (1 + pi_pce),
+      .fns =  ~ . - lag(.) * (1 + pi_pce + gdppoth),
       .names = "{.col}_net"
     )
   ) %>%

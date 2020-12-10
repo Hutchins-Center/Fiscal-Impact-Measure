@@ -1,0 +1,74 @@
+---
+title: "NIPA Consistent FIM vs Regular FIM Check"
+author: "Manuel Alcalá Kovalski"
+date: "12/2/2020"
+output:
+  rmarkdown::html_vignette:
+    toc: yes
+    toc_depth: 3
+vignette: |
+  %\VignetteIndexEntry{The comparedf function for NIPA}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r include = FALSE}
+knitr::opts_chunk$set(eval = TRUE, message = FALSE, results = 'asis', comment='', warning = FALSE)
+options(width = 120)
+```
+
+```{r}
+source('src/packages.R')
+```
+
+
+```{r, include = FALSE}
+thismonth <- format(Sys.Date(), "%m-%Y")
+nipa_fim <-
+  read_xlsx(here('development', 'features', 'nipa-consistent-FIM', 'results', thismonth, 'data', 'no-addons', 'nipa_fim_noaddons.xlsx')) %>%
+  as_tibble() %>%
+  mutate(date = as_date(date)) %>%
+  filter(date >= '1999-12-31') %>%
+  select(date, fim_bars, fim_bars_ma, ends_with('cont'))
+
+fim <- read_xlsx(here('results', thismonth, 'no-addons', 'fim_noaddons.xlsx')) %>%
+  mutate(date = as_date(date)) %>%
+  filter(date >= '1999-12-31') %>%
+  select(date, fim_bars, fim_bars_ma, ends_with('cont'))
+
+```
+
+## Regular FIM
+
+
+```{r}
+paged_table(fim, options(digits = 2))
+```
+## NIPA consistent FIM
+```{r}
+paged_table(nipa_fim, options(digits = 2))
+```
+
+```{r, results = 'asis', include = FALSE}
+library('arsenal')
+```
+
+# Comparison 
+Differences between the NIPA consistent FIM and the FIM are summarized below. While the contributions of federal and state & local government should be different, the totals should add up to the same. 
+```{r, results = 'markup'}
+
+
+contributions_comparison <-
+  comparedf(fim , 
+            nipa_fim,
+            tol.num.val = 0.00000001
+) 
+
+```
+
+```{r}
+summary(contributions_comparison)
+
+```
+
+

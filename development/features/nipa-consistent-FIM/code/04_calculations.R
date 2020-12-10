@@ -205,7 +205,7 @@ fim <-
     mutate(
       across(
         .cols = all_of(tts), 
-        .fns =  ~ . - lag(.) * (1 + pi_pce),
+        .fns =  ~ . - lag(.) * (1 + pi_pce + gdppoth),
         .names = "{.col}_net"
       )
     ) %>%

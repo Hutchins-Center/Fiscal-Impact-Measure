@@ -120,7 +120,7 @@ contribution_nipas <- function(.data, var){
   ## Calculate contribution
   .data %>%
     mutate(
-      "{{ var }}_cont" := 400 * ({{ var }} - (1  + !!(deflator)) * lag({{ var }}) ) / lag(gdp)
+      "{{ var }}_cont" := 400 * ({{ var }} - (1  + !!(deflator) + gdppoth) * lag({{ var }}) ) / lag(gdp)
     ) %>%
     select(date, !!paste0(var_string, "_cont"))
 }

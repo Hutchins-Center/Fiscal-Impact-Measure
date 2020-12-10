@@ -12,15 +12,14 @@ fim <-
             pi_pce = q_g(jc),
             recession = if_else(recessq == -1,
                                 0,
-                                recessq),   
+                                recessq),  
             # GRANTS & NOMINAL SPENDING
             ## Federal
             federal_nom = gf, # SPENDING
             ## GRANTS
-            federal_cgrants_gross  = gfeg,
             federal_health_grants = gfeghhx,
-            federal_medicaid_grants = yfptmd, 
-            federal_cgrants = federal_cgrants_gross - federal_medicaid_grants, # Federal (non-health) grants in aid to states
+            federal_medicaid_grants = 0, 
+            federal_cgrants = gfeg, # Federal (non-health) grants in aid to states
             federal_igrants = gfeigx, # Federal capital grants in aid to states, nominal
             pi_federal = q_g(jgf),
             ## State
@@ -46,13 +45,15 @@ fim <-
             noncorp_taxes = personal_taxes + production_taxes + payroll_taxes, # alternative
             corporate_taxes = yctlg,
             subsidies  = gsub,
-            rebate_checks = if_else(is.na(gftfpe), 0, gftfpe),
+            rebate_checks = if_else(is.na(gftfpe),
+                                    0,
+                                    gftfpe),
             ## Federal
-            federal_medicaid = yfptmd,
-            federal_health_outlays = medicare + federal_medicaid,
-            federal_unemployment_insurance = gftfbusx,
+            federal_medicaid = 0,
+            federal_health_outlays = medicare,
+            federal_unemployment_insurance = unemployment_insurance,
             federal_rebate_checks = rebate_checks,
-            federal_social_benefits = gftfpnet - federal_health_outlays,
+            federal_social_benefits = gftfp - federal_health_outlays,
             federal_personal_taxes = gfrpt,
             federal_payroll_taxes = gfrs,
             federal_production_taxes  = gfrpri,
@@ -60,28 +61,29 @@ fim <-
             federal_corporate_taxes = gfrcp,
             federal_subsidies = gfsub,
             ## State
-            state_medicaid = medicaid - federal_medicaid,
-            state_health_outlays = state_medicaid,
+            state_health_outlays = medicaid,
             state_social_benefits_gross = gstfp,
-            state_unemployment_insurance = unemployment_insurance - federal_unemployment_insurance,
-            state_rebate_checks = 0,
-            state_social_benefits = state_social_benefits_gross - state_health_outlays - federal_medicaid_grants, # no medicare at state and local level
+            state_social_benefits = state_social_benefits_gross - state_health_outlays , # no medicare at state and local level
             state_personal_taxes = gsrpt,
             state_payroll_taxes = gsrs,
             state_production_taxes  = gsrpri,
             state_noncorp_taxes = state_personal_taxes + state_payroll_taxes + state_production_taxes,
             state_corporate_taxes = gsrcp,
-            state_subsidies = gssub
+            state_subsidies = gssub,
+            state_unemployment_insurance = 0,
+            state_rebate_checks = 0
   )
+
 
 # 4.3 Contribution of purchases and grants -------------------------------------------------------------------------------------
 
 ## Calculate contributions
 
+#g comes from table 3.9.5
 fim <-
   map(
     alist(federal_nom, state_local_nom, federal_cgrants, federal_igrants),
-    ~ contribution(fim, !!.x)
+    ~ contribution_nipas(fim, !!.x)
   ) %>%
   reduce(left_join) %>%
   left_join(fim, .)
@@ -89,29 +91,27 @@ fim <-
 # Sum up purchases, taking out the federal grants contribution from state and local and adding it back to federal. 
 fim <-
   fim %>%
-  mutate(federal_cont_ex_grants = federal_nom_cont,
+  mutate(federal_purchases_cont = federal_nom_cont,
          federal_grants_cont = federal_cgrants_cont + federal_igrants_cont,
-         federal_cont = federal_nom_cont + federal_grants_cont,
-         state_local_cont_ex_grants = state_local_nom_cont,
-         state_local_cont = state_local_nom_cont - federal_grants_cont,
-         purchases_cont = federal_cont + state_local_cont)
+         federal_cont = federal_purchases_cont - federal_grants_cont,
+         
+         state_local_purchases_cont = state_local_nom_cont,
+         state_local_cont = state_local_nom_cont + federal_grants_cont,
+         purchases_cont = federal_purchases_cont + state_local_purchases_cont,
+         government_cont = federal_cont + state_local_cont)
 
 # 4.4 Counterfactual Taxes and Transfers -------------------------------------------------------------------------------
 
 fim %<>%
-  mutate(social_benefits = social_benefits - federal_rebate_checks - unemployment_insurance,
+  mutate(social_benefits = social_benefits - rebate_checks - unemployment_insurance,
          federal_social_benefits = federal_social_benefits - federal_rebate_checks - federal_unemployment_insurance,
-         state_social_benefits = state_social_benefits - state_unemployment_insurance)
+         state_social_benefits = state_social_benefits)
 ## Category totals
 tt = c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes",
        'rebate_checks', 'unemployment_insurance')
-
 ## Category totals by level of government
 tts = c(tt, paste0("federal_", tt), paste0("state_", tt)) # totals and disaggregations by level of goverment
 
-
-# Calculate "net" taxes and transfers by subtracting counterfactual from realized.
-# We specify the counterfactual as the lag times the growth rate of potential gdp and our deflator
 fim <-  
   fim %>%
   mutate(
@@ -140,12 +140,24 @@ subsidies = grep("subsidies", tts, value=T)
 # Translate Taxes & Transfers into Consumption --------------------------------------------------------------------
 covid_start <- as.Date('2020-06-30')
 
-unemployment_insurance <- paste0(c('unemployment_insurance', 'state_unemployment_insurance',
-                                   'federal_unemployment_insurance'),
-                                 '_net')
+
+unemployment_insurance <- 
+  paste0(
+    c('unemployment_insurance', 
+      'state_unemployment_insurance',
+      'federal_unemployment_insurance'
+    ),
+    '_net'
+  )
 
 rebate_checks <-
-  paste0(c('rebate_checks', 'state_rebate_checks', 'federal_rebate_checks'), '_net')
+  paste0(
+    c('rebate_checks',
+      'state_rebate_checks',
+      'federal_rebate_checks'),
+    '_net'
+  )
+
 
 ## Dates for new MPCs
 
@@ -156,7 +168,6 @@ mpc_lag <-
   slice(
     which(date == covid_start) - (nlag - 1)
   )
-
 
 ## CALCULATE MPCS
 covid_end <- as.Date('2025-12-31')
@@ -196,7 +207,12 @@ fim <-
       .fns = ~ mpc_rebate_CRN19(.x),
       .names = "{.col}_xmpc"
     )
-  )  %>%
+  ) %>%
+  ## UNEMPLOYMENT INSURANCE
+  ## 
+  ## 
+  ## 
+  ## REBATE CHECKS
   ## CORPORATE TAXES
   mutate(
     across(
@@ -237,10 +253,12 @@ fim %<>%
   mutate(social_benefits_net_xmpc = social_benefits_net_xmpc + unemployment_insurance_net_xmpc + rebate_checks_net_xmpc,
          state_social_benefits_net_xmpc = state_social_benefits_net_xmpc + state_unemployment_insurance_net_xmpc + state_rebate_checks_net_xmpc,
          federal_social_benefits_net_xmpc = federal_social_benefits_net_xmpc + federal_unemployment_insurance_net_xmpc + federal_rebate_checks_net_xmpc)
-
 # Sum up transfers net taxes
-tt = paste0(c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes"),
-            '_net')
+tt <-
+  paste0(
+    c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes"), 
+    '_net'
+  )
 
 govt_taxes_transfers <- paste0(tt, "_xmpc")
 state_taxes_transfers <- paste0("state_", tt, "_xmpc")
@@ -273,6 +291,7 @@ contributionTTS <- paste0(
   '_cont'
 )
 
+# add ui and rebate, exclude these from social benefits for now
 net <- c("transfers_net_taxes", "state_transfers_net_taxes", "federal_transfers_net_taxes",
          "health_outlays_net_xmpc", "social_benefits_net_xmpc", "noncorp_taxes_net_xmpc",
          "corporate_taxes_net_xmpc", "state_subsidies_net_xmpc", "federal_subsidies_net_xmpc",
@@ -282,32 +301,35 @@ fim <-
   fim %>%
   mutate(
     across(
-      .cols  = net,
+      .cols  = all_of(net),
       .fns = ~ 400 * .x / lag(gdp),
       .names = "{.col}_cont"
     )
   ) %>%
-  setnames(paste0(net, "_cont"), contributionTTS) #%>%
-## Add contribution of subsidies to contribution of taxes and transfers
-# I think this is double counting
-# mutate(
-#   taxes_transfers_cont = taxes_transfers_cont + subsidies_cont,
-#   federal_taxes_transfers_cont = federal_taxes_transfers_cont + federal_subsidies_cont,
-#   state_taxes_transfers_cont = state_taxes_transfers_cont + state_subsidies_cont
-# )
+  setnames(paste0(net, "_cont"), contributionTTS) 
 
-# We forecast two years ahead
-####change to 6 quarters ahead for COVID19 as of August 3rd 2020
-#last_proj_date = fim$date[which(fim$date == last_hist_date) + 8]
+
+## Add Unemployment Insurance and Rebate Checks legislation back into social benefits
+## This gives us the right totals for our summaries
 fim %<>%
   mutate(social_benefits = social_benefits + unemployment_insurance,
          federal_social_benefits = federal_social_benefits + federal_unemployment_insurance + rebate_checks,
          state_social_benefits = state_social_benefits + state_unemployment_insurance 
   )
 
+# We forecast two years ahead
+####change to 6 quarters ahead for COVID19 as of August 3rd 2020
+#last_proj_date = fim$date[which(fim$date == last_hist_date) + 8]
+
+
 # 4.6 Export data -------------------------------------------------------------------------------------------
+# Create folder for current month's update
+thismonth <- format(Sys.Date(), "%m-%Y")
+nipa_path <- 'development/features/nipa-consistent-FIM'
+dir.create(here(nipa_path, 'results', thismonth, 'data'))
 firstDate <- "1999-12-31"
-saveRDS(fim %>% filter(date > firstDate ), 'data/processed/fim.rds')
+saveRDS(fim %>% filter(date > firstDate ), here(nipa_path, 'results', thismonth, 'data',
+                                                'fim-processed.Rds'))
 # 4.6.1 Clean FIM data frame ----------------------------------------------------------------------------
 fim <-
   fim %>% 
@@ -341,19 +363,14 @@ fim_interactive <-
     "state_local" = state_local_cont,
     "consumption" = taxes_transfers_subsidies_cont
   )
-# 4.6.3 Create CSV files --------------------------------------------------------------------------------
-# Create folder for current month's update
-thismonth <- format(Sys.Date(), "%m-%Y")
-dir.create(here('results', thismonth, 'no-addons'))
 
-output_no_addons <-
-  function(data, names){ 
-  folder_path <- here('results', thismonth, 'no-addons')
-  write_xlsx(data, here(folder_path, paste0(names, '_noaddons', ".xlsx")))
+
+# 4.6.3 Create CSV files --------------------------------------------------------------------------------
+# Write csv to current month's folder
+output_nipa <- function(data, names){ 
+  write_xlsx(data, here(nipa_path, 'results', thismonth, 'data', 'no-addons', paste0('nipa_', names, '_noaddons', '.xlsx')))
 }
 
-
-# Write csv to current month's folder
 results <- 
   list(fim = fim,
        fim_interactive = fim_interactive,
@@ -361,5 +378,5 @@ results <-
 
 list(data = results, 
      names = names(results)) %>%
-  purrr::pmap(output_no_addons) 
+  purrr::pmap(output_nipa) 
 
