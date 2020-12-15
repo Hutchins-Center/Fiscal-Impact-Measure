@@ -124,19 +124,24 @@ xx$grcsi[forecastPeriod] = xx$gsrs[forecastPeriod] + xx$gfrs[forecastPeriod]  # 
 xx$yctlg[forecastPeriod] = xx$gsrcp[forecastPeriod] + xx$gfrcp[forecastPeriod] # corporate taxes
 xx$gsub[forecastPeriod] = xx$gssub[forecastPeriod] + xx$gfsub[forecastPeriod] # subsidies
 
-# Medicaid grants reallocation (Removed) ----------------------------------------------------------------
-# xx <-
-#   xx %>%
-#     mutate(
+# Medicaid grants reallocation ----------------------------------------------------------------
+# Only relevant because we want to take federal medicaid grants 
+# out of federal consumption grants
+
+ xx <-
+   xx %>%
+    mutate(
 #       
 #       
 #       # Reattribute federal grants to states back to Federal government
 #       # Parse between those for consumption and investment and those for transfers (Medicaid)
 #       
 #       # federal medicaid grants to states
-#       # yfptmd = if_else(is.na(gfeghdx), # if we don't have the medicaid data (pre-1993)'
-#       #                  yptmd*fshare, # use the fmaps to estimate
-#       #                  gfeghdx), # otherwise, use data for medicaid + prescription drugs transfers
+      fshare = fmap$fshare[match(year(date), fmap$year)] %>%
+        na.locf(),
+      yfptmd = if_else(is.na(gfeghdx), # if we don't have the medicaid data (pre-1993)'
+                       yptmd*fshare, # use the fmaps to estimate
+                       gfeghdx)# otherwise, use data for medicaid + prescription drugs transfers
 #       # 
 #       # 
 #       # state medicaid payments = total medicaid - federal medicaid grants
@@ -148,5 +153,5 @@ xx$gsub[forecastPeriod] = xx$gssub[forecastPeriod] + xx$gfsub[forecastPeriod] # 
 #       # net federal transfer payments = federal transfer payments + medicaid transfers paid for by the federal government
 #       # gftfpnet = gftfp + yfptmd 
 #       # we reattribute the capital grants later after calculating contributions. 
-#     )
+)
 

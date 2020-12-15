@@ -1,28 +1,28 @@
-## HEADER ---------------------------
-##
-## Script name: Projections
-##
-## Purpose of script:
-## Construct quarterly projections
-## Authors: 
-## Manuel Alcalá Kovalski
-## Sage Belz
-## Kadija Yilla
-## Date Created: 2020-10-05
-##
-##
-##
-##
-## Notes ---------------------
-## We use projected growth rates and iteratively forecast levels from current levels. 
-##
-## 
-
-# 2 Projected Growth Rates -----------------------------------------------------------------------------
+# ## HEADER ---------------------------
+# ##
+# ## Script name: Projections
+# ##
+# ## Purpose of script:
+# ## Construct quarterly projections
+# ## Authors:
+# ## Manuel Alcalá Kovalski
+# ## Sage Belz
+# ## Kadija Yilla
+# ## Date Created: 2020-10-05
+# ##
+# ##
+# ##
+# ##
+# ## Notes ---------------------
+# ## We use projected growth rates and iteratively forecast levels from current levels.
+# ##
+# ##
+#
+# # 2 Projected Growth Rates -----------------------------------------------------------------------------
 last_hist_date <-
-  hist %>% 
-  select(date) %>% 
-  slice_tail() %>% 
+  hist %>%
+  select(date) %>%
+  slice_tail() %>%
   pull()
 
 last_proj_date <- last_hist_date + years(2)
@@ -35,15 +35,15 @@ taxpieces_gdp = paste0(taxpieces, '_gdp')
 # construct forecasts of federal taxes and transfers growth using CBO's annual budget/revenue projections as they appear
 # in the NIPAs (except Medicaid and Medicare, which come straight from revenue projections)
 
-budg <- 
+budg <-
   # we use annual rates, so we can just replicate annual levesl for each q
-  bind_rows(budg, budg, budg, budg) %>% 
+  bind_rows(budg, budg, budg, budg) %>%
   arrange(fy) %>%
   mutate(date = econ$date) %>%
   mutate(date = lag(date))
 
 
- 
+
 ### 2.1.1 COLA Adjustments --------------------------------------------------------------------------------------
 
 # Adjust federal transfers to feature their january COLA-related bump; reattribute that growth to calendar quarter 1
@@ -62,16 +62,16 @@ budg <- budg %>%
              lag(cpiu_g, 2),
              NULL
            )
-  ) %>% 
-  # forecastPeriod filling so each q has correct cola rate, 
+  ) %>%
+  # forecastPeriod filling so each q has correct cola rate,
   fill(cola_rate)
 
-# Don't think this does anything  
+# Don't think this does anything
 budg$pcw_g[is.na(budg$pcw_g)] = budg$cpiu_g[is.na(budg$pcw_g)]
 
-budg <- 
+budg <-
   budg %>% mutate(health_ui = SMA(yptmd + yptmr + yptu, n = 4),
-                        # temporarily take out medicaid, medicare, ui, and COLA 
+                        # temporarily take out medicaid, medicare, ui, and COLA
                         # smooth with 4 quarter  moving average
                         gftfp_noCOLA = SMA((gftfp - health_ui)*(1-cola_rate), n = 4),
                         # Store old gftfp as unadjusted
@@ -81,7 +81,7 @@ budg <-
                         gftfp_g = q_g(gftfp)
                    ) %>%
             # smooth all budget series except total social transfers, which we did above
-            mutate( 
+            mutate(
               across(.cols = c("gfrpt",  "gfrpri",  "gfrcp",  "gfrs", "yptmr",  "yptmd" ),
                      .fns = ~ rollapply(.x, width = 4, mean, fill = NA, align =  'right')
                   ) %>%
@@ -93,7 +93,7 @@ budg <-
                 .names = "{.col}_g"
               )
             )
-          ) 
+          )
 
 
 
@@ -108,8 +108,8 @@ predate = "2025-09-30"
 budg <-
   budg %>%
     mutate(gfrptCurrentLaw = gfrpt,
-           gfrptCurrentLaw_g = gfrpt_g, 
-           gfrpt_g = 
+           gfrptCurrentLaw_g = gfrpt_g,
+           gfrpt_g =
                      if_else(date >= expdate,
                        lag(gfrpt_g),
                        gfrpt_g,
@@ -130,7 +130,7 @@ econ_a <-
   rename(date = calendar_date)
 
 aa <- left_join(econ_a,
-      hist %>% filter(month(date) == 12) %>% 
+      hist %>% filter(month(date) == 12) %>%
         mutate(date = year(date)) %>%
         select(date, taxpieces),
       by = 'date')
@@ -172,7 +172,7 @@ econ <-
  #  mutate(
  #    across(
  #      .cols = taxpieces_gdp,
- #      .fns = ~ na.locf(. / gdp) * gdp 
+ #      .fns = ~ na.locf(. / gdp) * gdp
  #    )
  #  ) %>%
   # Growth rate of S&L Taxes
@@ -191,29 +191,42 @@ econGrowthRates <-
 
 # Filter so that we only get the budget growth rates
 budgetGrowthRates <-
-  budg %>% 
-  select(date, ends_with('_g'), gfrptCurrentLaw) 
+  budg %>%
+  select(date, ends_with('_g'), gfrptCurrentLaw)
 
-growthRates <- left_join(econGrowthRates, 
+growthRates <- left_join(econGrowthRates,
                          budgetGrowthRates,
-                         by = 'date') 
+                         by = 'date')
 
 xx <-
-    full_join(hist, 
+    full_join(hist,
               growthRates,
               by = 'date')
 
 ## 4.2 FIM component calculations ----------------------------------------------------------------------------
 
 ### 4.2.1 ------------------------------------------------------------------------------------------
+unemployment_insurance_override <-
+  read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6.xlsx", 
+           sheet = "FIM Add Factors") %>%
+  mutate(date = as_date(date)) %>%
+  select(date, contains('unemployment_insurance')) 
+  
 
+xx %<>%
+  left_join(unemployment_insurance_override) %>%
+  mutate(
+    across(
+      .cols = ends_with('override'),
+      .fns = ~ if_else(is.na(.x), 0, .x)
+    )
+  )
+  
 # gftfbusx =	Fed Transfer Payments/Persons: State Unemployment Insurance Benefits (SAAR, Mil.$)
 # gftfp = Federal Government Social Benefit Payments to Persons (SAAR, Bil.$)
 # gstfp = State & Local Government Social Benefit Payments to Persons (SAAR, Bil.$)
 
-# Federal UI legislation total from Q2 of 2020 is $768.8 (Bil. $)
-Q2_2020 <- "2020-06-30" 
-federal_UI <- 768.8
+# Federal UI legislation total from Q3 of 2020 is $768.8 (Bil. $)
 xx <- 
   xx %>%
     mutate(
@@ -221,14 +234,10 @@ xx <-
       # SOCIAL BENEFITS
       # Unemployment Insurance
       gftfbusx = gftfbusx / 1000, # Translate UI from millions to billions
-      gftfp = gftfp - gftfbusx,
-      gstfp = gstfp + gftfbusx,
-      gftfp = if_else(date == Q2_2020,
-                      gftfp + federal_UI,
-                      gftfp),
-      gstfp = if_else(date == Q2_2020,
-                      gstfp - federal_UI,
-                      gstfp),
+      # Reallocate state UI (gftfbusx) from federal to state
+      # Add ui legislation to federal and subtract from state
+      gftfp = gftfp - gftfbusx + federal_unemployment_insurance_override,
+      gstfp = gstfp + gftfbusx - federal_unemployment_insurance_override,
      
       # GRANTS
       

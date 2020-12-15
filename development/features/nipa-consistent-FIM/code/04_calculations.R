@@ -19,7 +19,7 @@ fim <-
          ## GRANTS
          federal_health_grants = gfeghhx,
          federal_medicaid_grants = 0, 
-         federal_cgrants = gfeg, # Federal (non-health) grants in aid to states
+         federal_cgrants = gfeg - yfptmd, # Federal (non-health) grants in aid to states
          federal_igrants = gfeigx, # Federal capital grants in aid to states, nominal
          pi_federal = q_g(jgf),
          ## State
@@ -37,6 +37,7 @@ fim <-
          medicaid = yptmd,
          health_outlays = medicare + medicaid, # Medicare + Medicaid
          unemployment_insurance = yptu,
+         gtfp,
          social_benefits_gross = gtfp,
          social_benefits = social_benefits_gross - health_outlays, # Social benefits net health outlays
          personal_taxes = yptx,
@@ -80,7 +81,7 @@ fim <-
 # Remove when NIPAS are updated or new economic projections are released (whichever comes first)
 
 #load add factor file
-add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v5.xlsx",
+add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6.xlsx",
                           sheet = "FIM Add Factors") %>%
                   mutate(
                     date = as.Date(date)
@@ -89,6 +90,7 @@ add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v5.
 fim <-
   fim %>%
   full_join(add_factors %>% 
+              select(-ends_with('override')) %>%
               filter(date > last_hist_date),
             by = "date") %>%
   mutate(across(
@@ -97,15 +99,15 @@ fim <-
                      0,
                      .x)
     )
-  )
-# 
-# # Add factors to categories
-# 
-# #QUESTION FOR LOUISE: do we need to change add factor calculation for ui and rebate
-# covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies',
-#                       'federal_cgrants', 'state_health_outlays', 'state_social_benefits',
-#                       'state_noncorp_taxes', 'state_corporate_taxes')
-# fim[ ,covidLegislation] <- fim[ ,covidLegislation] + fim[ ,paste0('add_', covidLegislation)]
+  ) %>%
+  left_join(add_factors %>% select(date, ends_with('override')),
+            by = 'date') %>%
+  mutate(across(
+    .cols = ends_with('override'),
+    .fns = ~ if_else(is.na(.x),
+                     0,
+                     .x)
+  ))
 
 # # New Totals
 fim <-
@@ -121,24 +123,24 @@ fim <-
   #   # federal_nom = add_federal_nom + federal_nom,
   #   federal_cgrants = add_federal_cgrants + federal_cgrants
   #   # federal_cgrants = if_else(date == Q2_2020,
-  #   #                           181.51,
-  #   #                           federal_cgrants)
-  # )
+#   #                           181.51,
+#   #                           federal_cgrants)
+# )
 mutate(
-
+  
   #calculate new variables by adding the add factors
   state_health_outlays  = state_health_outlays + add_state_health_outlays,
   state_social_benefits  = state_social_benefits + add_state_social_benefits,
   state_noncorp_taxes  =  state_noncorp_taxes + add_state_noncorp_taxes,
   state_corporate_taxes  = state_corporate_taxes + add_state_corporate_taxes,
-
+  
   federal_health_outlays  = federal_health_outlays + add_federal_health_outlays,
   federal_social_benefits  = federal_social_benefits + add_federal_social_benefits,
   # federal_noncorp_taxes  = federal_noncorp_taxes + add_federal_noncorp_taxes,
   # federal_corporate_taxes  = federal_corporate_taxes + add_federal_corporate_taxes,
   federal_subsidies  = federal_subsidies + add_federal_subsidies,
   federal_cgrants = federal_cgrants + add_federal_cgrants,
-
+  
   #new category totals
   health_outlays  = state_health_outlays  + federal_health_outlays ,
   social_benefits  = state_social_benefits  + federal_social_benefits ,
@@ -147,21 +149,39 @@ mutate(
   subsidies   = state_subsidies + federal_subsidies,
   # state_local_nom = add_state_expenditures + state_local_nom,
   # federal_nom = add_federal_nom + federal_nom,
-
+  
 )
 
 
-federal_cgrants_override = add_factors$federal_cgrants_override[1:2]
-fim$federal_cgrants[202:203] <- federal_cgrants_override #Manually entering value for Q2 2020 since add factors start in Q3
-
-fim %>%
-  mutate(unemployment_insurance = if_else(date > last_hist_date,
+Q2_2020 <- '2020-06-30'
+Q3_2020 <- '2020-09-30'
+last_override <- '2022-12-31'
+fim <-
+  fim %>%
+  mutate(unemployment_insurance = if_else(date >= Q3_2020 & date <= last_override,
                                           unemployment_insurance_override,
                                           unemployment_insurance),
-         federal_unemployment_insurance = if_else(date > last_hist_date,
+         federal_unemployment_insurance = if_else(date >= Q3_2020 & date <= last_override,
                                                   unemployment_insurance_override,
-                                                  federal_unemployment_insurance)
+                                                  federal_unemployment_insurance),
+         federal_cgrants = if_else(date >= Q2_2020 & date <= Q3_2020,
+                                   federal_cgrants_override,
+                                   federal_cgrants)
+         
   )
+
+# 
+# # Add factors to categories
+# 
+# #QUESTION FOR LOUISE: do we need to change add factor calculation for ui and rebate
+# covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies',
+#                       'federal_cgrants', 'state_health_outlays', 'state_social_benefits',
+#                       'state_noncorp_taxes', 'state_corporate_taxes')
+# fim[ ,covidLegislation] <- fim[ ,covidLegislation] + fim[ ,paste0('add_', covidLegislation)]
+
+
+
+
 
 # 4.3 Contribution of purchases and grants -------------------------------------------------------------------------------------
 
@@ -339,7 +359,7 @@ fim <-
 # 
 fim %<>% 
   mutate(social_benefits_net_xmpc = social_benefits_net_xmpc + unemployment_insurance_net_xmpc + rebate_checks_net_xmpc,
-         state_social_benefits_net_xmpc = state_social_benefits_net_xmpc + state_unemployment_insurance_net_xmpc + state_rebate_checks_net_xmpc,
+         state_social_benefits_net_xmpc = state_social_benefits_net_xmpc,
          federal_social_benefits_net_xmpc = federal_social_benefits_net_xmpc + federal_unemployment_insurance_net_xmpc + federal_rebate_checks_net_xmpc)
 # Sum up transfers net taxes
 tt <-
@@ -400,7 +420,7 @@ fim <-
 ## Add Unemployment Insurance and Rebate Checks legislation back into social benefits
 ## This gives us the right totals for our summaries
 fim %<>%
-  mutate(social_benefits = social_benefits + unemployment_insurance,
+  mutate(social_benefits = social_benefits + unemployment_insurance +rebate_checks,
          federal_social_benefits = federal_social_benefits + federal_unemployment_insurance + rebate_checks,
          state_social_benefits = state_social_benefits + state_unemployment_insurance 
   )

@@ -38,6 +38,7 @@ fim <-
          medicaid = yptmd,
          health_outlays = medicare + medicaid, # Medicare + Medicaid
          unemployment_insurance = yptu,
+         gtfp,
          social_benefits_gross = gtfp,
          social_benefits = social_benefits_gross - health_outlays, # Social benefits net health outlays
          personal_taxes = yptx,
@@ -50,7 +51,7 @@ fim <-
          ## Federal
          federal_medicaid = yfptmd,
          federal_health_outlays = medicare + federal_medicaid,
-         federal_unemployment_insurance = gftfbusx,
+         federal_unemployment_insurance = federal_unemployment_insurance_override,
          federal_rebate_checks = rebate_checks,
          federal_social_benefits = gftfpnet - federal_health_outlays,
          federal_personal_taxes = gfrpt,
@@ -80,7 +81,7 @@ fim <-
 # Remove when NIPAS are updated or new economic projections are released (whichever comes first)
 
 #load add factor file
-add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v5.xlsx", 
+add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6.xlsx", 
                           sheet = "FIM Add Factors") %>%
                   mutate(
                     date = as.Date(date)
@@ -149,25 +150,30 @@ mutate(
 )
 
 
-federal_cgrants_override = add_factors$federal_cgrants_override[1:2]
-fim$federal_cgrants[202:203] <- federal_cgrants_override #Manually entering value for Q2 2020 since add factors start in Q3
 #load add factor file
-override <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v5.xlsx", 
+override <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6.xlsx", 
                           sheet = "FIM Add Factors") %>%
-  select(date, ends_with('override'), -federal_cgrants_override) %>%
-  mutate(date = as_date(date)) %>%
-  filter(date > last_hist_date) 
+  select(date, ends_with('override')) %>%
+  mutate(date = as_date(date)) 
 
-fim %<>% left_join(override, by = 'date') %>%
-  mutate(unemployment_insurance = if_else(date > last_hist_date,
+Q2_2020 <- '2020-06-30'
+Q3_2020 <- '2020-09-30'
+last_override <- '2022-12-31'
+fim <-
+  fim %>%
+  left_join(override, by = 'date') %>%
+  mutate(unemployment_insurance = if_else(date >= Q3_2020 & date <= last_override,
                                           unemployment_insurance_override,
                                           unemployment_insurance),
-         federal_unemployment_insurance = if_else(date > last_hist_date,
+         federal_unemployment_insurance = if_else(date >= Q2_2020 & date <= last_override,
                                                   federal_unemployment_insurance_override,
                                                   federal_unemployment_insurance),
-         state_unemployment_insurance = if_else(date > last_hist_date,
+         state_unemployment_insurance = if_else(date >= Q2_2020 & date <= last_override,
                                                 state_unemployment_insurance_override,
-                                                state_unemployment_insurance)
+                                                state_unemployment_insurance),
+         federal_cgrants = if_else(date >= Q2_2020 & date <= Q3_2020,
+                                   federal_cgrants_override,
+                                   federal_cgrants)
          )
 
   
@@ -398,7 +404,7 @@ fim <-
 ####change to 6 quarters ahead for COVID19 as of August 3rd 2020
 #last_proj_date = fim$date[which(fim$date == last_hist_date) + 8]
 fim %<>%
-  mutate(social_benefits = social_benefits + unemployment_insurance,
+  mutate(social_benefits = social_benefits + unemployment_insurance + rebate_checks,
          federal_social_benefits = federal_social_benefits + federal_unemployment_insurance + rebate_checks,
          state_social_benefits = state_social_benefits + state_unemployment_insurance 
   )

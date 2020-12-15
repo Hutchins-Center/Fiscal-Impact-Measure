@@ -19,7 +19,7 @@ fim <-
             ## GRANTS
             federal_health_grants = gfeghhx,
             federal_medicaid_grants = 0, 
-            federal_cgrants = gfeg, # Federal (non-health) grants in aid to states
+            federal_cgrants = gfeg - yfptmd, # Federal (non-health) grants in aid to states
             federal_igrants = gfeigx, # Federal capital grants in aid to states, nominal
             pi_federal = q_g(jgf),
             ## State
@@ -74,6 +74,28 @@ fim <-
             state_rebate_checks = 0
   )
 
+override <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6.xlsx", 
+                       sheet = "FIM Add Factors") %>%
+  select(date, ends_with('override')) %>%
+  mutate(date = as_date(date)) 
+
+Q2_2020 <- '2020-06-30'
+Q3_2020 <- '2020-09-30'
+last_override <- '2022-12-31'
+fim <-
+  fim %>%
+  left_join(override, by = 'date') %>%
+  mutate(unemployment_insurance = if_else(date >= Q3_2020 & date <= last_override,
+                                          unemployment_insurance_override,
+                                          unemployment_insurance),
+         federal_unemployment_insurance = if_else(date >= Q3_2020 & date <= last_override,
+                                                  unemployment_insurance_override,
+                                                  federal_unemployment_insurance),
+         federal_cgrants = if_else(date >= Q2_2020 & date <= Q3_2020,
+                                   federal_cgrants_override,
+                                   federal_cgrants)
+         
+  )
 
 # 4.3 Contribution of purchases and grants -------------------------------------------------------------------------------------
 
@@ -251,7 +273,7 @@ fim <-
 # 
 fim %<>% 
   mutate(social_benefits_net_xmpc = social_benefits_net_xmpc + unemployment_insurance_net_xmpc + rebate_checks_net_xmpc,
-         state_social_benefits_net_xmpc = state_social_benefits_net_xmpc + state_unemployment_insurance_net_xmpc + state_rebate_checks_net_xmpc,
+         state_social_benefits_net_xmpc = state_social_benefits_net_xmpc,
          federal_social_benefits_net_xmpc = federal_social_benefits_net_xmpc + federal_unemployment_insurance_net_xmpc + federal_rebate_checks_net_xmpc)
 # Sum up transfers net taxes
 tt <-

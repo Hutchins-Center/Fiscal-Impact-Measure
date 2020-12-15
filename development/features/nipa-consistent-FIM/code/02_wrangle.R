@@ -212,17 +212,17 @@ xx <-
     
     # SOCIAL BENEFITS
     # Unemployment Insurance
-    # gftfbusx = gftfbusx / 1000,  Translate UI from millions to billions
-    
+     gftfbusx = gftfbusx / 1000,  # Translate UI from millions to billions
+
     # Leave allocation of UI spending as is.
-    # gftfp = gftfp - gftfbusx,
-    # gstfp = gstfp + gftfbusx,
-    # gftfp = if_else(date == Q2_2020,
-    #                 gftfp + federal_UI,
-    #                 gftfp),
-    # gstfp = if_else(date == Q2_2020,
-    #                 gstfp - federal_UI,
-    #                 gstfp),
+     # gftfp = gftfp - gftfbusx,
+     # gstfp = gstfp + gftfbusx,
+     # gftfp = if_else(date == Q2_2020,
+     #                 gftfp + federal_UI,
+     #                 gftfp),
+     # gstfp = if_else(date == Q2_2020,
+     #                 gstfp - federal_UI,
+     #                 gstfp),
     
     # GRANTS
     
