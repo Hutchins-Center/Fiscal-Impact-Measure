@@ -144,7 +144,7 @@ mutate(
   noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
   corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
   subsidies   = state_subsidies + federal_subsidies,
-  # state_local_nom = add_state_expenditures + state_local_nom,
+  state_local_nom = state_local_nom + add_state_purchases,
   # federal_nom = add_federal_nom + federal_nom,
   
 )
