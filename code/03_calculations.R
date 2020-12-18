@@ -81,7 +81,7 @@ fim <-
 # Remove when NIPAS are updated or new economic projections are released (whichever comes first)
 
 #load add factor file
-add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6.xlsx", 
+add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6_round2.xlsx", 
                           sheet = "FIM Add Factors") %>%
                   mutate(
                     date = as.Date(date)

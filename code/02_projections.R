@@ -102,8 +102,8 @@ budg <-
 # Construct alternative scenario for personal current taxes, under which the TCJA provisions for income taxes don't
 # expire in 2025
 
-expdate = "2025-12-30"
-predate = "2025-09-30"
+expdate <- "2025-12-30"
+predate <- "2025-09-30"
 
 budg <-
   budg %>%
@@ -125,30 +125,30 @@ budg <-
 ### 3.1.1 ---------------------------------------------------------------------------
 taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
 taxpieces_gdp = paste0(taxpieces, '_gdp')
-econ_a <-
-  read_xlsx('data/raw/cbo/cbo_econ_proj_annual.xlsx')  %>%
-  rename(date = calendar_date)
-
-aa <- left_join(econ_a,
-      hist %>% filter(month(date) == 12) %>%
-        mutate(date = year(date)) %>%
-        select(date, taxpieces),
-      by = 'date')
-
-aa <-
-  bind_rows(aa, aa, aa, aa) %>%
-  arrange(date) %>%
-  mutate(date = econ$date)
-
-
-aa <- aa %>%
-  mutate(across(
-    .cols = all_of(taxpieces),
-    .fns = ~ na.locf(. / gdp),
-    .names = "{col}_gdp"
-  ))
-
-econ[,taxpieces] <- sapply(aa[,taxpieces_gdp], function(x) x*econ$gdp)
+# econ_a <-
+#   read_xlsx('data/raw/cbo/cbo_econ_proj_annual.xlsx')  %>%
+#   rename(date = calendar_date)
+# 
+# aa <- left_join(econ_a,
+#       hist %>% filter(month(date) == 12) %>%
+#         mutate(date = year(date)) %>%
+#         select(date, taxpieces),
+#       by = 'date')
+# 
+# aa <-
+#   bind_rows(aa, aa, aa, aa) %>%
+#   arrange(date) %>%
+#   mutate(date = econ$date)
+# 
+# 
+# aa <- aa %>%
+#   mutate(across(
+#     .cols = all_of(taxpieces),
+#     .fns = ~ na.locf(. / gdp),
+#     .names = "{col}_gdp"
+#   ))
+# 
+# econ[,taxpieces] <- sapply(aa[,taxpieces_gdp], function(x) x*econ$gdp)
 
 econ <-
   econ %>%
@@ -166,22 +166,23 @@ econ <-
   ) %>%
   # S&L Taxes
   # Commented out what I think we should be doing instead for state taxes
- # left_join(hist %>%
- #          select(date, taxpieces),
- #        all.x = F) %>%
- #  mutate(
- #    across(
- #      .cols = taxpieces_gdp,
- #      .fns = ~ na.locf(. / gdp) * gdp
- #    )
- #  ) %>%
-  # Growth rate of S&L Taxes
-    # mutate(
-    #   across(
-    #     .cols = taxpieces,
-    #     .fns = ~ q_g(.),
-    #     .names = "{.col}_g"
-    #   )
+ left_join(hist %>%
+          select(date, taxpieces),
+        all.x = F) %>%
+  mutate(
+    across(
+      .cols = taxpieces,
+      .fns = ~ na.locf(. / gdp) * gdp
+    )
+  ) %>%
+ # Growth rate of S&L Taxes
+ mutate(
+   across(
+     .cols = taxpieces,
+     .fns = ~ q_g(.),
+     .names = "{.col}_g"
+   ) 
+  ) %>%
     as_tibble()
 ## 4 Merge growth rates and levels data frames ---------------------------------------------------------------------
 
