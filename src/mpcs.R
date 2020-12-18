@@ -129,6 +129,18 @@ mpc_rebate_CRN19 = function(x){
   j
 }
 
+mpc_rebate_round2 = function(x){
+  j = NA
+  for(i in 8:length(x)){
+    if(is.na(x[i-7])){
+      j[i] = NA
+    } else{
+      j[i] = 0.7*(0.35*x[i]+0.15*x[i-1]+0.08*x[i-2]+0.08*x[i-3] + 0.08*x[i-4] + 0.08*x[i-5] + 0.08*x[i-6] + 0.08*x[i-7]) # distributes out to 40 percent of the -0.6 MPC applied in first two quarters and the remainder evenly over last 5
+    }
+  }
+  j
+}
+
 #Same as pre-covid
 mpc_noncorp_taxes_CRN19 =  function(x){
   j = NA
