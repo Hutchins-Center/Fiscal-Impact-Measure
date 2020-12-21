@@ -99,31 +99,10 @@ fim <-
                      .x)
     )
   )
-
-# Add factors to categories
-# covidLegislation <- c('federal_health_outlays', 'federal_social_benefits', 'federal_subsidies',
-#                       'federal_cgrants', 'state_health_outlays', 'state_social_benefits',
-#                       'state_noncorp_taxes', 'state_corporate_taxes')
-# fim[ ,covidLegislation] <- fim[ ,covidLegislation] + fim[ ,paste0('add_', covidLegislation)]
-
 # New Totals
 fim <- 
   fim %>%
-  # mutate(
-  #   # new totals
-  #   health_outlays  = state_health_outlays  + federal_health_outlays ,
-  #   social_benefits  = state_social_benefits  + federal_social_benefits ,
-  #   noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
-  #   corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
-  #   subsidies   = state_subsidies + federal_subsidies,
-  #   # state_local_nom = add_state_expenditures + state_local_nom,
-  #   # federal_nom = add_federal_nom + federal_nom,
-  #   federal_cgrants = add_federal_cgrants + federal_cgrants
-  #   # federal_cgrants = if_else(date == Q2_2020,
-  #   #                           181.51,
-  #   #                           federal_cgrants)
-  # )
-mutate(
+  mutate(
   
   #calculate new variables by adding the add factors
   state_health_outlays  = state_health_outlays + add_state_health_outlays,
@@ -150,7 +129,8 @@ mutate(
 )
 
 
-#load add factor file
+# Overrides -----------------------------------------------------------------------------------
+# Load add factor file and select override columns
 override <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6.xlsx", 
                           sheet = "FIM Add Factors") %>%
   select(date, ends_with('override')) %>%
@@ -264,6 +244,7 @@ mpc_lag <-
 
 ## CALCULATE MPCS
 covid_end <- as.Date('2025-12-31')
+round2 <- as.Date('2021-03-31')
 fim <-
   fim %>% 
     ## HEALTH OUTLAYS
@@ -327,8 +308,8 @@ fim <-
     mutate(
       across(
         .cols = all_of(subsidies),
-        .fns = ~ if_else(date >= covid_start & date <= covid_end,
-                         mpc_subsidies(.x),
+        .fns = ~ if_else(date >= round2,
+                         mpc_ppp_round2(.x),
                          mpc_subsidies(.x)
         ),
         .names = "{.col}_xmpc"

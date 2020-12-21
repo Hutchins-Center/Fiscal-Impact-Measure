@@ -11,7 +11,19 @@ mpc_social_benefits = function(x){
   0.9 * rollapply(x, width = 4, mean, partial = TRUE, fill = NA, align =  'right')
 }
 
+# Same as mpc_corporate_taxes
+mpc_c <- function(x){
+  mpc <- -0.4
+  mpc * rollapply(x, width = 12, mean, fill = NA, align =  'right')
+}
 
+# Same as mpc noncorp taxes
+mpc_nc <- function(x){
+  mpc <- -0.6
+  weights <- c(rep(0.1, 6), rep(0.2, 2))
+  mpc * roll::roll_sum(x, width = length(weights),
+                       weights = weights, online = FALSE)
+}
 
 mpc_noncorp_taxes = function(x){
   j = NA
@@ -53,6 +65,23 @@ mpc_subsidies = function(x){
       lagend = i
       lags = lagstart:lagend
       j[i] = 0.45*(0.11*x[i]+0.095*x[i-1]+0.09*x[i-2]+0.085*x[i-3]+0.08*x[i-4]+0.08*x[i-5]+0.08*x[i-6]+0.08*x[i-7]+0.075*x[i-8]+0.075*x[i-9]+0.075*x[i-10]+0.075*x[i-11]) 
+    }
+  }
+  j
+}
+
+
+
+mpc_ppp_round2 = function(x){
+  j = NA
+  for(i in 12:length(x)){
+    if(is.na(x[i-11])){
+      j[i] = NA
+    } else{
+      lagstart = i-11
+      lagend = i
+      lags = lagstart:lagend
+      j[i] = 0.525*(0.15*x[i]+ 0.1125*x[i-1]+0.1*x[i-2]+0.0875*x[i-3]+0.0750*x[i-4]+0.0750*x[i-5]+0.0750*x[i-6]+0.0750*x[i-7]+0.0625*x[i-8]+0.0625*x[i-9]+0.0625*x[i-10]+0.0625*x[i-11]) 
     }
   }
   j
