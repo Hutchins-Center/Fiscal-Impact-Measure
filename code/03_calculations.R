@@ -383,7 +383,7 @@ fim <-
 
 # We forecast two years ahead
 ####change to 6 quarters ahead for COVID19 as of August 3rd 2020
-#last_proj_date = fim$date[which(fim$date == last_hist_date) + 8]
+
 fim %<>%
   mutate(social_benefits = social_benefits + unemployment_insurance + rebate_checks,
          federal_social_benefits = federal_social_benefits + federal_unemployment_insurance + rebate_checks,
@@ -394,6 +394,7 @@ fim %<>%
 firstDate <- "1999-12-31"
 saveRDS(fim %>% filter(date > firstDate ), 'data/processed/fim.rds')
 # 4.6.1 Clean FIM data frame ----------------------------------------------------------------------------
+last_proj_date <- as.Date('2022-09-30')
 fim <-
   fim %>% 
     mutate(fim_bars = federal_cont + state_local_cont + taxes_transfers_cont,

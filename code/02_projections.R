@@ -22,6 +22,7 @@
 last_hist_date <-
   hist %>%
   select(date) %>%
+  filter(!is.na(date)) %>%
   slice_tail() %>%
   pull()
 
