@@ -1,12 +1,12 @@
 ---
-title: "Fiscal Impact Update: Changes in Contributions Relative to Previous Update"
-author: " Manuel Alcala Kovalski, Tyler Powell, Kadija Yilla"
+title: 'Fiscal Impact Update: Changes in Contributions Relative to Previous Update'
+author: ' Manuel Alcala Kovalski, Tyler Powell, Kadija Yilla'
 date: "`r Sys.Date()`"
-output: html_document
-vignette: >
-  %\VignetteIndexEntry{Vignette Title}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output:
+  pdf_document: default
+  html_document: default
+vignette: |
+  %\VignetteIndexEntry{Vignette Title} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include = FALSE}
@@ -37,7 +37,7 @@ previous_month <- month(Sys.Date() - months(1))
 previous_year <- year(Sys.Date() - months(1)) 
 previous_path <- glue::glue('results/{ previous_month }-{previous_year }')
 
-previous <- read_excel(glue('{previous_path}/fim-{previous_month}-{previous_year}.xlsx'), na = "NA") %>%
+previous <- read_excel(glue('{previous_path}/fim.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
   filter(date >= '2017-12-31' & date <= last_proj_date)  %>%
   select(-contains(c('add', 'override')))
@@ -55,7 +55,7 @@ update <- read_excel(glue('{update_path}/fim.xlsx'), na = "NA") %>%
 
 ## Total Quarterly Fiscal Impact
 
-```{r fim, fig.show='hold'}
+```{r fim}
 previous %>%
   mutate(key = 'previous') %>%
   bind_rows(update %>% mutate(key = 'update')) %>%
@@ -75,12 +75,12 @@ previous %>%
        y = 'Percentage points',
        title =  'Quarterly Fiscal Impact') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
 
-```{r fim-ma, fig.show='hold'}
+```{r fim-ma}
 previous %>%
   mutate(key = 'previous') %>%
   bind_rows(update %>% mutate(key = 'update')) %>%
@@ -100,7 +100,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Quarterly Fiscal Impact, Four Quarter Moving Average') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -125,7 +125,7 @@ previous %>%
        title =  'Contribution of Federal Purchases') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired', direction = 1) + 
 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -149,7 +149,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of S&L Purchases') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -175,7 +175,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of Federal Purchases') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -199,7 +199,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of S&L Purchases') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -223,7 +223,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of Consumption Grants') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -247,7 +247,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of Investment Grants') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -272,7 +272,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of Taxes and Transfers') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -296,7 +296,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of Federal Taxes and Transfers') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -321,7 +321,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of S&L Taxes and Transfers') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -348,7 +348,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of Subsidies') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -372,7 +372,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of Federal Subsidies') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 
@@ -396,7 +396,7 @@ previous %>%
        y = 'Percentage points',
        title =  'Contribution of S&L Subsidies') +
     scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() +
+  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
   theme(plot.title.position = 'plot')
 ```
 

@@ -75,27 +75,31 @@ mpc_subsidies = function(x){
   j
 }
 
-mpc_sub <- function(x){
-  mpc <- 0.45
-  weights <- c(rep(0.075, 4), rep(0.08, 4))
+
+mpc_ppp_round2 <- function(x){
+  mpc <- 0.525
+  weights <- c(rep(0.0625, 4), rep(0.0750, 4), 0.0875, 0.1, 0.1125, 0.15)
+  mpc * roll::roll_sum(x, width = length(weights),
+                       weights = weights, online = FALSE)
 }
 
-mpc_ppp_round2 = function(x){
+mpc_ui <- function(x){
+  mpc <- 0.9
+  weights <- c(rep(0.05, 2), rep(0.1, 2), rep(0.35, 2))
+  mpc * roll::roll_sum(x, width = length(weights), 
+                       weights = weights, online = FALSE)
+}
+mpc_ui_CRN19 = function(x){
   j = NA
-  for(i in 12:length(x)){
-    if(is.na(x[i-11])){
+  for(i in 6:length(x)){
+    if(is.na(x[i-5])){
       j[i] = NA
     } else{
-      lagstart = i-11
-      lagend = i
-      lags = lagstart:lagend
-      j[i] = 0.525*(0.15*x[i]+ 0.1125*x[i-1]+0.1*x[i-2]+0.0875*x[i-3]+0.0750*x[i-4]+0.0750*x[i-5]+0.0750*x[i-6]+0.0750*x[i-7]+0.0625*x[i-8]+0.0625*x[i-9]+0.0625*x[i-10]+0.0625*x[i-11]) 
+      j[i] = 0.9*(0.35*x[i]+ 0.35*x[i-1]+0.1*x[i-2]+0.1*x[i-3] + 0.05*x[i-4] + 0.05*x[i-5]) # distributes out to 40 percent of the -0.6 MPC applied in first two quarters and the remainder evenly over last 5
     }
   }
   j
 }
-
-
 
 ### 4.5.2 Post-COVID ---------------------------------------------------------------------------------------------
 #Same as pre-covid
@@ -127,10 +131,21 @@ mpc_social_benefits_CRN19 = function(x){
     if(is.na(x[i-7])){
       j[i] = NA
     } else{
-      j[i] = 0.86*(0.2879*x[i]+0.2498*x[i-1]+0.19*x[i-2]+0.19*x[i-3] + 0.0253*x[i-4] + 0.0253*x[i-5] + 0.0159*x[i-6] + 0.0159*x[i-7]) # distributes out to 40 percent of the -0.6 MPC applied in first two quarters and the remainder evenly over last 5
+      j[i] = 0.86*(0.2879*x[i]+0.2498*x[i-1]+0.19*x[i-2]+0.19*x[i-3] +
+                     0.0253*x[i-4] + 0.0253*x[i-5] + 0.0159*x[i-6] +
+                     0.0159*x[i-7]) 
+      # distributes out to 40 percent of the -0.6 MPC applied in first two quarters 
+      # and the remainder evenly over last 5
     }
   }
   j
+}
+
+mpc_social_benefits_new <- function(x){
+  mpc <- 0.86
+  weights <- c(rep(0.0159, 2), rep(0.0253, 2), rep(0.19, 2), 0.2498, 0.2879)
+  mpc * roll::roll_sum(x, width = length(weights),
+                 weights = weights, online = FALSE)
 }
 
 # Regular	0.9	62%	0.25	0.25	0.25	0.25				
@@ -142,17 +157,7 @@ mpc_social_benefits_ex_ui_rebate <-
     0.9 * rollapply(x, width = 4, mean, partial = TRUE, fill = NA, align =  'right')
   }
 
-mpc_ui_CRN19 = function(x){
-  j = NA
-  for(i in 6:length(x)){
-    if(is.na(x[i-5])){
-      j[i] = NA
-    } else{
-      j[i] = 0.9*(0.35*x[i]+ .35*x[i-1]+0.1*x[i-2]+0.1*x[i-3] + 0.05*x[i-4] + 0.05*x[i-5]) # distributes out to 40 percent of the -0.6 MPC applied in first two quarters and the remainder evenly over last 5
-    }
-  }
-  j
-}
+
 
 mpc_rebate_CRN19 = function(x){
   j = NA
@@ -165,6 +170,14 @@ mpc_rebate_CRN19 = function(x){
   }
   j
 }
+mpc_rebate <- function(x){
+  mpc <- 0.7
+  weights <- c(rep(0.08, 6), 0.15, 0.35)
+  mpc * roll::roll_sum(x, width = length(weights),
+                       weights = weights, online = FALSE)
+}
+
+
 
 mpc_rebate_round2 = function(x){
   j = NA
@@ -176,6 +189,13 @@ mpc_rebate_round2 = function(x){
     }
   }
   j
+}
+
+mpc_rebate_r2 <- function(x){
+  mpc <- 0.7
+  weights <- c(rep(0.08, 6), 0.15, 0.35)
+  mpc * roll::roll_sum(x, width = length(weights),
+                       weights = weights, online = FALSE)
 }
 
 #Same as pre-covid
