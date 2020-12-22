@@ -1,0 +1,239 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+  \usepackage{amssymb}
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Fiscal Impact Update: S\&L TTS},
+  pdfauthor={Manuel Alcala Kovalski, Tyler Powell, Kadija Yilla},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{Fiscal Impact Update: S\&L TTS}
+\author{Manuel Alcala Kovalski, Tyler Powell, Kadija Yilla}
+\date{2020-12-22}
+
+\begin{document}
+\maketitle
+
+\begin{verbatim}
+#> 
+#> 
+#> Table: Summary of data.frames
+#> 
+#> version   arg                                             ncol   nrow
+#> --------  ---------------------------------------------  -----  -----
+#> x         previous %>% select(date, contains("state"))      38     20
+#> y         update %>% select(date, contains("state"))        38     20
+#> 
+#> 
+#> 
+#> Table: Summary of overall comparison
+#> 
+#> statistic                                                      value
+#> ------------------------------------------------------------  ------
+#> Number of by-variables                                             0
+#> Number of non-by variables in common                              38
+#> Number of variables compared                                      38
+#> Number of variables in x but not y                                 0
+#> Number of variables in y but not x                                 0
+#> Number of variables compared with some values unequal             14
+#> Number of variables compared with all values equal                24
+#> Number of observations in common                                  20
+#> Number of observations in x but not y                              0
+#> Number of observations in y but not x                              0
+#> Number of observations with some compared variables unequal       20
+#> Number of observations with all compared variables equal           0
+#> Number of values unequal                                         178
+#> 
+#> 
+#> 
+#> Table: Variables not shared
+#> 
+#> |                        |
+#> |:-----------------------|
+#> |No variables not shared |
+#> 
+#> 
+#> 
+#> Table: Other variables not compared
+#> 
+#> |                                |
+#> |:-------------------------------|
+#> |No other variables not compared |
+#> 
+#> 
+#> 
+#> Table: Observations not shared
+#> 
+#> |                           |
+#> |:--------------------------|
+#> |No observations not shared |
+#> 
+#> 
+#> 
+#> Table: Differences detected by variable
+#> 
+#> var.x                                   var.y                                     n   NAs
+#> --------------------------------------  --------------------------------------  ---  ----
+#> date                                    date                                      0     0
+#> state_local_cont                        state_local_cont                          0     0
+#> state_local_nom                         state_local_nom                           7     0
+#> pi_state_local                          pi_state_local                            0     0
+#> pi_state_local_c                        pi_state_local_c                          0     0
+#> pi_state_local_i                        pi_state_local_i                          0     0
+#> state_local_nom_pi                      state_local_nom_pi                        0     0
+#> state_medicaid                          state_medicaid                            0     0
+#> state_health_outlays                    state_health_outlays                      0     0
+#> state_social_benefits_gross             state_social_benefits_gross              10     0
+#> state_unemployment_insurance            state_unemployment_insurance             12     0
+#> state_rebate_checks                     state_rebate_checks                       0     0
+#> state_social_benefits                   state_social_benefits                    10     0
+#> state_personal_taxes                    state_personal_taxes                      0     0
+#> state_payroll_taxes                     state_payroll_taxes                       0     0
+#> state_production_taxes                  state_production_taxes                    0     0
+#> state_noncorp_taxes                     state_noncorp_taxes                       0     0
+#> state_corporate_taxes                   state_corporate_taxes                     0     0
+#> state_subsidies                         state_subsidies                           0     0
+#> state_local_nom_cont                    state_local_nom_cont                      7     0
+#> state_local_cont_ex_grants              state_local_cont_ex_grants                7     0
+#> state_subsidies_net                     state_subsidies_net                       0     0
+#> state_health_outlays_net                state_health_outlays_net                  0     0
+#> state_social_benefits_net               state_social_benefits_net                20     0
+#> state_noncorp_taxes_net                 state_noncorp_taxes_net                   0     0
+#> state_corporate_taxes_net               state_corporate_taxes_net                 0     0
+#> state_rebate_checks_net                 state_rebate_checks_net                   0     0
+#> state_unemployment_insurance_net        state_unemployment_insurance_net         13     0
+#> state_health_outlays_net_xmpc           state_health_outlays_net_xmpc             0     0
+#> state_social_benefits_net_xmpc          state_social_benefits_net_xmpc           20     0
+#> state_unemployment_insurance_net_xmpc   state_unemployment_insurance_net_xmpc    18     0
+#> state_rebate_checks_net_xmpc            state_rebate_checks_net_xmpc              0     0
+#> state_corporate_taxes_net_xmpc          state_corporate_taxes_net_xmpc            0     0
+#> state_noncorp_taxes_net_xmpc            state_noncorp_taxes_net_xmpc              0     0
+#> state_subsidies_net_xmpc                state_subsidies_net_xmpc                  7     0
+#> state_transfers_net_taxes               state_transfers_net_taxes                20     0
+#> state_taxes_transfers_cont              state_taxes_transfers_cont               20     0
+#> state_subsidies_cont                    state_subsidies_cont                      7     0
+#> 
+#> 
+#> 
+#> Table: Differences detected (128 not shown)
+#> 
+#> var.x                          var.y                           ..row.names..  values.x      values.y       row.x   row.y
+#> -----------------------------  -----------------------------  --------------  ------------  ------------  ------  ------
+#> state_local_nom                state_local_nom                            14  2341.363      2417.296          14      14
+#> state_local_nom                state_local_nom                            15  2347.216      2423.149          15      15
+#> state_local_nom                state_local_nom                            16  2358.953      2434.886          16      16
+#> state_local_nom                state_local_nom                            17  2376.645      2452.578          17      17
+#> state_local_nom                state_local_nom                            18  2400.411      2476.344          18      18
+#> state_local_nom                state_local_nom                            19  2425.697      2501.63           19      19
+#> state_local_nom                state_local_nom                            20  2448.483      2524.416          20      20
+#> state_social_benefits_gross    state_social_benefits_gross                11  1105.744      1039.611          11      11
+#> state_social_benefits_gross    state_social_benefits_gross                12  1567.137      828.937           12      12
+#> state_social_benefits_gross    state_social_benefits_gross                13  1571.055      831.0093          13      13
+#> state_social_benefits_gross    state_social_benefits_gross                14  1574.982      833.0869          14      14
+#> state_social_benefits_gross    state_social_benefits_gross                15  1578.92       835.1696          15      15
+#> state_social_benefits_gross    state_social_benefits_gross                16  1586.815      839.3454          16      16
+#> state_social_benefits_gross    state_social_benefits_gross                17  1598.716      845.6405          17      17
+#> state_social_benefits_gross    state_social_benefits_gross                18  1614.703      854.0969          18      18
+#> state_social_benefits_gross    state_social_benefits_gross                19  1631.712      863.0938          19      19
+#> state_social_benefits_gross    state_social_benefits_gross                20  1647.04       871.2016          20      20
+#> state_unemployment_insurance   state_unemployment_insurance                1  0.436         29.8               1       1
+#> state_unemployment_insurance   state_unemployment_insurance                2  0.401         29.2               2       2
+#> state_unemployment_insurance   state_unemployment_insurance                3  0.408         27.9               3       3
+#> state_unemployment_insurance   state_unemployment_insurance                4  0.411         27.4               4       4
+#> state_unemployment_insurance   state_unemployment_insurance                5  0.353         27                 5       5
+#> state_unemployment_insurance   state_unemployment_insurance                6  0.443         28                 6       6
+#> state_unemployment_insurance   state_unemployment_insurance                7  0.405         27.5               7       7
+#> state_unemployment_insurance   state_unemployment_insurance                8  0.403         27.6               8       8
+#> state_unemployment_insurance   state_unemployment_insurance                9  0.408         27.9               9       9
+#> state_unemployment_insurance   state_unemployment_insurance               10  0.379         43.4              10      10
+#> state_social_benefits          state_social_benefits                      11  436.944       370.8107          11      11
+#> state_social_benefits          state_social_benefits                      12  875.837       137.637           12      12
+#> state_social_benefits          state_social_benefits                      13  222.9229      -517.1227         13      13
+#> state_social_benefits          state_social_benefits                      14  203.2802      -538.6155         14      14
+#> state_social_benefits          state_social_benefits                      15  187.6384      -556.112          15      15
+#> state_social_benefits          state_social_benefits                      16  188.3565      -559.1126         16      16
+#> state_social_benefits          state_social_benefits                      17  189.4392      -563.6359         17      17
+#> state_social_benefits          state_social_benefits                      18  190.8936      -569.7123         18      18
+#> state_social_benefits          state_social_benefits                      19  196.6039      -572.014          19      19
+#> state_social_benefits          state_social_benefits                      20  201.9295      -573.9088         20      20
+#> state_local_nom_cont           state_local_nom_cont                       14  -0.1764513    1.230697          14      14
+#> state_local_nom_cont           state_local_nom_cont                       15  -0.2952246    -0.3082595        15      15
+#> state_local_nom_cont           state_local_nom_cont                       16  -0.1884332    -0.2013417        16      16
+#> state_local_nom_cont           state_local_nom_cont                       17  -0.09025519   -0.1032112        17      17
+#> state_local_nom_cont           state_local_nom_cont                       18  -0.0341637    -0.04851018       18      18
+#> state_local_nom_cont           state_local_nom_cont                       19  -0.03479644   -0.04972172       19      19
+#> state_local_nom_cont           state_local_nom_cont                       20  -0.09316578   -0.1082914        20      20
+#> state_local_cont_ex_grants     state_local_cont_ex_grants                 14  -0.1764513    1.230697          14      14
+#> state_local_cont_ex_grants     state_local_cont_ex_grants                 15  -0.2952246    -0.3082595        15      15
+#> state_local_cont_ex_grants     state_local_cont_ex_grants                 16  -0.1884332    -0.2013417        16      16
+#> state_local_cont_ex_grants     state_local_cont_ex_grants                 17  -0.09025519   -0.1032112        17      17
+#> state_local_cont_ex_grants     state_local_cont_ex_grants                 18  -0.0341637    -0.04851018       18      18
+#> state_local_cont_ex_grants     state_local_cont_ex_grants                 19  -0.03479644   -0.04972172       19      19
+#> 
+#> 
+#> 
+#> Table: Non-identical attributes
+#> 
+#> |                            |
+#> |:---------------------------|
+#> |No non-identical attributes |
+\end{verbatim}
+
+\end{document}
