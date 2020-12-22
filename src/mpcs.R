@@ -39,7 +39,12 @@ mpc_noncorp_taxes = function(x){
   }
   j
 }
-
+mpc_nc <- function(x){
+  mpc <- -0.6
+  weights <- c(rep(0.1, 6), rep(0.2, 2))
+  mpc * roll::roll_sum(x, width = length(weights),
+                       weights = weights, online = FALSE)
+}
 mpc_corporate_taxes = function(x){
   j = NA
   for(i in 12:length(x)){
@@ -70,7 +75,10 @@ mpc_subsidies = function(x){
   j
 }
 
-
+mpc_sub <- function(x){
+  mpc <- 0.45
+  weights <- c(rep(0.075, 4), rep(0.08, 4))
+}
 
 mpc_ppp_round2 = function(x){
   j = NA
