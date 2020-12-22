@@ -124,14 +124,15 @@ fim <-
   corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
   subsidies   = state_subsidies + federal_subsidies,
   state_local_nom = state_local_nom + add_state_purchases,
-  federal_nom = add_federal_purchases + federal_nom
+  federal_nom = add_federal_purchases + federal_nom,
+  federal_rebate_checks = federal_rebate_checks + add_rebate_checks
   
 )
 
 
 # Overrides -----------------------------------------------------------------------------------
 # Load add factor file and select override columns
-override <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6.xlsx", 
+override <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6_round2.xlsx", 
                           sheet = "FIM Add Factors") %>%
   select(date, ends_with('override')) %>%
   mutate(date = as_date(date)) 

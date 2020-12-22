@@ -39,8 +39,7 @@ previous_path <- glue::glue('results/{ previous_month }-{previous_year }')
 
 previous <- read_excel(glue('{previous_path}/fim.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
-  filter(date >= '2017-12-31' & date <= last_proj_date)  %>%
-  select(-contains(c('add', 'override')))
+  filter(date >= '2017-12-31' & date <= last_proj_date) 
 
 update_month <- month(Sys.Date())
 update_year <- year(Sys.Date())
@@ -49,8 +48,7 @@ update_path <- glue::glue('results/{ update_month }-{update_year }')
 # update <- read_excel(glue('{update_path}/fim-{update_month}-{update_year}.xlsx'), na = "NA")
 update <- read_excel(glue('{update_path}/fim.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
-  filter(date >= '2017-12-31' & date <= last_proj_date) %>%
-  select(-contains(c('add', 'override')))
+  filter(date >= '2017-12-31' & date <= last_proj_date) 
 ```
 
 ## Total Quarterly Fiscal Impact
