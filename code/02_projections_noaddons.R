@@ -223,8 +223,8 @@ xx <-
     gftfbusx = gftfbusx / 1000, # Translate UI from millions to billions
     # Reallocate state UI (gftfbusx) from federal to state
     # Add ui legislation to federal and subtract from state
-    gftfp = gftfp - gftfbusx,
-    gstfp = gstfp + gftfbusx,
+    gftfp = gftfp - yptu,
+    gstfp = gstfp + yptu,
     
     # GRANTS
     
