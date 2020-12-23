@@ -238,8 +238,8 @@ xx <-
       gftfbusx = gftfbusx / 1000, # Translate UI from millions to billions
       # Reallocate state UI (gftfbusx) from federal to state
       # Add ui legislation to federal and subtract from state
-      gftfp = gftfp - gftfbusx + federal_unemployment_insurance_override,
-      gstfp = gstfp + gftfbusx - federal_unemployment_insurance_override,
+      gftfp = gftfp - yptu + federal_unemployment_insurance_override,
+      gstfp = gstfp + yptu - federal_unemployment_insurance_override,
      
       # GRANTS
       
