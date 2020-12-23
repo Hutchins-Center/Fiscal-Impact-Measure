@@ -125,7 +125,8 @@ fim <-
   subsidies   = state_subsidies + federal_subsidies,
   state_local_nom = state_local_nom + add_state_purchases,
   federal_nom = add_federal_purchases + federal_nom,
-  federal_rebate_checks = federal_rebate_checks + add_rebate_checks
+  federal_rebate_checks = federal_rebate_checks + add_rebate_checks,
+  rebate_checks = rebate_checks + add_rebate_checks
   
 )
 
@@ -395,7 +396,7 @@ fim %<>%
 firstDate <- "1999-12-31"
 saveRDS(fim %>% filter(date > firstDate ), 'data/processed/fim.rds')
 # 4.6.1 Clean FIM data frame ----------------------------------------------------------------------------
-last_proj_date <- as.Date('2022-09-30')
+last_proj_date <- as.Date('2022-12-31')
 fim <-
   fim %>% 
     mutate(fim_bars = federal_cont + state_local_cont + taxes_transfers_cont,
@@ -417,17 +418,21 @@ fim_interactive <-
            taxes_transfers_subsidies_cont = taxes_transfers_cont
            ) %>%
     separate(yrq, c("year", "quarter")) %>%
-    select(year, quarter, recession, projection,
-           fim_bars, fim_bars_ma, 
+    select(year, quarter, fim_bars_ma, recession,
+           fim_bars, 
            federal_cont, state_local_cont,
-           taxes_transfers_subsidies_cont) %>%
+           taxes_transfers_subsidies_cont,
+           projection) %>%
     rename(
       "total" = fim_bars,
       "impact" = fim_bars_ma,
       "federal" = federal_cont,
       "state_local" = state_local_cont,
       "consumption" = taxes_transfers_subsidies_cont
-    )
+    ) %>% 
+  mutate(recession = if_else(is.na(recession),
+                             0,
+                             recession))
 # 4.6.3 Create CSV files --------------------------------------------------------------------------------
 
 # Create folder for current month's update

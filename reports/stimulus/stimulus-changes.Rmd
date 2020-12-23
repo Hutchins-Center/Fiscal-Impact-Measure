@@ -1,0 +1,594 @@
+---
+title: 'Fiscal Impact stimulus: Changes in Contributions with Stimulus vs with No Stimulus'
+author: ' Manuel Alcala Kovalski, Tyler Powell, Kadija Yilla'
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+vignette: |
+  %\VignetteIndexEntry{Vignette Title} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  echo = FALSE,
+  fig.align = 'center',
+  warnings = FALSE,
+  message = FALSE,
+  cache = TRUE
+)
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r source}
+source('src/packages.R')
+library('glue')
+```
+
+
+```{r pull data, warnings = FALSE, message = FALSE, hide = TRUE, include = FALSE}
+last_hist_date <- as.Date("2020-09-30")
+last_proj_date <- last_hist_date + years(2) + months(7)
+
+
+
+stimulus_month <- month(Sys.Date())
+stimulus_year <- year(Sys.Date())
+stimulus_path <- glue::glue('results/{ stimulus_month }-{stimulus_year }')
+      
+# stimulus <- read_excel(glue('{stimulus_path}/fim-{stimulus_month}-{stimulus_year}.xlsx'), na = "NA")
+stimulus <- read_excel(glue('{stimulus_path}/fim.xlsx'), na = "NA") %>%
+  mutate(date = as_date(date)) %>%
+  filter(date >= '2021-03-31' & date <= last_proj_date) %>%
+  select(-contains(c('add', 'override')))
+
+no_stimulus <- read_excel(glue('{stimulus_path}/no-stimulus/fim_nostimulus.xlsx'), na = "NA") %>%
+  mutate(date = as_date(date)) %>%
+  filter(date >= '2021-03-31' & date <= last_proj_date) %>%
+  select(-contains(c('add', 'override')))
+```
+
+## Total Quarterly Fiscal Impact
+
+```{r fim, fig.show='hold'}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, fim_bars, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Quarterly Fiscal Impact') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +         
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+
+```{r fim-ma, fig.show='hold'}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, fim_bars_ma, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '', 
+       y = 'Percentage points',
+       title =  'Quarterly Fiscal Impact, Four Quarter Moving Average') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +         
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r federal-cont, include = FALSE}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, federal_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of Federal Purchases') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired', direction = 1) +     
+
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r state-cont, include = FALSE}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, state_local_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of S&L Purchases') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+## Purchases and Grants
+
+```{r purchases-federal}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, federal_nom_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of Federal Purchases Without Grants') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r purchases-state}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, state_local_nom_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of S&L Purchases') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r cgrants}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, federal_cgrants_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of Consumption Grants') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r igrants}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, federal_igrants_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of Investment Grants') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+## Taxes and Transfers
+```{r tts}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, taxes_transfers_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of Taxes and Transfers') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r federal-tts}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, federal_taxes_transfers_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of Federal Taxes and Transfers') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+
+```{r state-tts}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, state_taxes_transfers_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of S&L Taxes and Transfers') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+
+## Subsidies
+
+```{r subsidies}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, subsidies_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of Subsidies') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r subsidies_federal}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, federal_subsidies_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of Federal Subsidies') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r subsidies_state}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, state_subsidies_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of S&L Subsidies') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+```{r social-benefits}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, social_benefits_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Contribution of Social Benefits') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+
+```{r federal-social-benefits, include = FALSE}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, federal_social_benefits, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Level of Federal Social Benefits') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r state-social-benefits, include = FALSE}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, state_social_benefits, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Level of State Social Benefits') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r state-ui, include = FALSE}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, state_unemployment_insurance, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Level of State UI') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+
+```
+
+```{r, include = FALSE}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, state_unemployment_insurance, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Level of State UI') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+
+```
+```{r, include = FALSE}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, state_unemployment_insurance_net_xmpc, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Net State UI after MPC') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r, include = FALSE}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, state_social_benefits_net_xmpc, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'Net State Social Benefits after MPC') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
+```{r, include = FALSE}
+no_stimulus %>%
+  mutate(key = 'no_stimulus') %>%
+  bind_rows(stimulus %>% mutate(key = 'stimulus')) %>%
+  select(date, state_taxes_transfers_cont, key) %>%
+  group_by(key) %>%
+  pivot_longer(
+    where(
+      is.numeric
+    )
+  ) %>%
+  ggplot(aes(x = date,
+             y = value,
+             fill = key)
+         ) +
+  geom_col(position = 'dodge') +   scale_x_date(date_breaks = '3 months', date_labels = '%Y-%m') +
+  labs(x = '',
+       y = 'Percentage points',
+       title =  'State Taxes') +
+    scale_fill_brewer(name = "",labels = c('No stimulus', 'With stimulus'), type = 'qual', palette = 'Paired',                      direction = 1) +     
+  theme_hc() +
+  theme(plot.title.position = 'plot')
+```
+
