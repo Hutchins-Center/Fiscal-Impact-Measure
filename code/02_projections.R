@@ -209,7 +209,7 @@ xx <-
 
 ### 4.2.1 ------------------------------------------------------------------------------------------
 unemployment_insurance_override <-
-  read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6.xlsx", 
+  read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6_round2.xlsx", 
            sheet = "FIM Add Factors") %>%
   mutate(date = as_date(date)) %>%
   select(date, contains('unemployment_insurance')) 
