@@ -198,6 +198,8 @@ tts = c(tt, paste0("federal_", tt), paste0("state_", tt)) # totals and disaggreg
 
 # Calculate "net" taxes and transfers by subtracting counterfactual from realized.
 # We specify the counterfactual as the lag times the growth rate of potential gdp and our deflator
+# 
+# Note: pi_pce and gdppoth should be lagged
 fim <-  
   fim %>%
     mutate(
