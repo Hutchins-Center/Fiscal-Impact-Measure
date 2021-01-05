@@ -1,44 +1,16 @@
 ## ---------------------------
-##
-## Script name: Figures
-##
-## Purpose of script:
-## Create data visualizations for FIM
-## Authors: Manuel Alcalá Kovalski, Sage Belz, Kadija Yilla
-##
-## Date Created: 2020-10-07
-##
-## Email: malcalakovalski@brookings.edu
-##
-## ---------------------------
-##
-## Notes:
-##   
-##
-## ---------------------------
-
-
-## load up the packages we will need:
-
-# -----------------------------------------------------------------------------------------------------------------
-
-
+# Script name: Figures
 # Data viz packages -----------------------------------------------------------------------------------------------
-packages <-
-  c('ggplot2', 
-    'ggtext',
-    'gridExtra',
-    'grid',
-    'wesanderson',
-    'tinytex')
+packages <- 
+  c('ggplot2', 'ggtext','gridExtra','grid','wesanderson','tinytex')
 lapply(packages, require, character.only = TRUE)
 
 # End data for recession is one month after the end of the current quarter
 end_date_reccession = last_hist_date + months(1)
 
-
 # set plot formats, theme 
-uni.theme <- theme_bw() + 
+uni.theme <- function() {
+  theme_bw() +
   theme(legend.position = "bottom", 
         panel.grid.minor.x=element_blank(),
         panel.grid.major.x=element_blank(),
@@ -50,7 +22,7 @@ uni.theme <- theme_bw() +
         legend.title=element_blank(),
         legend.spacing.y = unit(2, 'cm')
         ) # , legend.margin = unit(c(rep(-.8, 4)),"cm")
-
+}
 guidez <- guides(
   fill = guide_legend(keywidth = unit(0.8, "cm"),
                       keyheight = unit(0.4, "cm"), 
@@ -74,56 +46,29 @@ colourz = c("black",
             wes_palette("Royal2")
             )
 
-#max value for the y axis
-max_y = ceiling(max(apply(fim[121:nrow(fim),2:7], 2, FUN=max, na.rm = TRUE))) + 1
-#minimum valye for the y axis
-min_y = floor(min(apply(fim[121:nrow(fim),2:7], 2, FUN=min, na.rm = TRUE))) - 1
+### AXIS LIMITS
+max_y <-
+  fim %>%
+  filter(date >= '2000-03-31') %>%
+  select(fim_bars:subsidies_cont) %>%
+  max() %>%
+  ceiling() + 1
+min_y <-
+  fim %>%
+  filter(date >= '2000-03-31') %>%
+  select(fim_bars:subsidies_cont) %>%
+  min() %>%
+  floor() - 1
 
 
-# helper function for line plots
-lp <- function(data, 
-               labelz = NULL,
-               ylabel = NULL,
-               t = NULL,
-               sub = NULL,
-               cap = NULL,
-               start.date = "2000-01-01",
-               end.date = last_proj_date,
-               colorz = colourz){
-                                  df_plot <- data
-                                  colnames(df_plot) = c("date", labelz)
-                                  df_plot <- melt(df_plot, id = "date")
-                                  df_plot <- df_plot[which(df_plot$date <= end.date & df_plot$date >= start.date), ]
-                                  
-                                  leg_exists = NULL
-                                  if(is.null(labelz)){
-                                    leg_exists = theme(legend.position="none")
-                                    }
   
   shade <-
      data.frame(start = as.Date(Sys.Date()), 
-                end = as.Date(end.date,
+                end = as.Date(last_proj_date,
                               "%Y-%m-%d")
                 )
-  
-  ggplot() + 
-    geom_line(data = df_plot, 
-              aes_string("date", "value", colour = "variable")
-              ) +     
-    uni.theme + 
-    scale_x_date(breaks = 0,
-                 date_breaks = "4 years",
-                 date_labels = "%Y",
-                 limits = as.Date(c(start.date, end.date))
-                 ) + 
-    labs(title = t,
-         y = ylabel,
-         x = "",
-         subtitle = sub,
-         caption = cap) +
-    scale_colour_manual(values=colorz) + 
-    leg_exists
-}
+
+ 
 
 # helper function for bar plots
 bp <- function(data, labelz = NULL, ylabel = NULL, t = NULL, sub = NULL, cap = NULL, start.date = "2000-01-01", end.date = last_proj_date, colorz = colorz) {
@@ -137,7 +82,7 @@ bp <- function(data, labelz = NULL, ylabel = NULL, t = NULL, sub = NULL, cap = N
   }
   
   ggplot() + geom_bar(data = df_plot, aes_string("date", "value", fill = "variable"), stat = "identity", width = 50) + 
-    uni.theme + 
+    uni.theme() + 
     scale_x_date(breaks = 0, date_breaks = "2 years", date_labels = "%Y", limits = as.Date(c(start.date,end.date))) + 
     labs(title = t, subtitle = sub, caption = cap) + ylab(ylabel) + xlab("") +
     scale_fill_manual(values=colorz) + leg_exists 
