@@ -1,0 +1,431 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+  \usepackage{amssymb}
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={04\_figures.R},
+  pdfauthor={malcalakovalski},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{04\_figures.R}
+\author{malcalakovalski}
+\date{2021-01-05}
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{packages }\OtherTok{\textless{}{-}} 
+  \FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}tidyverse\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}ggtext\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}gridExtra\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}grid\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}wesanderson\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}tinytex\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}glue\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}here\textquotesingle{}}\NormalTok{,}
+    \StringTok{\textquotesingle{}lubridate\textquotesingle{}}\NormalTok{)}
+\FunctionTok{lapply}\NormalTok{(packages, require, }\AttributeTok{character.only =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: tidyverse
+\end{verbatim}
+
+\begin{verbatim}
+## -- Attaching packages --------------------------------------- tidyverse 1.3.0 --
+\end{verbatim}
+
+\begin{verbatim}
+## v ggplot2 3.3.2     v purrr   0.3.4
+## v tibble  3.0.4     v dplyr   1.0.2
+## v tidyr   1.1.2     v stringr 1.4.0
+## v readr   1.4.0     v forcats 0.5.0
+\end{verbatim}
+
+\begin{verbatim}
+## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: ggtext
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: gridExtra
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'gridExtra'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:dplyr':
+## 
+##     combine
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: grid
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: wesanderson
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: tinytex
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: glue
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'glue'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:dplyr':
+## 
+##     collapse
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: here
+\end{verbatim}
+
+\begin{verbatim}
+## here() starts at /Users/malcalakovalski/Documents/Projects/Fiscal-Impact-Measure
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: lubridate
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'lubridate'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:base':
+## 
+##     date, intersect, setdiff, union
+\end{verbatim}
+
+\begin{verbatim}
+## [[1]]
+## [1] TRUE
+## 
+## [[2]]
+## [1] TRUE
+## 
+## [[3]]
+## [1] TRUE
+## 
+## [[4]]
+## [1] TRUE
+## 
+## [[5]]
+## [1] TRUE
+## 
+## [[6]]
+## [1] TRUE
+## 
+## [[7]]
+## [1] TRUE
+## 
+## [[8]]
+## [1] TRUE
+## 
+## [[9]]
+## [1] TRUE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# CONSTANTS {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+\NormalTok{start }\OtherTok{\textless{}{-}} \FunctionTok{as\_date}\NormalTok{(}\StringTok{"2000{-}01{-}01"}\NormalTok{)}
+\NormalTok{end }\OtherTok{\textless{}{-}} \FunctionTok{as\_date}\NormalTok{(}\StringTok{"2022{-}12{-}31"}\NormalTok{)}
+\NormalTok{last\_hist\_date }\OtherTok{\textless{}{-}}\NormalTok{ end }\SpecialCharTok{{-}} \FunctionTok{years}\NormalTok{(}\DecValTok{2}\NormalTok{)}
+\NormalTok{end\_date\_reccession }\OtherTok{\textless{}{-}}\NormalTok{ last\_hist\_date }\SpecialCharTok{+} \FunctionTok{months}\NormalTok{(}\DecValTok{1}\NormalTok{)}
+
+\CommentTok{\# Load data {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+\NormalTok{thismonth }\OtherTok{\textless{}{-}} \FunctionTok{format}\NormalTok{(}\FunctionTok{Sys.Date}\NormalTok{(), }\StringTok{"\%m{-}\%Y"}\NormalTok{)}
+\NormalTok{contributions }\OtherTok{\textless{}{-}} 
+\NormalTok{  readxl}\SpecialCharTok{::}\FunctionTok{read\_xlsx}\NormalTok{(}\FunctionTok{glue}\NormalTok{(}\StringTok{"results/\{thismonth\}/fim.xlsx"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(date, }\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}fim\textquotesingle{}}\NormalTok{), }\FunctionTok{ends\_with}\NormalTok{(}\StringTok{\textquotesingle{}cont\textquotesingle{}}\NormalTok{), recession) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{date =} \FunctionTok{as\_date}\NormalTok{(date)) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(date }\SpecialCharTok{\textgreater{}}\NormalTok{ start }\SpecialCharTok{\&}\NormalTok{ date }\SpecialCharTok{\textless{}=}\NormalTok{ end)}
+
+\NormalTok{max\_y }\OtherTok{\textless{}{-}}
+\NormalTok{  contributions}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(fim\_bars}\SpecialCharTok{:}\NormalTok{subsidies\_cont) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{max}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ceiling}\NormalTok{() }\SpecialCharTok{+} \DecValTok{1}
+\NormalTok{min\_y }\OtherTok{\textless{}{-}}
+\NormalTok{  contributions }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(fim\_bars}\SpecialCharTok{:}\NormalTok{subsidies\_cont) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{min}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{floor}\NormalTok{() }\SpecialCharTok{{-}} \DecValTok{1}
+
+\CommentTok{\# Theme {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+\CommentTok{\# set plot formats, theme }
+\NormalTok{uni.theme }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{() \{}
+  \FunctionTok{theme\_bw}\NormalTok{() }\SpecialCharTok{+}
+    \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"bottom"}\NormalTok{, }
+          \AttributeTok{panel.grid.minor.x=}\FunctionTok{element\_blank}\NormalTok{(),}
+          \AttributeTok{panel.grid.major.x=}\FunctionTok{element\_blank}\NormalTok{(),}
+          \AttributeTok{plot.margin=}\FunctionTok{unit}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\FloatTok{1.2}\NormalTok{,.}\DecValTok{5}\NormalTok{,.}\DecValTok{5}\NormalTok{,.}\DecValTok{5}\NormalTok{),}\StringTok{"cm"}\NormalTok{),}
+          \AttributeTok{plot.title =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{size=}\DecValTok{12}\NormalTok{),}
+          \AttributeTok{plot.subtitle =} \FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{size=}\DecValTok{10}\NormalTok{) , }
+          \AttributeTok{plot.caption =} 
+            \FunctionTok{element\_textbox\_simple}\NormalTok{(}\AttributeTok{size =} \DecValTok{9}\NormalTok{,}
+                                   \AttributeTok{lineheight =} \DecValTok{1}\NormalTok{,}
+                                   \AttributeTok{padding =} \FunctionTok{margin}\NormalTok{(}\FloatTok{5.5}\NormalTok{, }\FloatTok{5.5}\NormalTok{, }\FloatTok{5.5}\NormalTok{, }\FloatTok{5.5}\NormalTok{),}
+                                   \AttributeTok{margin =} \FunctionTok{margin}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\FloatTok{5.5}\NormalTok{, }\DecValTok{0}\NormalTok{)),}
+          \AttributeTok{legend.text=}\FunctionTok{element\_markdown}\NormalTok{(}\AttributeTok{size=}\DecValTok{10}\NormalTok{), }
+          \AttributeTok{legend.title=}\FunctionTok{element\_blank}\NormalTok{(),}
+          \AttributeTok{legend.spacing.y =} \FunctionTok{unit}\NormalTok{(}\DecValTok{2}\NormalTok{, }\StringTok{\textquotesingle{}cm\textquotesingle{}}\NormalTok{)}
+\NormalTok{    ) }\CommentTok{\# , legend.margin = unit(c(rep({-}.8, 4)),"cm")}
+\NormalTok{\}}
+
+\DocumentationTok{\#\# Legend formatting {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+\NormalTok{guidez }\OtherTok{\textless{}{-}} \FunctionTok{guides}\NormalTok{(}
+\AttributeTok{fill =} \FunctionTok{guide\_legend}\NormalTok{(}\AttributeTok{keywidth =} \FunctionTok{unit}\NormalTok{(}\FloatTok{0.8}\NormalTok{, }\StringTok{"cm"}\NormalTok{),}
+                    \AttributeTok{keyheight =} \FunctionTok{unit}\NormalTok{(}\FloatTok{0.4}\NormalTok{, }\StringTok{"cm"}\NormalTok{), }
+                    \AttributeTok{ncol =} \DecValTok{1}\NormalTok{),}
+\AttributeTok{colour =} \FunctionTok{guide\_legend}\NormalTok{(}\AttributeTok{keywidth =} \FunctionTok{unit}\NormalTok{(}\FloatTok{0.8}\NormalTok{, }\StringTok{"cm"}\NormalTok{),}
+                      \AttributeTok{keyheight =} \FunctionTok{unit}\NormalTok{(}\FloatTok{0.05}\NormalTok{, }\StringTok{"cm"}\NormalTok{), }
+                      \AttributeTok{ncol =} \DecValTok{1}\NormalTok{)}
+\NormalTok{)}
+
+
+\NormalTok{total\_pink }\OtherTok{\textless{}{-}} \FunctionTok{rgb}\NormalTok{(}\DecValTok{231}\NormalTok{, }\DecValTok{97}\NormalTok{, }\DecValTok{159}\NormalTok{, }\AttributeTok{maxColorValue =} \DecValTok{255}\NormalTok{)}
+\NormalTok{state\_local\_purple }\OtherTok{=} \FunctionTok{rgb}\NormalTok{(}\DecValTok{174}\NormalTok{, }\DecValTok{104}\NormalTok{, }\DecValTok{169}\NormalTok{,  }\AttributeTok{maxColorValue =} \DecValTok{255}\NormalTok{)}
+\NormalTok{federal\_blue }\OtherTok{=} \FunctionTok{rgb}\NormalTok{(}\DecValTok{33}\NormalTok{, }\DecValTok{152}\NormalTok{, }\DecValTok{199}\NormalTok{,  }\AttributeTok{maxColorValue =} \DecValTok{255}\NormalTok{)}
+\NormalTok{taxes\_transfers\_green }\OtherTok{=} \FunctionTok{rgb}\NormalTok{(}\DecValTok{27}\NormalTok{, }\DecValTok{149}\NormalTok{, }\DecValTok{83}\NormalTok{,  }\AttributeTok{maxColorValue =} \DecValTok{255}\NormalTok{)}
+\CommentTok{\# Shading {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+\NormalTok{economic\_statistics }\OtherTok{\textless{}{-}} 
+\NormalTok{  readxl}\SpecialCharTok{::}\FunctionTok{read\_excel}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{\textquotesingle{}data\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}raw\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}haver\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}economic\_statistics.xlsx\textquotesingle{}}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(date, recessq) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{date =} \FunctionTok{as\_date}\NormalTok{(date))}
+\NormalTok{recessions }\OtherTok{\textless{}{-}}
+\NormalTok{  contributions }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{select}\NormalTok{(date, recession) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{recession =} \FunctionTok{if\_else}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(recession),}
+                             \DecValTok{0}\NormalTok{,}
+\NormalTok{                             recession),}
+         \AttributeTok{recession\_event =}\NormalTok{ recession }\SpecialCharTok{{-}} \FunctionTok{lag}\NormalTok{(recession),}
+         \AttributeTok{start =} \FunctionTok{if\_else}\NormalTok{(recession\_event }\SpecialCharTok{==} \DecValTok{1}\NormalTok{, }
+\NormalTok{                         date,}
+\NormalTok{                         NA\_Date\_) ,}
+         \AttributeTok{end =} \FunctionTok{if\_else}\NormalTok{(recession\_event }\SpecialCharTok{==} \SpecialCharTok{{-}}\DecValTok{1}\NormalTok{,}
+\NormalTok{                       date,}
+\NormalTok{                       NA\_Date\_) }
+\NormalTok{         ) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(start, end) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \FunctionTok{c}\NormalTok{(start, end)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{na.omit}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(name) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{row =} \FunctionTok{row\_number}\NormalTok{()) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_wider}\NormalTok{(}\AttributeTok{names\_from =}\NormalTok{ name,}
+              \AttributeTok{values\_from =}\NormalTok{ value) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{row)}
+
+\NormalTok{recession\_shade }\OtherTok{\textless{}{-}}
+  \FunctionTok{geom\_rect}\NormalTok{(}\AttributeTok{data =}\NormalTok{ recessions, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{xmin =}\NormalTok{ start, }\AttributeTok{xmax =}\NormalTok{ end, }\AttributeTok{ymin=}\SpecialCharTok{{-}}\ConstantTok{Inf}\NormalTok{, }\AttributeTok{ymax=}\SpecialCharTok{+}\ConstantTok{Inf}\NormalTok{),}
+            \AttributeTok{fill =} \StringTok{\textquotesingle{}grey\textquotesingle{}}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.3}\NormalTok{)}
+
+
+\CommentTok{\# Functions {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+\NormalTok{fim\_plot }\OtherTok{\textless{}{-}}
+  \ControlFlowTok{function}\NormalTok{(df, title)\{}
+\NormalTok{    df }\SpecialCharTok{\%\textgreater{}\%}
+      \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+      \FunctionTok{geom\_bar}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ date, }\AttributeTok{y =}\NormalTok{ value, }\AttributeTok{fill =}\NormalTok{ variable),}
+               \AttributeTok{stat =} \StringTok{\textquotesingle{}identity\textquotesingle{}}\NormalTok{, }\AttributeTok{width =} \DecValTok{50}\NormalTok{) }\SpecialCharTok{+}
+      \FunctionTok{geom\_line}\NormalTok{(}
+        \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ date,}
+            \AttributeTok{y =}\NormalTok{ fim\_bars\_ma,}
+            \AttributeTok{colour =} \StringTok{"4{-}quarter moving{-}average"}\NormalTok{)}
+\NormalTok{      ) }\SpecialCharTok{+}
+      \FunctionTok{geom\_point}\NormalTok{(}
+        \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ date,}
+            \AttributeTok{y =}\NormalTok{ fim\_bars\_ma,}
+            \AttributeTok{colour =} \StringTok{"4{-}quarter moving{-}average"}\NormalTok{), }\AttributeTok{size =} \DecValTok{1}
+\NormalTok{      ) }\SpecialCharTok{+}
+      \FunctionTok{labs}\NormalTok{(}
+        \AttributeTok{title =} \FunctionTok{glue}\NormalTok{(}\StringTok{"**Hutchins Center Fiscal Impact Measure: \{title\}**"}\NormalTok{),}
+        \AttributeTok{x =} \StringTok{\textquotesingle{}\textquotesingle{}}\NormalTok{,}
+        \AttributeTok{y =} \StringTok{\textquotesingle{}\textquotesingle{}}\NormalTok{,}
+        \AttributeTok{subtitle =} \StringTok{"Fiscal Policy Contribution to Real GDP Growth, percentage points"}\NormalTok{,}
+        \AttributeTok{caption =} \StringTok{"Source: Hutchins Center calculations from Bureau of Economic Analysis }
+\StringTok{        and Congressional Budget Office data; grey shaded areas indicate recessions }
+\StringTok{        and yellow shaded areas indicate projection."}\NormalTok{) }\SpecialCharTok{+}
+      \FunctionTok{geom\_richtext}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \FunctionTok{Sys.Date}\NormalTok{()}\SpecialCharTok{+}\DecValTok{350}\NormalTok{,}
+                    \AttributeTok{y =}\NormalTok{ max\_y), }
+                \AttributeTok{label =} \StringTok{"Projection"}\NormalTok{,}
+                \AttributeTok{cex =} \DecValTok{2}\NormalTok{, }
+                \AttributeTok{fill =} \ConstantTok{NA}\NormalTok{, }\AttributeTok{label.color =} \ConstantTok{NA}\NormalTok{, }\CommentTok{\# remove background and outline}
+\NormalTok{      ) }\SpecialCharTok{+}
+      \FunctionTok{annotate}\NormalTok{(}\StringTok{"rect"}\NormalTok{, }\AttributeTok{xmin =}\NormalTok{ last\_hist\_date }\SpecialCharTok{+} \DecValTok{40}\NormalTok{, }\AttributeTok{xmax =}\NormalTok{ end,}
+               \AttributeTok{ymin =} \SpecialCharTok{{-}}\ConstantTok{Inf}\NormalTok{, }\AttributeTok{ymax =} \ConstantTok{Inf}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.1}\NormalTok{, }\AttributeTok{fill =} \StringTok{\textquotesingle{}yellow\textquotesingle{}}\NormalTok{) }\SpecialCharTok{+}
+      \FunctionTok{geom\_rect}\NormalTok{(}\AttributeTok{data =}\NormalTok{ recessions,}
+                \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \ConstantTok{NULL}\NormalTok{, }\AttributeTok{y =} \ConstantTok{NULL}\NormalTok{,}
+                    \AttributeTok{xmin =}\NormalTok{ start, }\AttributeTok{xmax =}\NormalTok{ end, }
+                    \AttributeTok{ymin=}\SpecialCharTok{{-}}\ConstantTok{Inf}\NormalTok{, }\AttributeTok{ymax=}\SpecialCharTok{+}\ConstantTok{Inf}\NormalTok{), }\AttributeTok{fill =} \StringTok{\textquotesingle{}grey\textquotesingle{}}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.3}\NormalTok{) }\SpecialCharTok{+}
+      \FunctionTok{scale\_x\_date}\NormalTok{(}\AttributeTok{breaks =} \DecValTok{0}\NormalTok{, }\AttributeTok{date\_breaks =} \StringTok{"2 years"}\NormalTok{, }\AttributeTok{date\_labels =} \StringTok{\textquotesingle{}\%Y\textquotesingle{}}\NormalTok{,}
+                   \AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{0}\NormalTok{)) }\SpecialCharTok{+} 
+      \FunctionTok{scale\_color\_manual}\NormalTok{(}\StringTok{" "}\NormalTok{, }
+                         \AttributeTok{values=}\FunctionTok{c}\NormalTok{(}\StringTok{"4{-}quarter moving{-}average"} \OtherTok{=}\StringTok{"black"}\NormalTok{,}
+                                  \StringTok{"4{-}quarter moving{-}average"} \OtherTok{=}\StringTok{"black"}\NormalTok{)) }\SpecialCharTok{+}
+\NormalTok{      guidez }\SpecialCharTok{+}
+      \FunctionTok{uni.theme}\NormalTok{() }
+\NormalTok{  \}}
+
+\CommentTok{\# Figures {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+\DocumentationTok{\#\# Regular {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+\NormalTok{total }\OtherTok{\textless{}{-}}
+\NormalTok{  contributions }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(date, fim\_bars, fim\_bars\_ma) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \SpecialCharTok{{-}}\FunctionTok{c}\NormalTok{(date, fim\_bars\_ma), }\AttributeTok{names\_to =} \StringTok{\textquotesingle{}variable\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{fim\_plot}\NormalTok{(}\AttributeTok{title =} \StringTok{\textquotesingle{}Total\textquotesingle{}}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_manual}\NormalTok{(}\AttributeTok{labels =} \StringTok{" Quarterly fiscal impact"}\NormalTok{,}
+                    \AttributeTok{values =}\NormalTok{ total\_pink)}
+ 
+\NormalTok{components }\OtherTok{\textless{}{-}}
+\NormalTok{  contributions }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(date, state\_local\_cont, federal\_cont, taxes\_transfers\_cont, fim\_bars\_ma) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \SpecialCharTok{{-}}\FunctionTok{c}\NormalTok{(date, fim\_bars\_ma), }\AttributeTok{names\_to =} \StringTok{\textquotesingle{}variable\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{fim\_plot}\NormalTok{(}\AttributeTok{title =} \StringTok{\textquotesingle{}Components\textquotesingle{}}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_manual}\NormalTok{(}
+    \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{" State \& Local Purchases"}\NormalTok{, }\StringTok{" Federal Purchases"}\NormalTok{, }\StringTok{" Taxes, Transfers, \& Subsidies"}\NormalTok{),}
+                \AttributeTok{values =}  \FunctionTok{c}\NormalTok{(state\_local\_purple, federal\_blue, taxes\_transfers\_green)}
+\NormalTok{    )}
+\DocumentationTok{\#\# Expanded {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+\NormalTok{components\_govt }\OtherTok{\textless{}{-}}
+\NormalTok{  contributions }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{select}\NormalTok{(date, fim\_bars\_ma, state\_local\_cont, state\_taxes\_transfers\_cont, }
+\NormalTok{           federal\_cont, federal\_taxes\_transfers\_cont) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \SpecialCharTok{{-}}\FunctionTok{c}\NormalTok{(date, fim\_bars\_ma), }\AttributeTok{names\_to =} \StringTok{\textquotesingle{}variable\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{fim\_plot}\NormalTok{(}\AttributeTok{title =} \StringTok{"Components by Government"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_brewer}\NormalTok{(}\AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{" State \& Local Purchases"}\NormalTok{,}
+                               \StringTok{" State \& Local Taxes, Transfers, \& Subsidies"}\NormalTok{,}
+                                \StringTok{" Federal Purchases"}\NormalTok{,}
+                               \StringTok{" Federal Taxes, Transfers, \& Subsidies"}\NormalTok{)}
+\NormalTok{                    )}
+\NormalTok{taxes\_transfers }\OtherTok{\textless{}{-}}
+\NormalTok{  contributions }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(date, fim\_bars\_ma,}
+\NormalTok{         health\_cont, social\_benefits\_cont, }
+\NormalTok{         noncorp\_cont, corporate\_cont,}
+\NormalTok{         purchases\_cont, subsidies\_cont) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \SpecialCharTok{{-}}\FunctionTok{c}\NormalTok{(date, fim\_bars\_ma), }\AttributeTok{names\_to =} \StringTok{\textquotesingle{}variable\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{fim\_plot}\NormalTok{(}\AttributeTok{title =} \StringTok{"Taxes and Transfers Components"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_brewer}\NormalTok{(}\AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{" Health Outlays"}\NormalTok{, }\StringTok{" Social Benefits"}\NormalTok{,}
+                              \StringTok{" Noncorporate Taxes"}\NormalTok{, }\StringTok{" Corporate Taxes"}\NormalTok{, }
+                              \StringTok{" Purchases"}\NormalTok{, }\StringTok{" Subsidies"}\NormalTok{)}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+
+\end{document}
