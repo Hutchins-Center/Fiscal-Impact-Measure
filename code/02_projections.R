@@ -2,7 +2,7 @@
 # ##
 # ## Script name: Projections
 # ##
-# ## Purpose of script:
+# ## Purpose 
 # ## Construct quarterly projections
 # ## Authors:
 # ## Manuel Alcalá Kovalski
@@ -10,15 +10,8 @@
 # ## Kadija Yilla
 # ## Date Created: 2020-10-05
 # ##
-# ##
-# ##
-# ##
-# ## Notes ---------------------
-# ## We use projected growth rates and iteratively forecast levels from current levels.
-# ##
-# ##
-#
-# # 2 Projected Growth Rates -----------------------------------------------------------------------------
+
+## 2 Projected Growth Rates -----------------------------------------------------------------------------
 last_hist_date <-
   hist %>%
   select(date) %>%
@@ -28,8 +21,6 @@ last_hist_date <-
 
 last_proj_date <- last_hist_date + years(2)
 
-taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
-taxpieces_gdp = paste0(taxpieces, '_gdp')
 ## 2.1 Budget (Annual) ------------------------------------------------------------------------------------------
 
 
@@ -125,31 +116,6 @@ budg <-
 
 ### 3.1.1 ---------------------------------------------------------------------------
 taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
-taxpieces_gdp = paste0(taxpieces, '_gdp')
-# econ_a <-
-#   read_xlsx('data/raw/cbo/cbo_econ_proj_annual.xlsx')  %>%
-#   rename(date = calendar_date)
-# 
-# aa <- left_join(econ_a,
-#       hist %>% filter(month(date) == 12) %>%
-#         mutate(date = year(date)) %>%
-#         select(date, taxpieces),
-#       by = 'date')
-# 
-# aa <-
-#   bind_rows(aa, aa, aa, aa) %>%
-#   arrange(date) %>%
-#   mutate(date = econ$date)
-# 
-# 
-# aa <- aa %>%
-#   mutate(across(
-#     .cols = all_of(taxpieces),
-#     .fns = ~ na.locf(. / gdp),
-#     .names = "{col}_gdp"
-#   ))
-# 
-# econ[,taxpieces] <- sapply(aa[,taxpieces_gdp], function(x) x*econ$gdp)
 
 econ <-
   econ %>%
@@ -166,13 +132,12 @@ econ <-
     )
   ) %>%
   # S&L Taxes
-  # Commented out what I think we should be doing instead for state taxes
  left_join(hist %>%
           select(date, taxpieces),
         all.x = F) %>%
   mutate(
     across(
-      .cols = taxpieces,
+      .cols = all_of(taxpieces),
       .fns = ~ na.locf(. / gdp) * gdp
     )
   ) %>%
@@ -384,17 +349,6 @@ for(f in forecastPeriod){
 xx <-
   xx %>%
     mutate(
-      
-      # 
-      # gtfp = gftfp + gstfp, # social benefits = federal benefits + state and local benefits
-      # yptx = gfrpt + gsrpt, # alternative path
-      # yptxb = gfrptCurrentLaw + gsrpt, # current law
-      # ytpi = gsrpri + gfrpri,  #production and import taxes
-      # grcsi = gsrs + gfrs,  # payroll taxes
-      # yctlg = gsrcp + gfrcp, # corporate taxes
-      # gsub = gssub + gfsub,
-      
-      
       # Reattribute federal grants to states back to Federal government
       # Parse between those for consumption and investment and those for transfers (Medicaid)
       
