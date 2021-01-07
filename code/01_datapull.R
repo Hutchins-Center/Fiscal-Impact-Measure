@@ -2,18 +2,17 @@
 ## Source custom  functions and packages
 source('src/functions.R')
 source('src/packages.R')
-options(scipen = 9)
 # CBO projections -----------------------------------------------------------
 # Economic --------------------------------------------------------------------------------------------
 # Quarterly 
 econ <-
   read_xlsx(here('data/raw/cbo/cbo_econ_proj_quarterly.xlsx')) %>%
-  mutate(date =  gsub("12/30/", "12/31/", date)) %>%
-  mutate(date = as.Date(date))
+  mutate(date = as_date(date))
 
 # Budget ----------------------------------------------------------------------------------------------
 budg <-
-  read_xlsx(here('data/raw/cbo/cbo_budget_nipas_proj_annual.xlsx'))
+  read_xlsx(here('data/raw/cbo/cbo_budget_nipas_proj_annual.xlsx')) %>%
+  as_tsibble(index = fy)
 
 # Federal Medical Assistance Percentage (FMAP) --------------------------------------------------------------------
 fmap <-
