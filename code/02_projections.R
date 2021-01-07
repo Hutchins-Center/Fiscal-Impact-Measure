@@ -266,9 +266,7 @@ medicaid_reallocation <- function(df){
     )
 }
 
-projections <-
-  projections %>%
-  medicaid_reallocation()
+
 
 # 5 Forecast ----------------------------------------------------------------------------------------------------
 
@@ -350,7 +348,8 @@ total_forecast <- function(df){
 
 projections <-
   projections %>%
-  total_forecast()
+  total_forecast() %>%
+  medicaid_reallocation()
 
 
 
