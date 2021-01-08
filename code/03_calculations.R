@@ -185,8 +185,6 @@ fim <-
   contributions_purchases_grants() %>%
   total_purchases()
 # 4.4 Counterfactual Taxes and Transfers -------------------------------------------------------------------------------
-
-
 remove_social_benefit_components <- function(df, component){
   remove_unemployment_insurance <- function(df){
     df %>%
@@ -222,15 +220,6 @@ taxes_transfers_minus_neutral <- function(df){
     )
   
 }
-make_tts_list <- function(tax_transfer){
-  tt = paste0(c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes",
-                'rebate_checks', 'unemployment_insurance'), '_net')
-  tts = c(tt, paste0("federal_", tt), paste0("state_", tt)) 
-  str_subset(tts, {{tax_transfer}})
-}
-
-## CALCULATE MPCS
-
 calculate_health_mpc <- function(df){
   taxes_transfers <- 'health_outlays'
   net <- 'minus_neutral'
@@ -306,130 +295,80 @@ fim <-
   calculate_mpc('noncorp_taxes') %>%
   calculate_mpc('corporate_taxes') 
 
-
-
-
-
 # 4.5 Taxes and Transfers ----------------------------------------------------------------------------------------------
-
-
 add_social_benefit_components <- function(df){
   add_unemployment_insurance <- function(df){
     df %>%
-      mutate(social_benefits_ = social_benefits_ + rebate_checks_,
-             federal_social_benefits_ = federal_social_benefits_ + federal_rebate_checks_,
-             state_social_benefits_ = state_social_benefits_ + state_rebate_checks_)
+      mutate(social_benefits = social_benefits + unemployment_insurance,
+             federal_social_benefits = federal_social_benefits + federal_unemployment_insurance,
+             state_social_benefits = state_social_benefits + state_unemployment_insurance)
   }
-  add_unemployment_insurance_post_mpc <- function(df){
+
+  add_rebate_checks <-function(df){
     df %>%
-      mutate(social_benefits_post_mpc = social_benefits_post_mpc + unemployment_insurance_post_mpc,
-             federal_social_benefits_post_mpc = federal_social_benefits_post_mpc + federal_unemployment_insurance_post_mpc,
-             state_social_benefits_post_mpc = state_social_benefits_post_mpc + state_unemployment_insurance_post_mpc)
+      mutate(social_benefits = social_benefits + rebate_checks,
+             federal_social_benefits = federal_social_benefits + federal_rebate_checks,
+             state_social_benefits = state_social_benefits + state_rebate_checks)
   }
-  
-  add_unemployment_insurance <-function(df){
-    df %>%
-      mutate(social_benefits_ = social_benefits_ + rebate_checks_,
-             federal_social_benefits_ = federal_social_benefits_ + federal_rebate_checks_,
-             state_social_benefits_ = state_social_benefits_ + state_rebate_checks_)
-  }
-  add_rebate_checks_post_mpc <- function(df){
-    df %>%
-      mutate(social_benefits_post_mpc = social_benefits_post_mpc + rebate_checks_post_mpc,
-             federal_social_benefits_post_mpc = federal_social_benefits_post_mpc + federal_rebate_checks_post_mpc,
-             state_social_benefits_post_mpc = state_social_benefits_post_mpc + state_rebate_checks_post_mpc)
-  }
+
   df %>%
-    add_unemployment_insurance_post_mpc() %>%
-    add_rebate_checks_post_mpc()
+    add_unemployment_insurance() %>%
+    add_rebate_checks()
 }
 taxes_contributions <- function(df){
+  taxes <- c('noncorp_taxes_post_mpc', 'corporate_taxes_post_mpc')
+  all_taxes <- c(glue('{taxes}'), glue('federal_{taxes}'), glue('state_{taxes}')) 
   df %>%
     mutate(
       across(
-        .cols  = c(noncorp_taxes_post_mpc, corporate_taxes_post_mpc),
-        .fns = ~ 400 * .x / lag(gdp),
-        .names = "{.col}_cont"
-      )
-    )
-    
-}
-
-fim %>%
-  taxes_contributions() %>%
-  rename(noncorp_taxes_post_mpc_cont = )
-fim %>% taxes_contributions()
-get_total_taxes <- function(df){
-  taxes <- c('noncorp_taxes', 'corporate_taxes')
-  df %>%
-    mutate(
-      taxes_post_mpc = noncorp_taxes_post_mpc + corporate_taxes_post_mpc,
-      federal_taxes_post_mpc = federal_noncorp_taxes_post_mpc + federal_corporate_taxes_post_mpc,
-      state_taxes_post_mpc = state_noncorp_taxes_post_mpc + state_corporate_taxes_post_mpc
-    )
-}
-get_total_transfers <- function(df){
-  transfers <- c('social_benefits_post_mpc', 'health_outlays_post_mpc', 'subsidies_post_mpc')
-  federal_transfers <- c(glue('federal_{transfers}'))
-  state_transfers <- c(glue('state_{transfers}'))
-  
-  df %>%
-    mutate(transfers_post_mpc = rowSums(select(., .dots = all_of(transfers)), na.rm = TRUE),
-           federal_transfers_post_mpc = rowSums(select(., .dots = all_of(federal_transfers)), na.rm = TRUE),
-           state_transfers_post_mpc = rowSums(select(., .dots = all_of(state_transfers)), na.rm = TRUE)
-           )
-
-}
-get_transfers_net_taxes <- function(df){
-  df %>%
-    mutate(transfers_net_taxes = transfers_post_mpc + taxes_post_mpc,
-           federal_transfers_net_taxes = federal_transfers_post_mpc + federal_taxes_post_mpc,
-           state_transfers_net_taxes = state_transfers_post_mpc + state_taxes_post_mpc)
-}
-taxes_transfers_contributions <- function(df){
-  taxes_transfers_components <-
-    c('transfers', 'social_benefits', 'health_outlays', 'subsidies', 
-      'unemployment_insurance', 'rebate_checks', 
-      'corporate_taxes', 'noncorp_taxes') %>%
-    paste0('_post_mpc')
-  federal_taxes_transfers_components <- c(glue('federal_{taxes_transfers_components}'))
-  state_taxes_transfers_components <- c(glue('state_{taxes_transfers_components}'))
-  all <- c(taxes_transfers_components, 
-           federal_taxes_transfers_components,
-           state_taxes_transfers_components)
-  
-  df %>%
-    mutate(
-      across(
-        .cols  = all_of(all),
-        .fns = ~ 400 * .x / lag(gdp),
-        .names = "{.col}_cont"
-      )
-    )
-}
-taxes_net_transfers_contribution <- function(df){
-  
-  transfers_net_taxes <- 
-    c('transfers', 'federal_transfers', 'state_transfers') %>%
-    paste0('_net_taxes')
-
-
-  
-  all_taxes_transfers <- c(transfers_net_taxes, taxes_transfers_components,
-                           federal_taxes_transfers_components, 
-                           state_taxes_transfers_components)
-  
-  fim %>%
-    mutate(
-      across(
-        .cols  = all_of(all_taxes_transfers),
+        .cols  = all_of(all_taxes),
         .fns = ~ 400 * .x / lag(gdp),
         .names = "{.col}_cont"
       )
     ) %>%
-    tidylog::rename(
-           federal_taxes_transfers_cont = federal_transfers_net_taxes_cont,
-          state_taxes_transfers_cont = transfers_net_taxes_cont)  
+  rename_with(~ gsub('post_mpc_cont', 'cont', .x))
+    
+}
+sum_taxes_contributions <- function(df){
+  taxes <- c('noncorp_taxes', 'corporate_taxes')
+  df %>%
+    mutate(
+      taxes_cont = rowSums(select(., .dots = all_of(str_glue('{taxes}_cont')))),
+      federal_taxes_cont = rowSums(select(., .dots = all_of(str_glue('federal_{taxes}_cont')))),
+      state_taxes_cont = rowSums(select(., .dots = all_of(str_glue('state_{taxes}_cont'))))
+    )
+}
+transfers_contributions <- function(df){
+  transfers <- c('social_benefits_post_mpc', 'health_outlays_post_mpc', 'subsidies_post_mpc',
+                 'unemployment_insurance_post_mpc', 'rebate_checks_post_mpc')
+  all_transfers <- c(glue('{transfers}'), glue('federal_{transfers}'), glue('state_{transfers}')) 
+  df %>%
+    mutate(
+      across(
+        .cols  = all_of(all_transfers),
+        .fns = ~ 400 * .x / lag(gdp),
+        .names = "{.col}_cont"
+      )
+    ) %>%
+    rename_with(~ gsub('post_mpc_cont', 'cont', .x))
+}
+sum_transfers_contributions <- function(df){
+  transfers <- c('social_benefits',  'health_outlays', 'subsidies',
+                 'unemployment_insurance', 'rebate_checks')
+  df %>%
+    mutate(
+       transfers_cont = rowSums(select(., .dots = all_of(str_glue('{transfers}_cont')))),
+       federal_transfers_cont = rowSums(select(., .dots = all_of(str_glue('federal_{transfers}_cont')))),
+       state_transfers_cont = rowSums(select(., .dots = all_of(str_glue('state_{transfers}_cont'))))
+      )
+}
+sum_taxes_transfers <- function(df){
+  df %>%
+    mutate(
+      taxes_transfers_cont = taxes_cont + transfers_cont,
+      federal_taxes_transfers_cont = federal_taxes_cont - federal_transfers_cont,
+      state_taxes_transfers_cont = state_taxes_cont + state_transfers_cont,
+    )
 }
 get_fiscal_impact <- function(df){
   df %>%
@@ -439,39 +378,28 @@ get_fiscal_impact <- function(df){
            fim_bars_ma = fiscal_impact_moving_average
     )
 }
-reorder_columns <- function(df){
-  fim %>%
-    select(date, fical_impact, fiscal_impact_moving_average,
-           federal_cont, state_local_cont, taxes_transfers_cont,)
-}
+
 
 fim <-
   fim %>%
+  taxes_contributions() %>%
+  sum_taxes_contributions() %>%
+  transfers_contributions() %>%
+  sum_transfers_contributions() %>%
+  sum_taxes_transfers() %>%
   add_social_benefit_components() %>%
-  get_total_taxes() %>%
-  get_total_transfers() %>%
-  get_transfers_net_taxes() %>%
-  taxes_transfers_contribution() %>%
   get_fiscal_impact() %>%
-  select(date, fiscal_impact, fisccal_impact_moving_average, federal_cont, state_local_cont
-         )
+  arrange(date, recession, fiscal_impact, fiscal_impact_moving_average, 
+          federal_cont, state_local_cont, 
+          taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
 
-
-
-# Taxes, Transfers, & Subsidies Contributions ---------------------------------------------------------------------
 
 # 4.6 Export data -------------------------------------------------------------------------------------------
-fim <-
-  fim %>% 
-    mutate(fim_bars = federal_cont + state_local_cont + taxes_transfers_cont,
-           fim_bars_ma = SMA(na.locf(fim_bars, na.rm = F), n = 4)) %>% 
-    select(date, fim_bars, fim_bars_ma, state_local_cont, federal_cont, taxes_transfers_cont, 
-           subsidies_cont, recession, everything())
-# 4.6.2 Website interactive ----------------------------------------------------------------------------------
-firstDate <- "1999-12-31"
 
-fim_interactive <- 
-  fim %>% 
+# 4.6.2 Website interactive ----------------------------------------------------------------------------------
+prepare_interactive <- function(df){
+  firstDate <- "1999-12-31"
+  df %>% 
     filter(date >= firstDate) %>% 
     mutate(
            yrq = as.yearqtr(date),
@@ -496,11 +424,15 @@ fim_interactive <-
   mutate(recession = if_else(is.na(recession),
                              0,
                              recession))
+}
+fim_interactive <-
+  fim %>%
+  prepare_interactive()
 # 4.6.3 Create CSV files --------------------------------------------------------------------------------
-
+export_results <- function(){
 # Create folder for current month's update
-thismonth <- format(Sys.Date(), "%m-%Y")
-dir.create(here('results/', thismonth))
+current_month <- glue('{month(today())}-{year(today())}')
+dir.create(here('results', current_month))
 
 # Write csv to current month's folder
 results <- 
@@ -508,7 +440,14 @@ results <-
                 fim_interactive = fim_interactive,
                 projections = projections)
 
+output_xlsx <- function(data, names){ 
+  write_xlsx(data, glue('results/{current_month}/{names}.xlsx'))
+}
+
 list(data = results, 
      names = names(results)) %>%
   purrr::pmap(output_xlsx) 
+}
+export_results()
+
 
