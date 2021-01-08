@@ -263,6 +263,7 @@ calculate_social_benefits_mpc <- function(df){
            !!state := glue('state_{taxes_transfers}_{net}_xmpc'))
 }
 calculate_mpc <- function(df, taxes_transfers){
+
   net <- 'minus_neutral'
   government_levels <- c(glue('{taxes_transfers}_{net}'), glue('federal_{taxes_transfers}_{net}'),
                          glue('state_{taxes_transfers}_{net}'))
@@ -270,8 +271,27 @@ calculate_mpc <- function(df, taxes_transfers){
   federal <- glue('federal_{taxes_transfers}_post_mpc')
   state <- glue('state_{taxes_transfers}_post_mpc')
   
-  mpc_fun <- eval(sym(glue('mpc_{taxes_transfers}')))
-  df %>%
+  if(taxes_transfers == 'subsidies'){
+    second_draw <- as_date('2021-03-31')
+    mpc_fun <- eval(sym(glue('mpc_{taxes_transfers}')))
+    mpc_fun_second_draw <- eval(sym(glue('mpc_{taxes_transfers}_second_draw')))
+    df %>%
+      mutate(
+        across(
+          .cols = all_of(government_levels),
+          .fns = ~ if_else(date < second_draw, 
+                           mpc_fun(.),
+                           mpc_fun_second_draw(.)),
+          .names = '{.col}_xmpc'
+        )
+      ) %>%
+      rename(!!total := glue('{taxes_transfers}_{net}_xmpc'),
+             !!federal := glue('federal_{taxes_transfers}_{net}_xmpc'),
+             !!state := glue('state_{taxes_transfers}_{net}_xmpc'))
+  }
+  else{
+    mpc_fun <- eval(sym(glue('mpc_{taxes_transfers}')))
+    df %>%
     mutate(
       across(
         .cols = all_of(government_levels),
@@ -282,6 +302,7 @@ calculate_mpc <- function(df, taxes_transfers){
     rename(!!total := glue('{taxes_transfers}_{net}_xmpc'),
            !!federal := glue('federal_{taxes_transfers}_{net}_xmpc'),
            !!state := glue('state_{taxes_transfers}_{net}_xmpc'))
+  }
 }
 fim <-
   fim %>%
@@ -339,8 +360,9 @@ sum_taxes_contributions <- function(df){
     )
 }
 transfers_contributions <- function(df){
-  transfers <- c('social_benefits_post_mpc', 'health_outlays_post_mpc', 'subsidies_post_mpc',
-                 'unemployment_insurance_post_mpc', 'rebate_checks_post_mpc')
+  transfers <- c('social_benefits', 'health_outlays', 'subsidies',
+                 'unemployment_insurance', 'rebate_checks') %>%
+    paste0('_post_mpc')
   all_transfers <- c(glue('{transfers}'), glue('federal_{transfers}'), glue('state_{transfers}')) 
   df %>%
     mutate(
@@ -357,16 +379,17 @@ sum_transfers_contributions <- function(df){
                  'unemployment_insurance', 'rebate_checks')
   df %>%
     mutate(
-       transfers_cont = rowSums(select(., .dots = all_of(str_glue('{transfers}_cont')))),
-       federal_transfers_cont = rowSums(select(., .dots = all_of(str_glue('federal_{transfers}_cont')))),
-       state_transfers_cont = rowSums(select(., .dots = all_of(str_glue('state_{transfers}_cont'))))
+       transfers_cont = rowSums(select(., .dots = all_of(str_glue('{transfers}_cont'))), na.rm = TRUE),
+       federal_transfers_cont = rowSums(select(., .dots = all_of(str_glue('federal_{transfers}_cont'))), na.rm = TRUE),
+       state_transfers_cont = rowSums(select(., .dots = all_of(str_glue('state_{transfers}_cont'))), na.rm = TRUE)
       )
 }
+
 sum_taxes_transfers <- function(df){
   df %>%
     mutate(
       taxes_transfers_cont = taxes_cont + transfers_cont,
-      federal_taxes_transfers_cont = federal_taxes_cont - federal_transfers_cont,
+      federal_taxes_transfers_cont = federal_taxes_cont + federal_transfers_cont,
       state_taxes_transfers_cont = state_taxes_cont + state_transfers_cont,
     )
 }
@@ -379,7 +402,47 @@ get_fiscal_impact <- function(df){
     )
 }
 
-
+skim_contributions <- function(df){
+  df %>%
+     select(date, ends_with('cont')) %>% 
+    filter(date > '2019-12-31') %>%
+    skim()
+}
+get_transfers <- function(){
+  fim %>%
+  taxes_contributions() %>%
+  sum_taxes_contributions() %>%
+  transfers_contributions() %>%
+  sum_transfers_contributions() %>%
+  sum_taxes_transfers() %>% 
+  select(date, transfers_cont, social_benefits_cont, health_outlays_cont,
+         subsidies_cont, unemployment_insurance_cont, rebate_checks_cont,
+         federal_transfers_cont, federal_social_benefits_cont,
+         federal_health_outlays_cont, federal_subsidies_cont,
+         federal_unemployment_insurance_cont, federal_rebate_checks_cont,
+         state_transfers_cont, state_social_benefits_cont,
+         state_health_outlays_cont, state_subsidies_cont,
+         state_unemployment_insurance_cont, state_rebate_checks_cont) %>% 
+  mutate(sum = federal_transfers_cont + state_transfers_cont,
+         diff = transfers_cont - sum) %>% filter(date > '2019-12-31') 
+}
+get_taxes <- function(){
+  fim %>%
+    taxes_contributions() %>%
+    sum_taxes_contributions() %>%
+    filter(date > '2019-12-31') %>%
+    select(date, taxes_cont, corporate_taxes_cont, 
+           noncorp_taxes_cont, federal_taxes_cont, 
+           federal_corporate_taxes_cont, 
+           federal_noncorp_taxes_cont,
+           state_taxes_cont, state_corporate_taxes_cont,
+           state_noncorp_taxes_cont) %>%
+    mutate(total = taxes_cont, 
+           sum = federal_taxes_cont + state_taxes_cont,
+           diff = total - sum)
+}
+  
+transfers <- get_transfers
 fim <-
   fim %>%
   taxes_contributions() %>%

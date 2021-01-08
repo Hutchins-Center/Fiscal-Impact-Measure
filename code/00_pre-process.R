@@ -27,6 +27,9 @@ data2 <-
   pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ"), 
             "usecon",
             start.date = START)
+pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ"), 
+          "usecon",
+          start.date = '1970-01-01')
 
 
 

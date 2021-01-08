@@ -126,10 +126,7 @@ contribution_nipas <- function(.data, var){
 }
 
 
-output_xlsx <- function(data, names){ 
-  folder_path <- paste0("results/", thismonth, '/')
-  write_xlsx(data, paste0(folder_path, names, ".xlsx"))
-}
+
 
 annual_to_quarter <- function(df, var){
  
