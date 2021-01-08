@@ -40,7 +40,7 @@ mpc_ppp_round2 <- function(x){
                        weights = weights, online = FALSE)
 }
 
-mpc_ui <- function(x){
+mpc_unemployment_insurance <- function(x){
   mpc <- 0.9
   weights <- c(rep(0.05, 2), rep(0.1, 2), rep(0.35, 2))
   mpc * roll::roll_sum(x, width = length(weights), 
@@ -96,7 +96,7 @@ mpc_rebate_CRN19 = function(x){
   }
   j
 }
-mpc_rebate <- function(x){
+mpc_rebate_checks <- function(x){
   mpc <- 0.7
   weights <- c(rep(0.08, 6), 0.15, 0.35)
   mpc * roll::roll_sum(x, width = length(weights),
