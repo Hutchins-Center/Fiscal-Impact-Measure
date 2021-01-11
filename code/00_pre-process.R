@@ -29,7 +29,7 @@ data2 <-
             start.date = START)
 
 data3 <-
-  pull_data(c('LASGOVA', 'LALGOVA'),
+  pull_data(c('LASGOVA', 'LALGOVA','CPGS' ),
             'usecon',
             start.date = START)
 
