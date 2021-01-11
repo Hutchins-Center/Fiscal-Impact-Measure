@@ -9,7 +9,7 @@ source('src/functions.R')
 
 # 0.1 Pull Raw Data---------------------------------------------------------------
 
-START <- as.Date("01-01-1970")
+START <- "01-01-1970"
 
 # Quarterly -------------------------------------------------------------------------------------------------------
 haver.path("//ESDATA01/DLX/DATA/")
@@ -27,15 +27,13 @@ data2 <-
   pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ"), 
             "usecon",
             start.date = START)
-pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ"), 
-          "usecon",
-          start.date = '1970-01-01')
 
 
 data3 <-
   pull_data(c('LASGOVA', 'LALGOVA','CPGS' ),
             'usecon',
-            start.date = START)
+            start.date = START) %>%
+  as_tibble()
 
 # Write csv to current month's folder
 haver_raw_list <- 
