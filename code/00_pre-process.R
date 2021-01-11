@@ -9,7 +9,7 @@ source('src/functions.R')
 
 # 0.1 Pull Raw Data---------------------------------------------------------------
 
-START <- "01-01-1970"
+START <- as.Date("01-01-1970")
 
 # Quarterly -------------------------------------------------------------------------------------------------------
 haver.path("//ESDATA01/DLX/DATA/")
@@ -32,11 +32,16 @@ pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ"),
           start.date = '1970-01-01')
 
 
+data3 <-
+  pull_data(c('LASGOVA', 'LALGOVA','CPGS' ),
+            'usecon',
+            start.date = START)
 
 # Write csv to current month's folder
 haver_raw_list <- 
   list(national_accounts = data1,
-       economic_statistics = data2)
+       economic_statistics = data2,
+       state_local_employment = data3)
 
 # Write haver data to raw folder ------------------------------------------
 
