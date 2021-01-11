@@ -11,6 +11,3 @@ ls()
 vis_drake_graph(plan)      # nolint
 
 make(plan) # Or make(plan, jobs = 2), etc.
-
-
-# this is just a comment
