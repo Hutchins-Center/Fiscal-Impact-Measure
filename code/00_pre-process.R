@@ -28,12 +28,18 @@ data2 <-
             "usecon",
             start.date = START)
 
+data3 <-
+  pull_data(c('LASGOVA', 'LALGOVA'),
+            'usecon',
+            start.date = START)
+
 
 
 # Write csv to current month's folder
 haver_raw_list <- 
   list(national_accounts = data1,
-       economic_statistics = data2)
+       economic_statistics = data2,
+       state_local_employment = data3)
 
 # Write haver data to raw folder ------------------------------------------
 
