@@ -91,7 +91,12 @@ plan <-
       knitr_in("reports/drake-report.Rmd"),
       output_file = file_out("drake-report.pdf"),
       quiet = TRUE
-    )
-    
+    ),
+    state_local_employment_raw = readxl::read_xlsx(file_in('data/raw/haver/state_local_employment.xlsx')),
+    state_local_employment = state_local_employment_raw %>%
+      mutate(date = lubridate::as_date(date)) %>%
+      rename(state_employment = lasgova, 
+             local_employment = lalgova) %>%
+      mutate(state_local_employment = state_employment + local_employment)
   )
 
