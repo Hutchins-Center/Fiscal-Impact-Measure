@@ -1,8 +1,9 @@
+current_month <- get_current_month()
 plan <- 
   drake_plan(
     cbo_projections_raw = load_cbo_projections(),
     fmap = read_xlsx(here('data/raw/nhe_fmap.xlsx')),
-    historical = target(load_haver_data()),
+    historical = target(load_haver_data(),
     last_hist_date = get_last_hist_date(historical),
     last_proj_date = last_hist_date + lubridate::years(2),
     cbo_projections = cbo_projections_raw %>% cola_adjustment() %>%
@@ -36,7 +37,7 @@ plan <-
       grants_growth() %>%
       deflators_growth() %>%
       mutate(historical = if_else(date > last_hist_date, 0, 1)), 
-      projections = prepare_projections %>%
+      projections = target(prepare_projections %>%
         mutate(forecast_period = if_else(date <= '2020-09-30', 0, 1)) %>%
         make_cumulative_growth_rates() %>%
         fill(components) %>%
@@ -48,8 +49,9 @@ plan <-
         sum_projections(grcsi, gfrs, gsrs) %>%
         sum_projections(yctlg, gfrcp, gsrcp) %>%
         sum_projections(gsub, gfsub, gssub) %>%
-        medicaid_reallocation(),
-    fim = fim_create(projections) %>%
+        medicaid_reallocation()
+        ),
+    fim = target(fim_create(projections) %>%
       add_factors() %>%
       override_projections() %>%
       fill_overrides() %>%
@@ -73,30 +75,79 @@ plan <-
       get_fiscal_impact() %>%
       arrange(date, recession, fiscal_impact, fiscal_impact_moving_average, 
               federal_cont, state_local_cont, 
-              taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont),
-    fim_interactive = fim %>%
+              taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
+    ),
+      fim_interactive = fim %>%
       prepare_interactive(),
-    output = {
-      dir.create(glue(file_out('results/{get_current_month()}')))
-      writexl::write_xlsx(fim, glue(file_out("results/{get_current_month()}/fim-{get_current_month()}.xlsx")))
-      write.csv(fim_interactive, glue(file_out('results/{get_current_month()}/fim_interactive.csv')))
-      write.csv(projections, glue(file_out('results/{get_current_month()}/projections-{get_current_month()}.csv')))
-    },
+
+    output = target({
+      dir.create(glue('results/{current_month}'))
+      write_xlsx(fim, file_out(!!paste0('results/', current_month, '/fim-', current_month, '.xlsx')))
+      write.csv(fim_interactive, glue('results/{current_month}/fim_interactive.csv'))
+      write.csv(projections, file_out(!!glue('results/{get_current_month()}/projections-{get_current_month()}.csv')))
+    }),
     contributions = fim %>%
       select(date, fiscal_impact, fiscal_impact_moving_average,
              ends_with('cont'), recession) %>%
       mutate(date = lubridate::as_date(date)) %>%
       filter(date > '2000-01-01' & date <= '2022-12-31'),
-    report = rmarkdown::render(
-      knitr_in("reports/drake-report.Rmd"),
-      output_file = file_out("drake-report.pdf"),
-      quiet = TRUE
-    ),
+    max_y = contributions %>% 
+      select(fiscal_impact) %>% 
+      max() %>% ceiling(),
+    recession_shade = contributions %>%
+                      get_recession_shade(),
+    hutchins_logo = knitr::include_graphics(file.path(here::here(),"images","HC_NEW_BROOKINGS_RGB.jpg")),
+    fim_report = {
+          rmarkdown::render(
+          drake::knitr_in("reports/Fiscal-Impact.Rmd"),
+          output_dir = 'reports',
+          output_file = 'Fiscal-Impact.pdf',
+          quiet = TRUE
+        )
+      filesstrings::file.move('reports/Fiscal-Impact.pdf',
+                              !!glue('reports/{get_current_month()}'),
+                              overwrite = TRUE)
+      },
+    fim_report_expanded = target({
+      if(file.exists(!!glue('reports/{get_current_month()}/Fiscal-Impact-Expanded.pdf')) == FALSE){
+      rmarkdown::render(
+        drake::knitr_in("reports/Fiscal-Impact-Expanded.Rmd"),
+        output_dir = 'reports',
+        output_file = 'Fiscal-Impact-Expanded.pdf',
+        quiet = TRUE
+      )
+        
+      filesstrings::file.move('reports/Fiscal-Impact-Expanded.pdf',
+                              !!glue('reports/{get_current_month()}'),
+                              overwrite = TRUE)
+      }
+      else {
+        
+      }
+    }),
     state_local_employment_raw = readxl::read_xlsx(file_in('data/raw/haver/state_local_employment.xlsx')),
-    state_local_employment = state_local_employment_raw %>%
+    state_local_employment = target(state_local_employment_raw %>%
       mutate(date = lubridate::as_date(date)) %>%
       rename(state_employment = lasgova, 
-             local_employment = lalgova) %>%
-      mutate(state_local_employment = state_employment + local_employment)
+             local_employment = lalgova,
+             construction = cpgs) %>%
+      mutate(state_local_employment = state_employment + local_employment) %>%
+      filter(date > lubridate::today() - lubridate::years(1))
+      ),
+    state_local_employment_report = target({
+      current_month = get_current_month()
+      rmarkdown::render(
+        knitr_in("reports/state_local_employment.Rmd"),
+        output_dir = 'reports',
+        output_file = 'state_local_employment.html',
+        quiet = TRUE
+      )
+      file_out(!!glue('reports/{current_month}/state_local_employment.html'))
+      filesstrings::file.move('reports/state_local_employment.html',
+                              !!glue('reports/{current_month}'), 
+                              overwrite = TRUE)
+    }
+    )
   )
-
+    
+      

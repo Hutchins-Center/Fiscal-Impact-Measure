@@ -1,0 +1,87 @@
+---
+title: "Monthly State & Local Employment Indicators"
+author: "Manuel Alcalá Kovalski"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis', fig.width = 6.5, fig.height = 4.5, fig.align = "center")
+library(ggplot2)
+library(glue)
+library(lubridate)
+library('tidyverse')
+library('scales')
+library(RColorBrewer)
+library('fim')
+library('ggtext')
+library('wesanderson')
+library('rmarkdown')
+library('kableExtra')
+```
+
+
+
+
+
+```{r cars}
+drake::loadd(state_local_employment)
+```
+
+```{r}
+paged_table(state_local_employment %>% filter(date > lubridate::today() - months(3)) %>% pivot_longer(where(is.numeric)) %>% pivot_wider(names_from = date) %>%
+              rowwise() %>% mutate(mean = mean(c_across(where(is.numeric)))), options(rows.print = 12, max.print = 12, cols.print = 13))
+```
+## Employment
+
+```{r figure options}
+employment_plot <- function(df, col, title){
+  df %>%
+    pivot_longer({{col}}) %>%
+    ggplot(aes(x = date,
+               y = value,
+               color = name)) +
+    geom_line() +
+  scale_y_continuous(name = '', labels  = scales::comma) +
+  labs(
+       title = glue('**{title}**'),
+       x = '',
+       y = '',
+       color = '') +
+  fim_theme() +
+  theme(legend.position = 'none',
+        plot.title = element_markdown(hjust = 0))
+}
+```
+
+
+```{r state local, echo=FALSE}
+state_local_employment %>%
+  employment_plot(state_local_employment, 'State & Local Employment')+
+  scale_color_manual(values = wes_palette('GrandBudapest1'))
+
+    
+```
+```{r state, echo=FALSE}
+state_local_employment %>%
+  employment_plot(state_employment, 'State employment') +
+  scale_color_manual(values = wes_palette('Zissou1'))
+    
+```
+```{r local, echo=FALSE}
+state_local_employment %>%
+  employment_plot(local_employment, 'Local employment') +
+  scale_color_brewer(palette = 'Dark2')
+```
+
+## Construction
+
+```{r, construction}
+state_local_employment %>%
+  employment_plot(construction, title = 'Construction put in place') +
+  scale_color_manual(values = wes_palette('GrandBudapest2'))
+```
+
+
+

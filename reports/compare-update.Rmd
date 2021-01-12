@@ -24,8 +24,14 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 ```{r source}
-source('src/packages.R')
-library('glue')
+library('drake')
+library('tidyverse')
+library('magrittr')
+library('ggthemes')
+library('ggtext')
+library('ggthemes')
+library('gridExtra')
+library('fim')
 ```
 
 
