@@ -1,6 +1,6 @@
 
 source("R/packages.R")  
-#source("R/functions.R")
+source("R/functions.R")
 # Build workflow plan data frame.
 source("R/plan.R")
 
@@ -13,5 +13,5 @@ ls()
 config <- drake_config(plan, verbose = 2)
 make_impl(config = config)
 
-vis_drake_graph(plan, file = 'dependencies.png', mode = 'all', targets_only = TRUE, build_times =  'none')   
+vis_drake_graph(plan, mode = 'all', targets_only = TRUE, build_times =  'none')   
 

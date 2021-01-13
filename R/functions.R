@@ -1,127 +1,55 @@
-total_fiscal_impact_plot <- function() {
-  contributions %>%
-    select(date, fiscal_impact, fiscal_impact_moving_average) %>%
-    pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
-    fim_plot(title = " Quarterly fiscal impact") +
-    scale_fill_manual(labels = " Quarterly fiscal impact",
-                      values = total_pink) +
-    ggplot2::annotate("rect", xmin = last_hist_date + 40, xmax = end, 
-                      ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow")
-}       
-
-taxes_transfers <- function() {
-  contributions %>%
-    select(date,  state_local_cont, federal_cont, taxes_transfers_cont, fiscal_impact_moving_average) %>%
-    pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
-    fim_plot(title = 'Total') +
-    scale_fill_manual(
-      labels = c(" State & Local Purchases", " Federal Purchases", " Taxes, Transfers, & Subsidies"),
-      values =  c(state_local_purple, federal_blue, taxes_transfers_green)
-    ) +
-    ggplot2::annotate("rect", xmin = last_hist_date + 40, xmax = end, 
-                      ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow")
-}
-components_govt <- function() {
-  contributions %>%
-    select(date, fiscal_impact_moving_average, state_local_cont, state_taxes_transfers_cont, 
-           federal_cont, federal_taxes_transfers_cont)  %>%
-    pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
-    fim_plot(title = 'Total') +
-    ggplot2::annotate("rect", xmin = last_hist_date + 40, xmax = end, 
-                      ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow") +
-    scale_fill_brewer(labels = c(" State & Local Purchases",
-                                 " State & Local Taxes, Transfers, & Subsidies",
-                                 " Federal Purchases",
-                                 " Federal Taxes, Transfers, & Subsidies")
-    )
-}  
-  taxes_transfers_govt <- function(){
-    contributions %>%
-      select(date, fiscal_impact_moving_average,
-             health_outlays_cont, social_benefits_cont, 
-             noncorp_taxes_cont, corporate_taxes_cont,
-             purchases_cont, subsidies_cont) %>%
-      pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
-      fim_plot(title = "Taxes and Transfers Components") +
-      ggplot2::annotate("rect", xmin = last_hist_date + 40, xmax = end, 
-                        ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow") +
-      scale_fill_brewer(labels = c(" Health Outlays", " Social Benefits",
-                                   " Noncorporate Taxes", " Corporate Taxes", 
-                                   " Purchases", " Subsidies")
-      )
-  }
-  
-  taxes <- function(){
-    contributions %>%
-      filter(date > lubridate::today() - lubridate::years(2)) %>%
-      select(date, federal_corporate_taxes_cont, federal_noncorp_taxes_cont,
-             state_corporate_taxes_cont, state_noncorp_taxes_cont) %>%
-      pivot_longer(cols = -c(date), names_to = 'variable') %>%
-      ggplot(aes(x = date,
-                 y = value,
-                 fill = variable)) + 
-      geom_col(position = 'dodge') +
-      scale_fill_brewer(labels = c(' Federal Corporate Taxes', ' Federal Non-Corporate Taxes', ' State Corporate Taxes', ' State Non-Corporate Taxes'), type = 'qual', 
-                        palette = 'Dark2') +
-      fim_theme()+
-      labs(
-        title = '**Impact of Taxes by Level of Government**'
-      )
-  }
-social_benefits <- function(){  
-  contributions %>%
-    filter(date > lubridate::today() - lubridate::years(5)) %>%
-    select(date, 
-           federal_social_benefits_cont, state_social_benefits_cont) %>%
-    pivot_longer(cols = -c(date), names_to = 'variable') %>%
-    ggplot(aes(x = date,
-               y = value,
-               fill = variable)) +
-    geom_col(position = 'dodge') +
-    scale_fill_brewer(labels = c(" Federal", " State"), type = 'seq'
-    ) +
-    fim_theme() +
-    labs(title = 'Impact of Social Benefits',
-         x= '',
-         y ='')
+create_projections <- function(df, last_date){
+components <- get_components_names()
+  df %>%  
+    mutate(forecast_period = if_else(date <= '2020-09-30', 0, 1)) %>%
+    mutate(historical = if_else(date > last_date, 0, 1)) %>%
+    make_cumulative_growth_rates() %>%
+    fill(components) %>%
+    make_forecasts() %>% 
+    sum_projections(gtfp, gftfp, gstfp) %>%
+    sum_projections(yptx, gfrpt, gsrpt) %>%
+    sum_projections(ytpi, gfrpri, gsrpri) %>%
+    sum_projections(grcsi, gfrs, gsrs) %>%
+    sum_projections(grcsi, gfrs, gsrs) %>%
+    sum_projections(yctlg, gfrcp, gsrcp) %>%
+    sum_projections(gsub, gfsub, gssub)
 }
 
-health_outlays <- function(){
-  contributions %>%
-    filter(date > lubridate::today() - lubridate::years(5)) %>%
-    select(date, 
-           federal_health_outlays_cont, state_health_outlays_cont) %>%
-    pivot_longer(cols = -c(date), names_to = 'variable') %>%
-    ggplot(aes(x = date,
-               y = value,
-               fill = variable)) +
-    geom_col(position = 'dodge') +
-    scale_fill_brewer(labels = c(" Federal", " State"), type = 'div', direction = -1
-    ) +
-    fim_theme() +
-    labs(title = 'Impact of transfers',
-         x= '',
-         y ='')
+components_growth_rates <- function(df){
+  df %>%
+    purchases_growth() %>%
+    transfers_growth() %>%
+    health_growth() %>%
+    subsidies_growth() %>%
+    grants_growth() %>%
+    deflators_growth() 
 }
 
+fim_calculations <- function(df){
+  df %>%  
+    add_factors() %>%
+    override_projections() %>%
+    fill_overrides() %>%
+    contributions_purchases_grants() %>%
+    total_purchases() %>%
+    remove_social_benefit_components() %>%
+    taxes_transfers_minus_neutral() %>%
+    calculate_mpc('subsidies') %>%
+    calculate_mpc('health_outlays') %>%
+    calculate_mpc('social_benefits') %>%
+    calculate_mpc('unemployment_insurance') %>%
+    calculate_mpc('rebate_checks') %>%
+    calculate_mpc('noncorp_taxes') %>%
+    calculate_mpc('corporate_taxes') %>%
+    taxes_contributions() %>%
+    sum_taxes_contributions() %>%
+    transfers_contributions() %>%
+    sum_transfers_contributions() %>%
+    sum_taxes_transfers() %>%
+    add_social_benefit_components() %>%
+    get_fiscal_impact() %>%
+    arrange(date, recession, fiscal_impact, fiscal_impact_moving_average, 
+            federal_cont, state_local_cont, 
+            taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
 
-legislation <- function(){
-  contributions %>%
-    filter(date > lubridate::today() - lubridate::years(1)) %>%
-    select(date, 
-           subsidies_cont, unemployment_insurance_cont, 
-           rebate_checks_cont) %>%
-    pivot_longer(cols = -c(date), names_to = 'variable') %>%
-    ggplot(aes(x = date,
-               y = value,
-               fill = variable)) +
-    geom_col(position = 'dodge') +
-    scale_fill_brewer(labels = c(
-      ' Subsidies', ' Unemployment Insurance',
-      ' Rebate checks'), type = 'qual'
-    ) +
-    fim_theme() + 
-    labs(title = 'Impact of legislation',
-         x = '',
-         y = '')
 }

@@ -2,10 +2,12 @@ source('src/packages.R')
 library('arsenal')
 thismonth <- format(Sys.Date(), "%m-%Y")
 nipa_path <- "development/features/nipa-consistent-FIM"
-nipa_results_path <- paste0(nipa_path, '/results/', thismonth, '/data')
+nipa_results_path <- paste0(nipa_path, '/results/12-2020/data')
 
 
 # State ---------------------------------------------------------------------------------------
+fim_nipa_consistent <- drake::readd(fim_nipa_consistent) %>%
+  filter(date >= '2018-03-31')
 
 bea_state <- read_xlsx(here(nipa_path, 'bea-tables', 'state-receipts-expenditures.xlsx')) %>%
   mutate(date = as.Date(date))
@@ -35,7 +37,7 @@ summary(
 # Federal -------------------------------------------------------------------------------------
 
 fim_nipa_federal <-
-  fim_nipa %>% 
+  fim_nipa_consistent %>% 
   select(date, contains('federal'),
          -contains(c('cont','net', 'add', 'pi'))
   )

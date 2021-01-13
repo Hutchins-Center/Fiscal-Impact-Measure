@@ -32,375 +32,150 @@ library('ggtext')
 library('ggthemes')
 library('gridExtra')
 library('fim')
+library('lubridate')
+library('glue')
+library('readxl')
 ```
 
 
 ```{r pull data, warnings = FALSE, message = FALSE, hide = TRUE, include = FALSE}
-last_hist_date <- as.Date("2020-09-30")
-last_proj_date <- last_hist_date + years(2) + months(7)
 
-previous_month <- month(Sys.Date() - months(1))
-previous_year <- year(Sys.Date() - months(1)) 
-previous_path <- glue::glue('results/{ previous_month }-{previous_year }')
+loadd(last_hist_date)
+loadd(last_proj_date)
 
-previous <- read_excel(glue('{previous_path}/fim.xlsx'), na = "NA") %>%
+last_month <- get_previous_month()
+current_month <- get_current_month()
+
+old <- 
+  read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
-  filter(date >= '2017-12-31' & date <= last_proj_date) 
+  filter(date >= '2017-12-31' & date <= last_proj_date) %>%
+  mutate(key = 'old')
 
-update_month <- month(Sys.Date())
-update_year <- year(Sys.Date())
-update_path <- glue::glue('results/{ update_month }-{update_year }')
-      
-# update <- read_excel(glue('{update_path}/fim-{update_month}-{update_year}.xlsx'), na = "NA")
-update <- read_excel(glue('{update_path}/fim.xlsx'), na = "NA") %>%
+new <- read_excel(glue('results/{current_month}/fim-{current_month}.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
-  filter(date >= '2017-12-31' & date <= last_proj_date) 
+  filter(date >= '2017-12-31' & date <= last_proj_date) %>%
+  mutate(key = 'new')
+foo <- function(variable){
+variable <- enquo(variable)
+new %>% select(date, !!variable) 
+}
 ```
 
 ## Total Quarterly Fiscal Impact
 
 ```{r fim}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, fim_bars, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Quarterly Fiscal Impact') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+comparison_plot <- function(df = old, df_new = new, variable = fiscal_impact, title = ''){
+  variable <- enquo(variable)
+  df %>%
+    bind_rows(df_new) %>%
+    select(date, !!variable, key) %>%
+    group_by(key) %>%
+    pivot_longer(where(is.numeric)) %>%
+    ggplot(aes(x = date,
+               y = value,
+               fill = key)) +
+    geom_col(position = 'dodge') +
+    geom_vline(xintercept = last_hist_date, linetype = 'dotted') +
+    labs(x = '', y = '', title = title) +
+    scale_fill_brewer(name = "", labels = c('Updated', 'Previous'),
+                      type = 'qual', palette = 'Paired', direction = -1) + 
+    theme_hc() +
+    theme(plot.title.position = 'plot')
+}
+
+comparison_plot(title = 'Quarterly Fiscal Impact')
+  
 ```
 
-
-```{r fim-ma}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, fim_bars_ma, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Quarterly Fiscal Impact, Four Quarter Moving Average') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
-```
 
 ```{r federal-cont}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, federal_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of Federal Purchases') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired', direction = 1) + 
-
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+comparison_plot(variable = federal_cont,
+                title = 'Contribution of Federal Purchases')
 ```
 
 ```{r state-cont}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, state_local_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of S&L Purchases') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+comparison_plot(variable = state_local_cont, title =  'Contribution of S&L Purchases')
 ```
-
-## Purchases and Grants
-
-```{r purchases-federal}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, federal_nom_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of Federal Purchases') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
-```
-
-```{r purchases-state}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, state_local_nom_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of S&L Purchases') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
-```
-
+## Contribution of Grants
 ```{r cgrants}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, federal_cgrants_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of Consumption Grants') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+comparison_plot(variable = federal_cgrants_cont,
+        title = 'Conctribution of Federal Consumption Grants')
 ```
 
 ```{r igrants}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, federal_igrants_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of Investment Grants') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+comparison_plot(variable = federal_igrants_cont,
+        title = 'Conctribution of Federal Investment Grants')
 ```
 
 ## Taxes and Transfers
 ```{r tts}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, taxes_transfers_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of Taxes and Transfers') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+comparison_plot(variable = 'taxes_transfers_cont',
+                title = 'Contribution of taxes and transfers')
 ```
 
 ```{r federal-tts}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, federal_taxes_transfers_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of Federal Taxes and Transfers') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+comparison_plot(variable = 'federal_taxes_transfers_cont',
+                title = 'Contribution of Federal Taxes and Transfers')
 ```
 
 
 ```{r state-tts}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, state_taxes_transfers_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of S&L Taxes and Transfers') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+comparison_plot(variable = 'state_taxes_transfers_cont',
+                title = 'Contribution of State Taxes and Transfers')
 ```
 
 
 ## Subsidies
 
 ```{r subsidies}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, subsidies_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of Subsidies') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+comparison_plot(variable = 'subsidies_cont',
+                title = 'Contribution of Subsidies')
+
+comparison_plot(variable = 'federal_subsidies_cont',
+                title = 'Contribution of Federal Subsidies')
+comparison_plot(variable = 'state_subsidies_cont',
+                title = 'Contribution of State Subsidies')
 ```
 
-```{r subsidies_federal}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, federal_subsidies_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of Federal Subsidies') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+```{r}
+
+comparison_plot(variable = 'taxes_cont',
+                title = 'Contribution of taxes')
+
+comparison_plot(variable = 'federal_taxes_cont',
+                title = 'Contribution of Federal taxes')
+comparison_plot(variable = 'state_taxes_cont',
+                title = 'Contribution of State taxes')
+```
+```{r}
+
+comparison_plot(variable = 'transfers_cont',
+                title = 'Contribution of transfers')
+
+comparison_plot(variable = 'federal_transfers_cont',
+                title = 'Contribution of Federal transfers')
+comparison_plot(variable = 'state_transfers_cont',
+                title = 'Contribution of State transfers')
 ```
 
-```{r subsidies_state}
-previous %>%
-  mutate(key = 'previous') %>%
-  bind_rows(update %>% mutate(key = 'update')) %>%
-  select(date, state_subsidies_cont, key) %>%
-  group_by(key) %>%
-  pivot_longer(
-    where(
-      is.numeric
-    )
-  ) %>%
-  ggplot(aes(x = date,
-             y = value,
-             fill = key)
-         ) +
-  geom_col(position = 'dodge') +
-  labs(x = '',
-       y = 'Percentage points',
-       title =  'Contribution of S&L Subsidies') +
-    scale_fill_brewer(name = "", labels = c('Previous', 'Updated'), type = 'qual', palette = 'Paired',                      direction = 1) + 
-  theme_hc() + geom_vline(xintercept  = last_hist_date, linetype =  'dotted')  +
-  theme(plot.title.position = 'plot')
+```{r}
+comparison_plot(variable = 'social_benefits_cont',
+                title = 'Contribution of social_benefits')
+
+comparison_plot(variable = 'federal_social_benefits_cont',
+                title = 'Contribution of Federal social_benefits')
+comparison_plot(variable = 'state_social_benefits_cont',
+                title = 'Contribution of State social_benefits')
+```
+## Unemployment Insurance
+```{r unemployment insurance}
+comparison_plot(variable = 'unemployment_insurance_cont',
+                title = 'Contribution of unemployment_insurance')
+
+comparison_plot(variable = 'federal_unemployment_insurance_cont',
+                title = 'Contribution of Federal unemployment_insurance')
+comparison_plot(variable = 'state_unemployment_insurance_cont',
+                title = 'Contribution of State unemployment_insurance')
 ```
 

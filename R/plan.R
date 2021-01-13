@@ -1,9 +1,10 @@
 current_month <- get_current_month()
+components <- get_components_names()
 plan <- 
   drake_plan(
     cbo_projections_raw = load_cbo_projections(),
     fmap = read_xlsx(here('data/raw/nhe_fmap.xlsx')),
-    historical = target(load_haver_data(),
+    historical = target(load_haver_data()),
     last_hist_date = get_last_hist_date(historical),
     last_proj_date = last_hist_date + lubridate::years(2),
     cbo_projections = cbo_projections_raw %>% cola_adjustment() %>%
@@ -16,7 +17,7 @@ plan <-
       growth_rates(),
     unemployment_insurance_override = load_unemployment_insurance_override(),
     components = get_components_names(),
-    prepare_projections = full_join(historical,
+    combined_data = target(full_join(historical,
                             cbo_projections %>%
                               dplyr::select(date, tidyselect::contains('_g')),
                             by = 'date') %>%
@@ -27,30 +28,24 @@ plan <-
           .fns = ~ if_else(is.na(.x), 0, .x)
         )
       ) %>%
-      millions_to_billions() %>%
+      millions_to_billions() 
+      ), 
+      projections = target(
+      combined_data %>% 
       unemployment_insurance_reallocation() %>%
       fmap_share_old() %>%
-      purchases_growth() %>%
-      transfers_growth() %>%
-      health_growth() %>%
-      subsidies_growth() %>%
-      grants_growth() %>%
-      deflators_growth() %>%
-      mutate(historical = if_else(date > last_hist_date, 0, 1)), 
-      projections = target(prepare_projections %>%
-        mutate(forecast_period = if_else(date <= '2020-09-30', 0, 1)) %>%
-        make_cumulative_growth_rates() %>%
-        fill(components) %>%
-        make_forecasts() %>% 
-        sum_projections(gtfp, gftfp, gstfp) %>%
-        sum_projections(yptx, gfrpt, gsrpt) %>%
-        sum_projections(ytpi, gfrpri, gsrpri) %>%
-        sum_projections(grcsi, gfrs, gsrs) %>%
-        sum_projections(grcsi, gfrs, gsrs) %>%
-        sum_projections(yctlg, gfrcp, gsrcp) %>%
-        sum_projections(gsub, gfsub, gssub) %>%
-        medicaid_reallocation()
-        ),
+      components_growth_rates() %>%
+      create_projections(last_date = last_hist_date) %>%
+      medicaid_reallocation()
+     ), 
+      nipa_projections = target(
+      combined_data %>%
+        fmap_share_old() %>%
+        components_growth_rates() %>%
+        create_projections(last_date = last_hist_date) %>%
+        mutate(yfptmd = 0, ysptmd = yptmd, 
+               gftfpnet = gftfp, gstfpnet = gstfp)
+    ),
     fim = target(fim_create(projections) %>%
       add_factors() %>%
       override_projections() %>%
@@ -77,6 +72,11 @@ plan <-
               federal_cont, state_local_cont, 
               taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
     ),
+    fim_nipa_consistent = 
+      target(
+          fim_create(nipa_projections) %>%
+          fim_calculations()
+      ),
       fim_interactive = fim %>%
       prepare_interactive(),
 
@@ -147,6 +147,19 @@ plan <-
                               !!glue('reports/{current_month}'), 
                               overwrite = TRUE)
     }
+    ),
+    compare_contributions = target(
+      {
+        render(
+          knitr_in("reports/compare-update.Rmd"),
+          output_dir = 'reports',
+          output_file = 'Update-Comparison.pdf',
+          quiet = TRUE
+        )
+        file_out(!!glue('reports/{current_month}/Update-Comparison.pdf'))
+        file.move('reports/Update-Comparison.pdf',
+                  !!glue('reports/{current_month}'))
+      }
     )
   )
     
