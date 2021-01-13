@@ -1667,14 +1667,23 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>Differences between the NIPA consistent FIM and the BEA data are tolerated up to 0.06 due to potential rounding errors.</p>
 <p>The differences deteced table (all the way at the bottom) in the summary below shows that our estimates match the BEA’s except for 2020 Q2 and 2020 Q3.</p>
 <p>In particular, our estimates for the contribution of Federal and State &amp; Local purchases for 2020 Q2 are both 0.2 lower than BEA. Similarily, our 2020 Q3 estimate is 0.11 lower for both Federal and State.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>contributions_comparison <span class="ot">&lt;-</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">comparedf</span>(fim_nipa_contributions , </span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>            nipa_contributions,</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">tol.vars =</span> <span class="fu">c</span>(<span class="at">fiscal_impact =</span> <span class="st">&#39;Government consumption expenditures and gross investment&#39;</span>,</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                             <span class="at">federal_purchases_cont =</span> <span class="st">&quot;Federal&quot;</span>,</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                             <span class="at">state_local_purchases_cont =</span> <span class="st">&quot;State and local&quot;</span>),</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">tol.num.val =</span> <span class="fl">0.01</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>) </span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>nipa_purchases_from_fim <span class="ot">&lt;-</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  drake<span class="sc">::</span><span class="fu">readd</span>(nipa_purchases_contributions) <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">date =</span> <span class="fu">as.yearqtr</span>(date)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">federal_purchases_cont =</span> federal_cont,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">state_local_purchases_cont =</span> state_local_cont) <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(date, purchases_cont, federal_purchases_cont, state_local_purchases_cont) <span class="sc">%&gt;%</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(date <span class="sc">&gt;=</span> <span class="st">&#39;2018 Q1&#39;</span> <span class="sc">&amp;</span> date <span class="sc">&lt;=</span> <span class="st">&#39;2020 Q3&#39;</span>) </span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>contributions_comparison <span class="ot">&lt;-</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">comparedf</span>(nipa_purchases_from_fim, </span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>            nipa_contributions,</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">tol.vars =</span> <span class="fu">c</span>(<span class="at">purchases_cont =</span> <span class="st">&#39;Government consumption expenditures and gross investment&#39;</span>,</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                             <span class="at">federal_purchases_cont =</span> <span class="st">&quot;Federal&quot;</span>,</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>                             <span class="at">state_local_purchases_cont =</span> <span class="st">&quot;State and local&quot;</span>),</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">tol.num.val =</span> <span class="fl">0.01</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>) </span></code></pre></div>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(contributions_comparison)</span></code></pre></div>
 <table>
 <caption>Summary of data.frames</caption>
@@ -1689,7 +1698,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <tbody>
 <tr class="odd">
 <td align="left">x</td>
-<td align="left">fim_nipa_contributions</td>
+<td align="left">nipa_purchases_from_fim</td>
 <td align="right">4</td>
 <td align="right">11</td>
 </tr>
@@ -1760,7 +1769,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </tr>
 <tr class="odd">
 <td align="left">Number of values unequal</td>
-<td align="right">32</td>
+<td align="right">24</td>
 </tr>
 </tbody>
 </table>
@@ -1806,15 +1815,15 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="right">0</td>
 </tr>
 <tr class="even">
-<td align="left">fiscal_impact</td>
+<td align="left">purchases_cont</td>
 <td align="left">Government consumption expenditures and gross investment</td>
-<td align="right">11</td>
+<td align="right">2</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
-<td align="right">10</td>
+<td align="right">11</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
@@ -1840,100 +1849,28 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">fiscal_impact</td>
-<td align="left">Government consumption expenditures and gross investment</td>
-<td align="right">1</td>
-<td align="left">0.018</td>
-<td align="left">0.26</td>
-<td align="right">1</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td align="left">fiscal_impact</td>
-<td align="left">Government consumption expenditures and gross investment</td>
-<td align="right">2</td>
-<td align="left">0.43</td>
-<td align="left">0.5</td>
-<td align="right">2</td>
-<td align="right">2</td>
-</tr>
-<tr class="odd">
-<td align="left">fiscal_impact</td>
-<td align="left">Government consumption expenditures and gross investment</td>
-<td align="right">3</td>
-<td align="left">0.17</td>
-<td align="left">0.44</td>
-<td align="right">3</td>
-<td align="right">3</td>
-</tr>
-<tr class="even">
-<td align="left">fiscal_impact</td>
-<td align="left">Government consumption expenditures and gross investment</td>
-<td align="right">4</td>
-<td align="left">-0.43</td>
-<td align="left">-0.16</td>
-<td align="right">4</td>
-<td align="right">4</td>
-</tr>
-<tr class="odd">
-<td align="left">fiscal_impact</td>
-<td align="left">Government consumption expenditures and gross investment</td>
-<td align="right">5</td>
-<td align="left">0.21</td>
-<td align="left">0.43</td>
-<td align="right">5</td>
-<td align="right">5</td>
-</tr>
-<tr class="even">
-<td align="left">fiscal_impact</td>
-<td align="left">Government consumption expenditures and gross investment</td>
-<td align="right">6</td>
-<td align="left">0.61</td>
-<td align="left">0.86</td>
-<td align="right">6</td>
-<td align="right">6</td>
-</tr>
-<tr class="odd">
-<td align="left">fiscal_impact</td>
-<td align="left">Government consumption expenditures and gross investment</td>
-<td align="right">7</td>
-<td align="left">0.4</td>
-<td align="left">0.37</td>
-<td align="right">7</td>
-<td align="right">7</td>
-</tr>
-<tr class="even">
-<td align="left">fiscal_impact</td>
-<td align="left">Government consumption expenditures and gross investment</td>
-<td align="right">8</td>
-<td align="left">0.48</td>
-<td align="left">0.42</td>
-<td align="right">8</td>
-<td align="right">8</td>
-</tr>
-<tr class="odd">
-<td align="left">fiscal_impact</td>
-<td align="left">Government consumption expenditures and gross investment</td>
-<td align="right">9</td>
-<td align="left">0.085</td>
-<td align="left">0.22</td>
-<td align="right">9</td>
-<td align="right">9</td>
-</tr>
-<tr class="even">
-<td align="left">fiscal_impact</td>
+<td align="left">purchases_cont</td>
 <td align="left">Government consumption expenditures and gross investment</td>
 <td align="right">10</td>
-<td align="left">14</td>
+<td align="left">0.44</td>
 <td align="left">0.77</td>
 <td align="right">10</td>
 <td align="right">10</td>
+</tr>
+<tr class="even">
+<td align="left">purchases_cont</td>
+<td align="left">Government consumption expenditures and gross investment</td>
+<td align="right">11</td>
+<td align="left">-0.98</td>
+<td align="left">-0.75</td>
+<td align="right">11</td>
+<td align="right">11</td>
 </tr>
 <tr class="odd">
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
 <td align="right">1</td>
-<td align="left">-0.0094</td>
+<td align="left">0.16</td>
 <td align="left">0.12</td>
 <td align="right">1</td>
 <td align="right">1</td>
@@ -1942,7 +1879,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
 <td align="right">2</td>
-<td align="left">-0.15</td>
+<td align="left">0.025</td>
 <td align="left">0.23</td>
 <td align="right">2</td>
 <td align="right">2</td>
@@ -1951,7 +1888,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
 <td align="right">3</td>
-<td align="left">0.19</td>
+<td align="left">0.36</td>
 <td align="left">0.29</td>
 <td align="right">3</td>
 <td align="right">3</td>
@@ -1960,7 +1897,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
 <td align="right">4</td>
-<td align="left">-0.17</td>
+<td align="left">0.012</td>
 <td align="left">0.12</td>
 <td align="right">4</td>
 <td align="right">4</td>
@@ -1969,7 +1906,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
 <td align="right">5</td>
-<td align="left">0.15</td>
+<td align="left">0.33</td>
 <td align="left">0.09</td>
 <td align="right">5</td>
 <td align="right">5</td>
@@ -1978,7 +1915,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
 <td align="right">6</td>
-<td align="left">0.63</td>
+<td align="left">0.81</td>
 <td align="left">0.58</td>
 <td align="right">6</td>
 <td align="right">6</td>
@@ -1987,7 +1924,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
 <td align="right">7</td>
-<td align="left">0.096</td>
+<td align="left">0.28</td>
 <td align="left">0.31</td>
 <td align="right">7</td>
 <td align="right">7</td>
@@ -1996,7 +1933,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
 <td align="right">8</td>
-<td align="left">0.13</td>
+<td align="left">0.31</td>
 <td align="left">0.26</td>
 <td align="right">8</td>
 <td align="right">8</td>
@@ -2004,26 +1941,26 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <tr class="odd">
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
-<td align="right">10</td>
-<td align="left">-5.5</td>
-<td align="left">1.2</td>
-<td align="right">10</td>
-<td align="right">10</td>
+<td align="right">9</td>
+<td align="left">0.28</td>
+<td align="left">0.1</td>
+<td align="right">9</td>
+<td align="right">9</td>
 </tr>
 <tr class="even">
 <td align="left">federal_purchases_cont</td>
 <td align="left">Federal</td>
-<td align="right">11</td>
-<td align="left">-0.49</td>
-<td align="left">-0.38</td>
-<td align="right">11</td>
-<td align="right">11</td>
+<td align="right">10</td>
+<td align="left">-5.3</td>
+<td align="left">1.2</td>
+<td align="right">10</td>
+<td align="right">10</td>
 </tr>
 <tr class="odd">
 <td align="left">state_local_purchases_cont</td>
 <td align="left">State and local</td>
 <td align="right">1</td>
-<td align="left">-0.042</td>
+<td align="left">0.093</td>
 <td align="left">0.13</td>
 <td align="right">1</td>
 <td align="right">1</td>
@@ -2032,7 +1969,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">state_local_purchases_cont</td>
 <td align="left">State and local</td>
 <td align="right">2</td>
-<td align="left">0.34</td>
+<td align="left">0.48</td>
 <td align="left">0.27</td>
 <td align="right">2</td>
 <td align="right">2</td>
@@ -2041,7 +1978,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">state_local_purchases_cont</td>
 <td align="left">State and local</td>
 <td align="right">3</td>
-<td align="left">-0.07</td>
+<td align="left">0.074</td>
 <td align="left">0.15</td>
 <td align="right">3</td>
 <td align="right">3</td>
@@ -2050,7 +1987,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">state_local_purchases_cont</td>
 <td align="left">State and local</td>
 <td align="right">4</td>
-<td align="left">-0.31</td>
+<td align="left">-0.17</td>
 <td align="left">-0.28</td>
 <td align="right">4</td>
 <td align="right">4</td>
@@ -2059,7 +1996,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">state_local_purchases_cont</td>
 <td align="left">State and local</td>
 <td align="right">5</td>
-<td align="left">-0.042</td>
+<td align="left">0.1</td>
 <td align="left">0.34</td>
 <td align="right">5</td>
 <td align="right">5</td>
@@ -2068,7 +2005,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">state_local_purchases_cont</td>
 <td align="left">State and local</td>
 <td align="right">6</td>
-<td align="left">-0.09</td>
+<td align="left">0.052</td>
 <td align="left">0.28</td>
 <td align="right">6</td>
 <td align="right">6</td>
@@ -2077,7 +2014,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">state_local_purchases_cont</td>
 <td align="left">State and local</td>
 <td align="right">7</td>
-<td align="left">-0.043</td>
+<td align="left">0.098</td>
 <td align="left">0.06</td>
 <td align="right">7</td>
 <td align="right">7</td>
@@ -2086,7 +2023,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">state_local_purchases_cont</td>
 <td align="left">State and local</td>
 <td align="right">8</td>
-<td align="left">-0.03</td>
+<td align="left">0.11</td>
 <td align="left">0.16</td>
 <td align="right">8</td>
 <td align="right">8</td>
@@ -2095,7 +2032,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">state_local_purchases_cont</td>
 <td align="left">State and local</td>
 <td align="right">9</td>
-<td align="left">-0.2</td>
+<td align="left">-0.056</td>
 <td align="left">0.12</td>
 <td align="right">9</td>
 <td align="right">9</td>
@@ -2104,7 +2041,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <td align="left">state_local_purchases_cont</td>
 <td align="left">State and local</td>
 <td align="right">10</td>
-<td align="left">5.6</td>
+<td align="left">5.8</td>
 <td align="left">-0.4</td>
 <td align="right">10</td>
 <td align="right">10</td>

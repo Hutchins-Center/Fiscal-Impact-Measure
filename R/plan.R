@@ -46,6 +46,15 @@ plan <-
         mutate(yfptmd = 0, ysptmd = yptmd, 
                gftfpnet = gftfp, gstfpnet = gstfp)
     ),
+    nipa_purchases_contributions = target(
+      nipa_projections %>%
+        fim_create() %>% 
+        add_factors() %>%
+        override_projections() %>%
+        contributions_purchases_grants_zero() %>%
+        total_purchases() %>%
+        select(date, ends_with('cont'))
+    ),
     fim = target(fim_create(projections) %>%
       add_factors() %>%
       override_projections() %>%
@@ -79,11 +88,15 @@ plan <-
       ),
       fim_interactive = fim %>%
       prepare_interactive(),
-
+      nipa_interactive = 
+      target(
+        fim_nipa_consistent %>% prepare_interactive()
+      ),
     output = target({
       dir.create(glue('results/{current_month}'))
       write_xlsx(fim, file_out(!!paste0('results/', current_month, '/fim-', current_month, '.xlsx')))
       write.csv(fim_interactive, glue('results/{current_month}/fim_interactive.csv'))
+      write.xlsx(nipa_interactive, glue('results/{current_month}/nipa_interactive.xlsx'), sheetName = 'contributions')
       write.csv(projections, file_out(!!glue('results/{get_current_month()}/projections-{get_current_month()}.csv')))
     }),
     contributions = fim %>%

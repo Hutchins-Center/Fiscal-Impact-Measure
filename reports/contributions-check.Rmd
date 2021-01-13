@@ -93,12 +93,19 @@ The differences deteced table (all the way at the bottom) in the summary below s
 
 In particular, our estimates for the contribution of Federal and State & Local purchases for 2020 Q2 are both 0.2 lower than BEA. Similarily, our 2020 Q3 estimate is 0.11 lower for both Federal and State. 
 ```{r, results = 'markup'}
-
+nipa_purchases_from_fim <- 
+  drake::readd(nipa_purchases_contributions) %>%
+   mutate(date = as.yearqtr(date)) %>%
+  rename(federal_purchases_cont = federal_cont,
+         state_local_purchases_cont = state_local_cont) %>%
+  select(date, purchases_cont, federal_purchases_cont, state_local_purchases_cont) %>%
+  filter(date >= '2018 Q1' & date <= '2020 Q3') 
+  
 
 contributions_comparison <-
-  comparedf(fim_nipa_contributions , 
+  comparedf(nipa_purchases_from_fim, 
             nipa_contributions,
-            tol.vars = c(fiscal_impact = 'Government consumption expenditures and gross investment',
+            tol.vars = c(purchases_cont = 'Government consumption expenditures and gross investment',
                              federal_purchases_cont = "Federal",
                              state_local_purchases_cont = "State and local"),
             tol.num.val = 0.01
