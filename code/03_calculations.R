@@ -1,7 +1,7 @@
 
 # 5 Construct FIM data frame for calculations -----------------------------------------------------------
-fim <-
-  xx %>%
+fim_create <- function(df){
+  df %>%
   transmute(date = date,
          # REFERENCE VARIABLES
          gdp = gdp, # nominal gdp
@@ -74,343 +74,395 @@ fim <-
          state_corporate_taxes = gsrcp,
          state_subsidies = gssub
          )
-
-# 5.2 Add-ons  ------------------------------------------------------------------------------------------
-
-# Created to adjust our forecasts for the coronavirus bills
-# Remove when NIPAS are updated or new economic projections are released (whichever comes first)
-
-#load add factor file
-add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6_round2.xlsx", 
-                          sheet = "FIM Add Factors") %>%
-                  mutate(
-                    date = as.Date(date)
-                  ) 
- 
-fim <-
-  fim %>% 
-  full_join(add_factors %>% select(-ends_with('override')) %>%
-              filter(date > last_hist_date),
-            by = "date") %>%
-  mutate(across(
-    .cols = starts_with('add_'),
-    .fns = ~ if_else(is.na(.x), 
-                     0,
-                     .x)
+}
+add_factors <- function(df){
+  #load add factor file
+  add_factors <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6_round2.xlsx", 
+                            sheet = "FIM Add Factors") %>%
+    mutate(
+      date = as_date(date)
+    ) 
+  df %>% 
+    full_join(add_factors %>% select(-ends_with('override')) %>%
+                filter(date > last_hist_date),
+              by = "date") %>%
+    mutate(across(
+      .cols = starts_with('add_'),
+      .fns = ~ if_else(is.na(.x), 
+                       0,
+                       .x)
+    )
+    ) %>%
+    mutate(
+      #calculate new variables by adding the add factors
+      state_health_outlays  = state_health_outlays + add_state_health_outlays,
+      state_social_benefits  = state_social_benefits + add_state_social_benefits,
+      state_noncorp_taxes  =  state_noncorp_taxes + add_state_noncorp_taxes,
+      state_corporate_taxes  = state_corporate_taxes + add_state_corporate_taxes,
+      
+      federal_health_outlays  = federal_health_outlays + add_federal_health_outlays,
+      federal_social_benefits  = federal_social_benefits + add_federal_social_benefits,
+      # federal_noncorp_taxes  = federal_noncorp_taxes + add_federal_noncorp_taxes,
+      # federal_corporate_taxes  = federal_corporate_taxes + add_federal_corporate_taxes,
+      federal_subsidies  = federal_subsidies + add_federal_subsidies,
+      federal_cgrants = federal_cgrants + add_federal_cgrants,
+      
+      #new category totals
+      health_outlays  = state_health_outlays  + federal_health_outlays ,
+      social_benefits  = state_social_benefits  + federal_social_benefits ,
+      noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
+      corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
+      subsidies   = state_subsidies + federal_subsidies,
+      state_local_nom = state_local_nom + add_state_purchases,
+      federal_nom = add_federal_purchases + federal_nom,
+      federal_rebate_checks = federal_rebate_checks + add_rebate_checks,
+      rebate_checks = rebate_checks + add_rebate_checks
+    )
+}
+override_projections <- function(df){ 
+  override <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6_round2.xlsx", 
+                         sheet = "FIM Add Factors") %>%
+    select(date, ends_with('override')) %>%
+    mutate(date = as_date(date)) 
+  
+  Q2_2020 <- '2020-06-30'
+  Q3_2020 <- '2020-09-30'
+  last_override <- '2022-12-31'
+  
+  df %>%
+    left_join(override, by = 'date') %>%
+    mutate(unemployment_insurance = if_else(date >= Q3_2020 & date <= last_override,
+                                            unemployment_insurance_override,
+                                            unemployment_insurance),
+           federal_unemployment_insurance = if_else(date >= Q2_2020 & date <= last_override,
+                                                    federal_unemployment_insurance_override,
+                                                    federal_unemployment_insurance),
+           state_unemployment_insurance = if_else(date >= Q2_2020 & date <= last_override,
+                                                  state_unemployment_insurance_override,
+                                                  state_unemployment_insurance),
+           federal_cgrants = if_else(date >= Q2_2020 & date <= Q3_2020,
+                                     federal_cgrants_override,
+                                     federal_cgrants)
+    ) 
+}
+fill_overrides <- function(df){
+  overrides <- c('unemployment_insurance', 'federal_unemployment_insurance', 'state_unemployment_insurance')
+  df %>%
+  mutate(
+    across(
+      .cols = contains('unemployment_insurance'),
+      .fns = ~if_else(is.na(.), 0, .)
     )
   )
-# New Totals
+}
 fim <- 
-  fim %>%
-  mutate(
-  
-  #calculate new variables by adding the add factors
-  state_health_outlays  = state_health_outlays + add_state_health_outlays,
-  state_social_benefits  = state_social_benefits + add_state_social_benefits,
-  state_noncorp_taxes  =  state_noncorp_taxes + add_state_noncorp_taxes,
-  state_corporate_taxes  = state_corporate_taxes + add_state_corporate_taxes,
-  
-  federal_health_outlays  = federal_health_outlays + add_federal_health_outlays,
-  federal_social_benefits  = federal_social_benefits + add_federal_social_benefits,
-  # federal_noncorp_taxes  = federal_noncorp_taxes + add_federal_noncorp_taxes,
-  # federal_corporate_taxes  = federal_corporate_taxes + add_federal_corporate_taxes,
-  federal_subsidies  = federal_subsidies + add_federal_subsidies,
-  federal_cgrants = federal_cgrants + add_federal_cgrants,
-  
-  #new category totals
-  health_outlays  = state_health_outlays  + federal_health_outlays ,
-  social_benefits  = state_social_benefits  + federal_social_benefits ,
-  noncorp_taxes  = state_noncorp_taxes  + federal_noncorp_taxes ,
-  corporate_taxes  = state_corporate_taxes  + federal_corporate_taxes ,
-  subsidies   = state_subsidies + federal_subsidies,
-  state_local_nom = state_local_nom + add_state_purchases,
-  federal_nom = add_federal_purchases + federal_nom,
-  federal_rebate_checks = federal_rebate_checks + add_rebate_checks,
-  rebate_checks = rebate_checks + add_rebate_checks
-  
-)
-
-
-# Overrides -----------------------------------------------------------------------------------
-# Load add factor file and select override columns
-override <- read_excel("documentation/COVID-19 Changes/September/LSFIM_KY_v6_round2.xlsx", 
-                          sheet = "FIM Add Factors") %>%
-  select(date, ends_with('override')) %>%
-  mutate(date = as_date(date)) 
-
-Q2_2020 <- '2020-06-30'
-Q3_2020 <- '2020-09-30'
-last_override <- '2022-12-31'
-fim <-
-  fim %>%
-  left_join(override, by = 'date') %>%
-  mutate(unemployment_insurance = if_else(date >= Q3_2020 & date <= last_override,
-                                          unemployment_insurance_override,
-                                          unemployment_insurance),
-         federal_unemployment_insurance = if_else(date >= Q2_2020 & date <= last_override,
-                                                  federal_unemployment_insurance_override,
-                                                  federal_unemployment_insurance),
-         state_unemployment_insurance = if_else(date >= Q2_2020 & date <= last_override,
-                                                state_unemployment_insurance_override,
-                                                state_unemployment_insurance),
-         federal_cgrants = if_else(date >= Q2_2020 & date <= Q3_2020,
-                                   federal_cgrants_override,
-                                   federal_cgrants)
-         )
-
-  
+  fim_create(projections) %>% 
+  add_factors() %>%
+  override_projections() %>%
+  fill_overrides()
 
 # 4.3 Contribution of purchases and grants -------------------------------------------------------------------------------------
-
-## Calculate contributions
-
-fim <-
+contributions_purchases_grants <- function(df){
   map(
     alist(federal_nom, state_local_nom, federal_cgrants, federal_igrants),
-    ~ contribution(fim, !!.x)
+    ~ contribution(df, !!.x)
   ) %>%
-  reduce(left_join) %>%
-  left_join(fim, .)
-
-# Sum up purchases, taking out the federal grants contribution from state and local and adding it back to federal. 
-fim <-
-  fim %>%
+    reduce(left_join) %>%
+    left_join(df, .)
+}
+total_purchases <- function(df){
+  df %>%
     mutate(federal_cont_ex_grants = federal_nom_cont,
            federal_grants_cont = federal_cgrants_cont + federal_igrants_cont,
            federal_cont = federal_nom_cont + federal_grants_cont,
            state_local_cont_ex_grants = state_local_nom_cont,
            state_local_cont = state_local_nom_cont - federal_grants_cont,
            purchases_cont = federal_cont + state_local_cont)
-  
+}
+
+fim <-
+  fim %>%
+  contributions_purchases_grants() %>%
+  total_purchases()
 # 4.4 Counterfactual Taxes and Transfers -------------------------------------------------------------------------------
-
-fim %<>%
-  mutate(social_benefits = social_benefits - federal_rebate_checks - unemployment_insurance,
-         federal_social_benefits = federal_social_benefits - federal_rebate_checks - federal_unemployment_insurance,
-         state_social_benefits = state_social_benefits - state_unemployment_insurance)
-## Category totals
-tt = c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes",
-       'rebate_checks', 'unemployment_insurance')
-
-## Category totals by level of government
-tts = c(tt, paste0("federal_", tt), paste0("state_", tt)) # totals and disaggregations by level of goverment
-
-
-# Calculate "net" taxes and transfers by subtracting counterfactual from realized.
-# We specify the counterfactual as the lag times the growth rate of potential gdp and our deflator
-# 
-# Note: pi_pce and gdppoth should be lagged
-fim <-  
-  fim %>%
+remove_social_benefit_components <- function(df, component){
+  remove_unemployment_insurance <- function(df){
+    df %>%
+      mutate(social_benefits = social_benefits - unemployment_insurance,
+             federal_social_benefits = federal_social_benefits - federal_unemployment_insurance,
+             state_social_benefits = state_social_benefits - state_unemployment_insurance)
+  }
+  remove_rebate_checks <- function(df){
+    df %>%
+      mutate(social_benefits = social_benefits - rebate_checks,
+             federal_social_benefits = federal_social_benefits - federal_rebate_checks,
+             state_social_benefits = state_social_benefits - state_rebate_checks)
+  }
+  df %>%
+    remove_unemployment_insurance() %>%
+    remove_rebate_checks()
+}
+neutral <- function(x){
+  lag(x) * (1 + fim$gdppoth + fim$pi_pce)
+}
+taxes_transfers_minus_neutral <- function(df){
+  taxes_transfers <- c("subsidies","health_outlays", "social_benefits",
+                       "noncorp_taxes", "corporate_taxes", 'rebate_checks', 
+                       'unemployment_insurance')
+  government_level <- c('federal', 'state')
+  all_taxes_transfers <- c(glue('{taxes_transfers}'), glue('federal_{taxes_transfers}'),
+                           glue('state_{taxes_transfers}'))
+  df %>%
     mutate(
-      across(
-        .cols = all_of(tts), 
-        .fns =  ~ . - lag(.) * (1 + pi_pce + gdppoth),
-        .names = "{.col}_net"
-      )
-    ) %>%
-    fill(ends_with("_net"))
-
-tts <- paste0(tts, "_net") # rename for efficiency
-tt <- paste0(tt, "_net") # rename for efficiency
-
-# 4.5 MPCs ----------------------------------------------------------------------------------------------
-
-#######
-
-# Take tax and transfer category totals, net of counterfactual taxes, multiply by MPC's
-health = grep("health", tts, value=T)
-social_benefits = grep("social_benefits", tts, value=T)
-noncorp = grep("noncorp", tts, value=T)
-corporate = grep("corporate", tts, value=T)
-subsidies = grep("subsidies", tts, value=T)
-
-# Translate Taxes & Transfers into Consumption --------------------------------------------------------------------
-covid_start <- as.Date('2020-06-30')
-
-unemployment_insurance <- paste0(c('unemployment_insurance', 'state_unemployment_insurance',
-                                  'federal_unemployment_insurance'),
-                                '_net')
-
-rebate_checks <-
-  paste0(c('rebate_checks', 'state_rebate_checks', 'federal_rebate_checks'), '_net')
-
-## Dates for new MPCs
-
-nlag <- 12
-mpc_lag <-
-  fim %>%
-  select(date) %>%
-  slice(
-    which(date == covid_start) - (nlag - 1)
-  )
-
-
-## CALCULATE MPCS
-covid_end <- as.Date('2025-12-31')
-round2 <- as.Date('2021-03-31')
-fim <-
-  fim %>% 
-    ## HEALTH OUTLAYS
-    mutate(
-      across(
-        .cols = all_of(health),
-        .fns = ~ if_else(date >= covid_start & date <= covid_end,
-                         mpc_health_outlays_CRN19(.x),
-                         mpc_health_outlays(.x)),
-        .names = "{.col}_xmpc"
-      )
-    ) %>%
-    ## SOCIAL BENEFITS
-    mutate(
-      across(
-        .cols = all_of(social_benefits),
-        .fns = ~ if_else(date >= covid_start & date <= covid_end,
-                         mpc_social_benefits(.x),
-                         mpc_social_benefits(.x)
-        ),
-        .names = "{.col}_xmpc"
-      )
-    ) %>%
-  mutate(
-    across(
-      .cols = all_of(unemployment_insurance),
-      .fns = ~ mpc_ui_CRN19(.x),
-      .names = "{.col}_xmpc"
+      across(.cols = all_of(all_taxes_transfers),
+             .fns = ~ . - neutral(.),
+             .names = '{.col}_minus_neutral')
     )
-  ) %>%
-  mutate(
-    across(
-      .cols = all_of(rebate_checks),
-      .fns = ~ mpc_rebate_CRN19(.x),
-      .names = "{.col}_xmpc"
-    )
-  )  %>%
-    ## CORPORATE TAXES
+  
+}
+calculate_health_mpc <- function(df){
+  taxes_transfers <- 'health_outlays'
+  net <- 'minus_neutral'
+  government_levels <- c(glue('{taxes_transfers}_{net}'), glue('federal_{taxes_transfers}_{net}'),
+                         glue('state_{taxes_transfers}_{net}'))
+  total <- glue('{taxes_transfers}_post_mpc')
+  federal <- glue('federal_{taxes_transfers}_post_mpc')
+  state <- glue('state_{taxes_transfers}_post_mpc')
+  
+  df %>%
     mutate(
       across(
-        .cols = all_of(corporate),
-        .fns = ~ if_else(date >= covid_start & date <= covid_end,
-                         mpc_corporate_taxes_CRN19(.x),
-                         mpc_corporate_taxes(.x)
-        ),
-        .names = "{.col}_xmpc"
+        .cols = all_of(government_levels),
+        .fns = ~ mpc_health_outlays(.x),
+        .names = '{.col}_xmpc'
       )
     ) %>%
-    ## NON-CORPORATE TAXES
+    rename(!!total := glue('{taxes_transfers}_{net}_xmpc'),
+           !!federal := glue('federal_{taxes_transfers}_{net}_xmpc'),
+           !!state := glue('state_{taxes_transfers}_{net}_xmpc'))
+}
+calculate_social_benefits_mpc <- function(df){
+  taxes_transfers <- 'social_benefits'
+  net <- 'minus_neutral'
+  government_levels <- c(glue('{taxes_transfers}_{net}'), glue('federal_{taxes_transfers}_{net}'),
+                         glue('state_{taxes_transfers}_{net}'))
+  total <- glue('{taxes_transfers}_post_mpc')
+  federal <- glue('federal_{taxes_transfers}_post_mpc')
+  state <- glue('state_{taxes_transfers}_post_mpc')
+  
+  df %>%
     mutate(
       across(
-        .cols = all_of(noncorp),
-        .fns = ~ if_else(date >= covid_start & date <= covid_end,
-                         mpc_noncorp_taxes_CRN19(.x),
-                         mpc_noncorp_taxes(.x)
-        ),
-        .names = "{.col}_xmpc"
+        .cols = all_of(government_levels),
+        .fns = ~ mpc_social_benefits(.x),
+        .names = '{.col}_xmpc'
       )
     ) %>%
-    ## SUBSIDIES
+    rename(!!total := glue('{taxes_transfers}_{net}_xmpc'),
+           !!federal := glue('federal_{taxes_transfers}_{net}_xmpc'),
+           !!state := glue('state_{taxes_transfers}_{net}_xmpc'))
+}
+calculate_mpc <- function(df, taxes_transfers){
+
+  net <- 'minus_neutral'
+  government_levels <- c(glue('{taxes_transfers}_{net}'), glue('federal_{taxes_transfers}_{net}'),
+                         glue('state_{taxes_transfers}_{net}'))
+  total <- glue('{taxes_transfers}_post_mpc')
+  federal <- glue('federal_{taxes_transfers}_post_mpc')
+  state <- glue('state_{taxes_transfers}_post_mpc')
+  
+  if(taxes_transfers == 'subsidies'){
+    second_draw <- as_date('2021-03-31')
+    mpc_fun <- eval(sym(glue('mpc_{taxes_transfers}')))
+    mpc_fun_second_draw <- eval(sym(glue('mpc_{taxes_transfers}_second_draw')))
+    df %>%
+      mutate(
+        across(
+          .cols = all_of(government_levels),
+          .fns = ~ if_else(date < second_draw, 
+                           mpc_fun(.),
+                           mpc_fun_second_draw(.)),
+          .names = '{.col}_xmpc'
+        )
+      ) %>%
+      rename(!!total := glue('{taxes_transfers}_{net}_xmpc'),
+             !!federal := glue('federal_{taxes_transfers}_{net}_xmpc'),
+             !!state := glue('state_{taxes_transfers}_{net}_xmpc'))
+  }
+  else{
+    mpc_fun <- eval(sym(glue('mpc_{taxes_transfers}')))
+    df %>%
     mutate(
       across(
-        .cols = all_of(subsidies),
-        .fns = ~ if_else(date >= round2,
-                         mpc_ppp_round2(.x),
-                         mpc_subsidies(.x)
-        ),
-        .names = "{.col}_xmpc"
+        .cols = all_of(government_levels),
+        .fns = ~ mpc_fun(.),
+        .names = '{.col}_xmpc'
       )
-    )
-
-# Add rebate and ui back into social benefits
-# 
-fim %<>% 
-  mutate(social_benefits_net_xmpc = social_benefits_net_xmpc + unemployment_insurance_net_xmpc + rebate_checks_net_xmpc,
-         state_social_benefits_net_xmpc = state_social_benefits_net_xmpc + state_unemployment_insurance_net_xmpc + state_rebate_checks_net_xmpc,
-         federal_social_benefits_net_xmpc = federal_social_benefits_net_xmpc + federal_unemployment_insurance_net_xmpc + federal_rebate_checks_net_xmpc)
-
-# Sum up transfers net taxes
-tt = paste0(c("subsidies","health_outlays", "social_benefits", "noncorp_taxes", "corporate_taxes"),
-            '_net')
-
-govt_taxes_transfers <- paste0(tt, "_xmpc")
-state_taxes_transfers <- paste0("state_", tt, "_xmpc")
-federal_taxes_transfers <- paste0("federal_", tt, "_xmpc")
+    ) %>%
+    rename(!!total := glue('{taxes_transfers}_{net}_xmpc'),
+           !!federal := glue('federal_{taxes_transfers}_{net}_xmpc'),
+           !!state := glue('state_{taxes_transfers}_{net}_xmpc'))
+  }
+}
 fim <-
   fim %>%
-  mutate(
-    transfers_net_taxes = rowSums(
-      select(., .dots = all_of(govt_taxes_transfers)), na.rm = TRUE
-    ),
-    state_transfers_net_taxes = rowSums(
-      select(., .dots = all_of(state_taxes_transfers)), na.rm = TRUE
-    ),
-    federal_transfers_net_taxes = rowSums(
-      select(., .dots = all_of(federal_taxes_transfers)), na.rm = TRUE
-    )
-  )
+  remove_social_benefit_components() %>%
+  taxes_transfers_minus_neutral() %>%
+  calculate_mpc('subsidies') %>%
+  calculate_mpc('health_outlays') %>%
+  calculate_mpc('social_benefits') %>%
+  calculate_mpc('unemployment_insurance') %>%
+  calculate_mpc('rebate_checks') %>%
+  calculate_mpc('noncorp_taxes') %>%
+  calculate_mpc('corporate_taxes') 
 
+# 4.5 Taxes and Transfers ----------------------------------------------------------------------------------------------
+add_social_benefit_components <- function(df){
+  add_unemployment_insurance <- function(df){
+    df %>%
+      mutate(social_benefits = social_benefits + unemployment_insurance,
+             federal_social_benefits = federal_social_benefits + federal_unemployment_insurance,
+             state_social_benefits = state_social_benefits + state_unemployment_insurance)
+  }
 
-# Taxes, Transfers, & Subsidies Contributions ---------------------------------------------------------------------
+  add_rebate_checks <-function(df){
+    df %>%
+      mutate(social_benefits = social_benefits + rebate_checks,
+             federal_social_benefits = federal_social_benefits + federal_rebate_checks,
+             state_social_benefits = state_social_benefits + state_rebate_checks)
+  }
 
-## Calulate the taxes, transfers, and subsidies FIM
-
-tts <-  c("taxes_transfers", "state_taxes_transfers", "federal_taxes_transfers",
-          "health", "social_benefits", "noncorp",
-          "corporate", "state_subsidies", "federal_subsidies",
-          "subsidies")
-contributionTTS <- paste0(
-  tts,
-  '_cont'
-)
-
-net <- c("transfers_net_taxes", "state_transfers_net_taxes", "federal_transfers_net_taxes",
-         "health_outlays_net_xmpc", "social_benefits_net_xmpc", "noncorp_taxes_net_xmpc",
-         "corporate_taxes_net_xmpc", "state_subsidies_net_xmpc", "federal_subsidies_net_xmpc",
-         "subsidies_net_xmpc")
-
-fim <-
-  fim %>%
+  df %>%
+    add_unemployment_insurance() %>%
+    add_rebate_checks()
+}
+taxes_contributions <- function(df){
+  taxes <- c('noncorp_taxes_post_mpc', 'corporate_taxes_post_mpc')
+  all_taxes <- c(glue('{taxes}'), glue('federal_{taxes}'), glue('state_{taxes}')) 
+  df %>%
     mutate(
       across(
-        .cols  = net,
+        .cols  = all_of(all_taxes),
         .fns = ~ 400 * .x / lag(gdp),
         .names = "{.col}_cont"
       )
     ) %>%
-  setnames(paste0(net, "_cont"), contributionTTS) #%>%
-  ## Add contribution of subsidies to contribution of taxes and transfers
-  # I think this is double counting
-# mutate(
-  #   taxes_transfers_cont = taxes_transfers_cont + subsidies_cont,
-  #   federal_taxes_transfers_cont = federal_taxes_transfers_cont + federal_subsidies_cont,
-  #   state_taxes_transfers_cont = state_taxes_transfers_cont + state_subsidies_cont
-  # )
+  rename_with(~ gsub('post_mpc_cont', 'cont', .x))
+    
+}
+sum_taxes_contributions <- function(df){
+  taxes <- c('noncorp_taxes', 'corporate_taxes')
+  df %>%
+    mutate(
+      taxes_cont = rowSums(select(., .dots = all_of(str_glue('{taxes}_cont')))),
+      federal_taxes_cont = rowSums(select(., .dots = all_of(str_glue('federal_{taxes}_cont')))),
+      state_taxes_cont = rowSums(select(., .dots = all_of(str_glue('state_{taxes}_cont'))))
+    )
+}
+transfers_contributions <- function(df){
+  transfers <- c('social_benefits', 'health_outlays', 'subsidies',
+                 'unemployment_insurance', 'rebate_checks') %>%
+    paste0('_post_mpc')
+  all_transfers <- c(glue('{transfers}'), glue('federal_{transfers}'), glue('state_{transfers}')) 
+  df %>%
+    mutate(
+      across(
+        .cols  = all_of(all_transfers),
+        .fns = ~ 400 * .x / lag(gdp),
+        .names = "{.col}_cont"
+      )
+    ) %>%
+    rename_with(~ gsub('post_mpc_cont', 'cont', .x))
+}
+sum_transfers_contributions <- function(df){
+  transfers <- c('social_benefits',  'health_outlays', 'subsidies',
+                 'unemployment_insurance', 'rebate_checks')
+  df %>%
+    mutate(
+       transfers_cont = rowSums(select(., .dots = all_of(str_glue('{transfers}_cont'))), na.rm = TRUE),
+       federal_transfers_cont = rowSums(select(., .dots = all_of(str_glue('federal_{transfers}_cont'))), na.rm = TRUE),
+       state_transfers_cont = rowSums(select(., .dots = all_of(str_glue('state_{transfers}_cont'))), na.rm = TRUE)
+      )
+}
 
-# We forecast two years ahead
-####change to 6 quarters ahead for COVID19 as of August 3rd 2020
+sum_taxes_transfers <- function(df){
+  df %>%
+    mutate(
+      taxes_transfers_cont = taxes_cont + transfers_cont,
+      federal_taxes_transfers_cont = federal_taxes_cont + federal_transfers_cont,
+      state_taxes_transfers_cont = state_taxes_cont + state_transfers_cont,
+    )
+}
+get_fiscal_impact <- function(df){
+  df %>%
+    mutate(fiscal_impact = federal_cont + state_local_cont + taxes_transfers_cont,
+           fim_bars = fiscal_impact,
+           fiscal_impact_moving_average = SMA(na.locf(fiscal_impact, na.rm = F), n=4),
+           fim_bars_ma = fiscal_impact_moving_average
+    )
+}
 
-fim %<>%
-  mutate(social_benefits = social_benefits + unemployment_insurance + rebate_checks,
-         federal_social_benefits = federal_social_benefits + federal_unemployment_insurance + rebate_checks,
-         state_social_benefits = state_social_benefits + state_unemployment_insurance 
-  )
+skim_contributions <- function(df){
+  df %>%
+     select(date, ends_with('cont')) %>% 
+    filter(date > '2019-12-31') %>%
+    skim()
+}
+get_transfers <- function(){
+  fim %>%
+  taxes_contributions() %>%
+  sum_taxes_contributions() %>%
+  transfers_contributions() %>%
+  sum_transfers_contributions() %>%
+  sum_taxes_transfers() %>% 
+  select(date, transfers_cont, social_benefits_cont, health_outlays_cont,
+         subsidies_cont, unemployment_insurance_cont, rebate_checks_cont,
+         federal_transfers_cont, federal_social_benefits_cont,
+         federal_health_outlays_cont, federal_subsidies_cont,
+         federal_unemployment_insurance_cont, federal_rebate_checks_cont,
+         state_transfers_cont, state_social_benefits_cont,
+         state_health_outlays_cont, state_subsidies_cont,
+         state_unemployment_insurance_cont, state_rebate_checks_cont) %>% 
+  mutate(sum = federal_transfers_cont + state_transfers_cont,
+         diff = transfers_cont - sum) %>% filter(date > '2019-12-31') 
+}
+get_taxes <- function(){
+  fim %>%
+    taxes_contributions() %>%
+    sum_taxes_contributions() %>%
+    filter(date > '2019-12-31') %>%
+    select(date, taxes_cont, corporate_taxes_cont, 
+           noncorp_taxes_cont, federal_taxes_cont, 
+           federal_corporate_taxes_cont, 
+           federal_noncorp_taxes_cont,
+           state_taxes_cont, state_corporate_taxes_cont,
+           state_noncorp_taxes_cont) %>%
+    mutate(total = taxes_cont, 
+           sum = federal_taxes_cont + state_taxes_cont,
+           diff = total - sum)
+}
+  
+transfers <- get_transfers
+fim <-
+  fim %>%
+  taxes_contributions() %>%
+  sum_taxes_contributions() %>%
+  transfers_contributions() %>%
+  sum_transfers_contributions() %>%
+  sum_taxes_transfers() %>%
+  add_social_benefit_components() %>%
+  get_fiscal_impact() %>%
+  arrange(date, recession, fiscal_impact, fiscal_impact_moving_average, 
+          federal_cont, state_local_cont, 
+          taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
+
 
 # 4.6 Export data -------------------------------------------------------------------------------------------
-firstDate <- "1999-12-31"
-saveRDS(fim %>% filter(date > firstDate ), 'data/processed/fim.rds')
-# 4.6.1 Clean FIM data frame ----------------------------------------------------------------------------
-last_proj_date <- as.Date('2022-12-31')
-fim <-
-  fim %>% 
-    mutate(fim_bars = federal_cont + state_local_cont + taxes_transfers_cont,
-           fim_bars_ma = SMA(na.locf(fim_bars, na.rm = F), n = 4)) %>% 
-    filter(date <= as.Date(last_proj_date)) %>%
-    select(date, fim_bars, fim_bars_ma, state_local_cont, federal_cont, taxes_transfers_cont, 
-           subsidies_cont, recession, everything())
-# 4.6.2 Website interactive ----------------------------------------------------------------------------------
-firstDate <- "1999-12-31"
 
-fim_interactive <- 
-  fim %>% 
+# 4.6.2 Website interactive ----------------------------------------------------------------------------------
+prepare_interactive <- function(df){
+  firstDate <- "1999-12-31"
+  df %>% 
     filter(date >= firstDate) %>% 
     mutate(
            yrq = as.yearqtr(date),
@@ -435,19 +487,30 @@ fim_interactive <-
   mutate(recession = if_else(is.na(recession),
                              0,
                              recession))
+}
+fim_interactive <-
+  fim %>%
+  prepare_interactive()
 # 4.6.3 Create CSV files --------------------------------------------------------------------------------
-
+export_results <- function(){
 # Create folder for current month's update
-thismonth <- format(Sys.Date(), "%m-%Y")
-dir.create(here('results/', thismonth))
+current_month <- glue('{month(today())}-{year(today())}')
+dir.create(here('results', current_month))
 
 # Write csv to current month's folder
 results <- 
   list(fim = fim,
                 fim_interactive = fim_interactive,
-                xx = xx)
+                projections = projections)
+
+output_xlsx <- function(data, names){ 
+  write_xlsx(data, glue('results/{current_month}/{names}.xlsx'))
+}
 
 list(data = results, 
      names = names(results)) %>%
   purrr::pmap(output_xlsx) 
+}
+export_results()
+
 

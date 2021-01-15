@@ -1,176 +1,122 @@
-# ## HEADER ---------------------------
-# ##
-# ## Script name: Projections
-# ##
-# ## Purpose 
-# ## Construct quarterly projections
-# ## Authors:
-# ## Manuel Alcalá Kovalski
-# ## Sage Belz
-# ## Kadija Yilla
-# ## Date Created: 2020-10-05
-# ##
 
-## 2 Projected Growth Rates -----------------------------------------------------------------------------
+# Constants -----------------------------------------------------------------------------------
+
 last_hist_date <-
   hist %>%
-  select(date) %>%
-  filter(!is.na(date)) %>%
-  slice_tail() %>%
-  pull()
+  pull(date) %>%
+  max()
 
 last_proj_date <- last_hist_date + years(2)
 
-## 2.1 Budget (Annual) ------------------------------------------------------------------------------------------
-
-
-# construct forecasts of federal taxes and transfers growth using CBO's annual budget/revenue projections as they appear
-# in the NIPAs (except Medicaid and Medicare, which come straight from revenue projections)
+### 2.1.1 CBO Projections --------------------------------------------------------------------------------------
 
 budg <-
-  # we use annual rates, so we can just replicate annual levesl for each q
-  bind_rows(budg, budg, budg, budg) %>%
-  arrange(fy) %>%
-  mutate(date = econ$date) %>%
-  mutate(date = lag(date))
+  budg %>% 
+  annual_to_quarter(fy)
 
+cbo_projections <-
+  budg %>% 
+  left_join(econ)
 
-
-### 2.1.1 COLA Adjustments --------------------------------------------------------------------------------------
-
-# Adjust federal transfers to feature their january COLA-related bump; reattribute that growth to calendar quarter 1
-# before smoothing out the rest of the non-COLA related growth. SSA uses CPI-W to create COLAs; We use CBO's projection
-# of CPI-U. This slightly affects the timing of total transfers, but not their levels
-
-budg <- budg %>%
-  mutate(cpiu = lag(econ$cpiu),
-         cpiu_g = q_a(cpiu) / 100,
-         pcw = hist$pcw[match(budg$date, hist$date)],
-         pcw_g = q_a(pcw) / 100,
-#        Applicable cola rate is CPIW from Q3 of previous year
-         cola_rate =
-           if_else(
-             month(date) == 3,
-             lag(cpiu_g, 2),
-             NULL
-           )
-  ) %>%
-  # forecastPeriod filling so each q has correct cola rate,
-  fill(cola_rate)
-
-# Don't think this does anything
-budg$pcw_g[is.na(budg$pcw_g)] = budg$cpiu_g[is.na(budg$pcw_g)]
-
-budg <-
-  budg %>% mutate(health_ui = SMA(yptmd + yptmr + yptu, n = 4),
-                        # temporarily take out medicaid, medicare, ui, and COLA
-                        # smooth with 4 quarter  moving average
-                        gftfp_noCOLA = SMA((gftfp - health_ui)*(1-cola_rate), n = 4),
-                        # Store old gftfp as unadjusted
-                        gftfp_unadj = gftfp,
-                        # Add COLA and smoothed health back in for new adjusted gftfp
-                        gftfp = gftfp_noCOLA * (1 + cola_rate)  + health_ui,
-                        gftfp_g = q_g(gftfp)
-                   ) %>%
-            # smooth all budget series except total social transfers, which we did above
-            mutate(
-              across(.cols = c("gfrpt",  "gfrpri",  "gfrcp",  "gfrs", "yptmr",  "yptmd" ),
-                     .fns = ~ rollapply(.x, width = 4, mean, fill = NA, align =  'right')
-                  ) %>%
-            # take "q-o-q" growth rate
-            mutate(
-              across(
-                .cols = c("gfrpt",  "gfrpri",  "gfrcp",  "gfrs", "yptmr",  "yptmd" ),
-                .fns  = ~  q_g(.x),
-                .names = "{.col}_g"
-              )
-            )
-          )
-
-
-
-### 2.1.2 Alternate tax scenario --------------------------------------------------------------------------------
-
-# Construct alternative scenario for personal current taxes, under which the TCJA provisions for income taxes don't
-# expire in 2025
-
-expdate <- "2025-12-30"
-predate <- "2025-09-30"
-
-budg <-
-  budg %>%
+cbo_projections_calculations <- function(){
+cola_adjustment <- function() {
+  cbo_projections %>%
+    mutate(cpiu_g = q_a(cpiu) / 100,
+           cola_rate = if_else(month(date) == 3,
+                               lag(cpiu_g, 2),
+                               NULL) 
+    ) %>%
+    fill(cola_rate) %>%
+    mutate(
+      gftfp_before_cola = gftfp,
+      health_ui = SMA(yptmd + yptmr + yptu, n = 4),
+      gftfp_noCOLA = SMA((gftfp - health_ui)*(1-cola_rate), n = 4),
+      gftfp =  gftfp_noCOLA * (1 + cola_rate)  + health_ui,
+    ) 
+} 
+smooth_budget_series <- function(df){
+  # smooth all budget series except total social transfers, which we did above
+  df %>%
+  mutate(
+    across(.cols = c("gfrpt",  "gfrpri",  "gfrcp",  "gfrs", "yptmr",  "yptmd"),
+           .fns = ~ rollapply(.x, width = 4, mean, fill = NA, align =  'right')
+    ) 
+  )
+}
+alternative_tax_scenario <- function(df){
+  # Construct alternative scenario for personal current taxes, under which the TCJA provisions for income taxes don't
+  # expire in 2025
+  expdate <- "2025-12-30"
+  predate <- "2025-09-30"
+  
+  df %>%
     mutate(gfrptCurrentLaw = gfrpt,
            gfrptCurrentLaw_g = gfrpt_g,
            gfrpt_g =
-                     if_else(date >= expdate,
-                       lag(gfrpt_g),
-                       gfrpt_g,
-                       missing = NULL
-                     ),
+             if_else(date >= expdate,
+                     lag(gfrpt_g),
+                     gfrpt_g,
+                     missing = NULL
+             ),
            gfrpt  = if_else(date >= predate,
                             lag(gfrpt) * (1 + gfrpt_g / 400),
-                            gfrpt)
-)
-
-## 3.1 Economic (Quarterly) ----------------------------------------------------------------------------------------------
-
-### 3.1.1 ---------------------------------------------------------------------------
-taxpieces = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs")
-
-econ <-
-  econ %>%
+                            gfrpt))
+}
+implicit_price_deflators <- function(df){
   # Implicit price deflators
-  mutate(jgf =  gf/gfh,
-         jgs = gs/gsh,
-         jc = c/ch)  %>%
-  # Growth rates
+  df %>% 
+    mutate(jgf =  gf/gfh,
+           jgs = gs/gsh,
+           jc = c/ch) 
+}
+state_taxes <- function(df){
+    df %>% 
+      left_join(hist %>%
+                  select(date, gsrpt ,gsrpri, gsrcp ,gsrs),
+                all.x = F) %>%
+      filter(date > '2016-12-31') %>%
+      mutate(
+        across(
+          .cols = c("gsrpt" ,"gsrpri", "gsrcp" ,"gsrs"),
+          .fns = ~ na.locf(. / gdp) * gdp
+        )
+      )
+}
+growth_rates <- function(df){
+  df %>%
+    mutate(
+      across(
+        .cols = where(is.numeric),
+        .fns = ~ q_g(.),
+        .names = "{.col}_g"
+      ) 
+    )
+}
+cola_adjustment() %>%
+smooth_budget_series() %>%
   mutate(
     across(
-      .cols = where(is.numeric),
+      .cols = c("gfrpt",  "gfrpri",  "gfrcp",  "gfrs", "yptmr",  "yptmd" ),
       .fns = ~ q_g(.x),
       .names = "{.col}_g"
     )
   ) %>%
-  # S&L Taxes
- left_join(hist %>%
-          select(date, taxpieces),
-        all.x = F) %>%
-  mutate(
-    across(
-      .cols = all_of(taxpieces),
-      .fns = ~ na.locf(. / gdp) * gdp
-    )
-  ) %>%
- # Growth rate of S&L Taxes
- mutate(
-   across(
-     .cols = taxpieces,
-     .fns = ~ q_g(.),
-     .names = "{.col}_g"
-   ) 
-  ) %>%
-    as_tibble()
+  alternative_tax_scenario() %>%
+  implicit_price_deflators() %>% 
+  state_taxes() %>%
+  growth_rates()
+}
+cbo_projections <- cbo_projections_calculations()
+
+
+
 ## 4 Merge growth rates and levels data frames ---------------------------------------------------------------------
-
-econGrowthRates <-
-  econ %>%
-  select(date, ends_with('_g'))
-
-# Filter so that we only get the budget growth rates
-budgetGrowthRates <-
-  budg %>%
-  select(date, ends_with('_g'), gfrptCurrentLaw)
-
-growthRates <- left_join(econGrowthRates,
-                         budgetGrowthRates,
-                         by = 'date')
-
-xx <-
+projections <-
     full_join(hist,
-              growthRates,
+              cbo_projections %>%
+                select(date, contains('_g')),
               by = 'date')
 
-## 4.2 FIM component calculations ----------------------------------------------------------------------------
 
 ### 4.2.1 ------------------------------------------------------------------------------------------
 unemployment_insurance_override <-
@@ -179,8 +125,7 @@ unemployment_insurance_override <-
   mutate(date = as_date(date)) %>%
   select(date, contains('unemployment_insurance')) 
   
-
-xx %<>%
+projections %<>%
   left_join(unemployment_insurance_override) %>%
   mutate(
     across(
@@ -189,173 +134,124 @@ xx %<>%
     )
   )
   
-# gftfbusx =	Fed Transfer Payments/Persons: State Unemployment Insurance Benefits (SAAR, Mil.$)
-# gftfp = Federal Government Social Benefit Payments to Persons (SAAR, Bil.$)
-# gstfp = State & Local Government Social Benefit Payments to Persons (SAAR, Bil.$)
-
 # Federal UI legislation total from Q3 of 2020 is $768.8 (Bil. $)
-xx <- 
-  xx %>%
+millions_to_billions <- function(df){
+  df %>% 
     mutate(
-      
-      # SOCIAL BENEFITS
-      # Unemployment Insurance
-      gftfbusx = gftfbusx / 1000, # Translate UI from millions to billions
-      # Reallocate state UI (gftfbusx) from federal to state
-      # Add ui legislation to federal and subtract from state
-      gftfp = gftfp - yptu + federal_unemployment_insurance_override,
-      gstfp = gstfp + yptu - federal_unemployment_insurance_override,
-     
-      # GRANTS
-      
-      # Fix units  (millions -> billions)
-      # Health & Hospitals grants
-      gfeghhx = gfeghhx / 1000,
-      # Medicaid grants
-      gfeghdx = gfeghdx / 1000,
-      # Capital grants to S&L
-      gfeigx = gfeigx / 1000,
-      
-        ## Medicaid
-      
-      # assume FMAP remains constant -- we still need the fmaps to do pre-1993 reallocation of grants
-      fshare = fmap$fshare[match(year(date), fmap$year)] %>%
-        na.locf()
+      across(.cols = c('gftfbusx', 'gfeghhx', 'gfeghdx', 'gfeigx'),
+             .fns = ~ . / 1000)
     )
+}
+unemployment_insurance_reallocation <- function(df){
+  df %>%
+    mutate(
+      gftfp = gftfp - yptu + federal_unemployment_insurance_override,
+      gstfp = gstfp + yptu - federal_unemployment_insurance_override
+    )
+}
+fmap_share <- function(df){
+ df %>%
+   left_join(fmap %>% filter(year >= 1970) %>% annual_to_quarter(year) %>% select(date, fshare) %>% na.locf())
+}
+fmap_share_old <- function(df){
+  df %>%
+    mutate(
+      fshare = fmap$fshare[match(year(date), fmap$year)] %>%
+                   na.locf())
+}
+
+projections <-
+  projections %>%
+    millions_to_billions() %>%
+    unemployment_insurance_reallocation() %>%
+    fmap_share_old()
+# Reuse comments ------------------------------------------------------------------------------
+
+
 
 
 # 4.2.3 Growth Rates Assumptions -----------------------------------------------------------------------------------------
-
-
-## Louise override CBO growth rate for S&L purchases for Q3 and Q4 for 2020
-
-Q3_2020 <- "2020-09-30" 
-Q4_2020 <- "2020-12-31" 
-## Louise override CBO growth rate for S&L purchases for Q42020 through (& including) Q12022
-xx$gs_g[204:209] = c(0.0025,0.0025,0.0025,0.005,0.0075,0.01)
-
-# past cap expiration dates, CBO assumes that fed purchases just grow with inflation. we want to assume they grow with
-# nominal potential (zero impact, essentially)
-capExpiration <- "2021-09-30"
-
-# Additional component calculations
-# Make special assumptions for projected growth rates
-xx <- xx %>% mutate(
-  # PURCHASES
-    # Federal
-    gf_g = if_else(date > capExpiration,
-                   gdppothq_g + jgdp_g,
-                   gf_g),
-    # State & Local
-      # Note: Louise said to override CBO growth rate for S&L purchases for Q3 and Q4 for 2020
-
-  # TRANSFERS
-  
-    # Federal
-      # Net federal transfers grow at the same rate as gross federal transfers
-    gftfpnet_g = gftfp_g, 
-  
-    # State & Local
-      # S&L gross and net transfers both grow with S&L current expenditures
-    gstfp_g = gs_g,
-    gstfpnet_g =  gs_g, 
-
-  # SUBSIDIES
-    # Federal and S&L subsidies grow with potential GDP
-  gfsub_g = gdppothq_g,
-  gssub_g = gdppothq_g,
-  
-  # GRANTS
-    # Federal
-      #  Health & Hospital grants to states growth with Medicaid
-        gfeghhx_g = yptmd_g, 
-      # Medicaid grants to states grow with medicaid
-        gfeghdx_g = yptmd_g, 
-  
-      # Aid to S&L grow with federal purchases
-        gfeg_g = gf_g, 
-      # Capital grants to state and local gov'ts grow with federal purchases
-        gfeigx_g = gf_g, 
-  
-  # DEFLATORS
-    # State & Local
-        # Investment deflator grows with overall deflator for S&L
-        jgsi_g = jgs_g,
-        # Consumption deflator grows with overall deflator for S&L
-        jgse_g = jgs_g
-  
-  # Disaggregated medicaid components grow with the aggregate  
-      # yfptmd_g = yptmd_g,  
-      # ysptmd_g = yptmd_g, 
-)
-
-
-# 5 Forecast ----------------------------------------------------------------------------------------------------
-
-## Generate forecastPeriod values of components using current levels and our projected growth rates. 
-
-components <-
-c(
-    # GDP
-      ## Actual
-      'gdp', 'gdph', 'jgdp',
-      ## Potential
-      'gdppotq', 'gdppothq',
-    # Gov't Consumption Expenditures & Gross Investment 
-      ## Total 
-      'g', 'gf', 'gs', 
-      ## Deflators
-         ### Total
-           'jgf', 'jgs',
-         ### S&L Consumption/Investment Expenditures
-              'jgse', 'jgsi',
-    # GRANTS
-    ## Total
-      'gfeg', 
-      ### Health & Hospitals
-        'gfeghhx',
-      ### Medicaid
-        'gfeghdx', 
-      ### Investment
-        'gfeigx', 
-    # TAXES
-      ## Personal
-        'gfrpt', 'gsrpt',
-      ## Social Insurance
-        'gfrs' ,'gsrs', 
-      ## Corporate
-        'gfrcp', 'gsrcp',
-      ## Production & Imports
-        'gfrpri', 'gsrpri',
-    # SOCIAL BENEFITS
-      ## Total
-      'gftfp', 'gstfp',
-      ## Medicaid
-      'yptmd',
-      ## Medicare
-      'yptmr',
-    # SUBSIDIES 
-    'gssub', 'gfsub', 
-    # PERSONAL CONSUMPTION
-    'c', 'jc'
-)
-
-forecastPeriod <- which(xx$date > last_hist_date)
-
-for(f in forecastPeriod){
-  xx[f,components] = xx[f-1, components]  * (1 + xx[f, paste0(components, "_g")])
+subsidies_growth <- function(df){
+  df %>% 
+    mutate(
+      gfsub_g = gdppothq_g,
+      gssub_g = gdppothq_g
+    )
 }
-# projections of total tax and transfer pieces = projections of state & local plus federal tax and transfer pieces 
-xx <-
-  xx %>%
+purchases_growth <- function(df){
+  capExpiration <- "2021-09-30"
+  df %>%
+    mutate(gf_g = if_else(date > capExpiration,
+                          gdppothq_g + jgdp_g,
+                          gf_g)
+    )
+}
+transfers_growth <- function(df){
+  df %>%
+    mutate(
+      gftfpnet_g = gftfp_g, 
+      gstfp_g = gs_g,
+      gstfpnet_g =  gs_g,
+    )
+}
+health_growth <- function(df){
+  df %>%
+    mutate(
+      #  Health & Hospital grants to states growth with Medicaid
+      gfeghhx_g = yptmd_g, 
+      # Medicaid grants to states grow with medicaid
+      gfeghdx_g = yptmd_g, 
+    )
+}
+grants_growth <- function(df){
+  df %>%
+    mutate(
+      # Aid to S&L grow with federal purchases
+      gfeg_g = gf_g, 
+      # Capital grants to state and local gov'ts grow with federal purchases
+      gfeigx_g = gf_g
+    )
+}
+deflators_growth <- function(df){
+  df %>%
+    mutate(
+      jgsi_g = jgs_g,
+      # Consumption deflator grows with overall deflator for S&L
+      jgse_g = jgs_g
+    )
+}
+growth_assumptions <- function(df){
+  df %>%
+    purchases_growth() %>%
+    transfers_growth() %>%
+    health_growth() %>%
+    subsidies_growth() %>%
+    grants_growth() %>%
+    deflators_growth()
+    
+}
+state_purchases_growth_override <- function(df){
+#   projections %>% filter(date < '2020-12-31') %>% count(n()) %>% pull()
+#   rate <- c(rep(0.0025,3), 0.005,0.0075,0.01)
+#   projections %>% mutate(replacement_rate = if_else(date >= '2020-12-31' & date <= '2022-03-31',
+#   )
+}
+
+
+projections <-
+  projections %>%
+  growth_assumptions()
+## Louise override CBO growth rate for S&L purchases for Q42020 through (& including) Q12022
+medicaid_reallocation <- function(df){
+  df %>%
     mutate(
       # Reattribute federal grants to states back to Federal government
       # Parse between those for consumption and investment and those for transfers (Medicaid)
       
       # federal medicaid grants to states
-      yfptmd = if_else(is.na(gfeghdx), # if we don't have the medicaid data (pre-1993)'
-                       yptmd*fshare, # use the fmaps to estimate
-                       gfeghdx), # otherwise, use data for medicaid + prescription drugs transfers
+      yfptmd = if_else(date >='1993-03-31',
+                       gfeghdx,
+                       yptmd*fshare),
       
       
       # state medicaid payments = total medicaid - federal medicaid grants
@@ -368,11 +264,94 @@ xx <-
       gftfpnet = gftfp + yfptmd 
       # we reattribute the capital grants later after calculating contributions. 
     )
-xx$gtfp[forecastPeriod] = xx$gftfp[forecastPeriod] + xx$gstfp[forecastPeriod] # social benefits = federal benefits + state and local benefits
-xx$yptx[forecastPeriod] = xx$gfrpt[forecastPeriod] + xx$gsrpt[forecastPeriod] # alternative path
-xx$yptxb[forecastPeriod] = xx$gfrptCurrentLaw[forecastPeriod] + xx$gsrpt[forecastPeriod] # current law
-xx$ytpi[forecastPeriod] = xx$gsrpri[forecastPeriod] + xx$gfrpri[forecastPeriod]  #production and import taxes
-xx$grcsi[forecastPeriod] = xx$gsrs[forecastPeriod] + xx$gfrs[forecastPeriod]  # payroll taxes
-xx$yctlg[forecastPeriod] = xx$gsrcp[forecastPeriod] + xx$gfrcp[forecastPeriod] # corporate taxes
-xx$gsub[forecastPeriod] = xx$gssub[forecastPeriod] + xx$gfsub[forecastPeriod] # subsidies
+}
+
+
+
+# 5 Forecast ----------------------------------------------------------------------------------------------------
+
+## Generate forecastPeriod values of components using current levels and our projected growth rates. 
+
+
+forecast_period <- function(){
+  forecastPeriod <- which(projections$date > last_hist_date)
+  return(forecastPeriod)
+}
+components <- function(){
+  components <-
+    c(
+      # GDP
+      ## Actual
+      'gdp', 'gdph', 'jgdp',
+      ## Potential
+      'gdppotq', 'gdppothq',
+      # Gov't Consumption Expenditures & Gross Investment 
+      ## Total 
+      'g', 'gf', 'gs', 
+      ## Deflators
+      ### Total
+      'jgf', 'jgs',
+      ### S&L Consumption/Investment Expenditures
+      'jgse', 'jgsi',
+      # GRANTS
+      ## Total
+      'gfeg', 
+      ### Health & Hospitals
+      'gfeghhx',
+      ### Medicaid
+      'gfeghdx', 
+      ### Investment
+      'gfeigx', 
+      # TAXES
+      ## Personal
+      'gfrpt', 'gsrpt',
+      ## Social Insurance
+      'gfrs' ,'gsrs', 
+      ## Corporate
+      'gfrcp', 'gsrcp',
+      ## Production & Imports
+      'gfrpri', 'gsrpri',
+      # SOCIAL BENEFITS
+      ## Total
+      'gftfp', 'gstfp',
+      ## Medicaid
+      'yptmd',
+      ## Medicare
+      'yptmr',
+      # SUBSIDIES 
+      'gssub', 'gfsub', 
+      # PERSONAL CONSUMPTION
+      'c', 'jc'
+    )
+  return(components)
+}
+
+for(f in forecast_period()){
+  projections[f,components()] = projections[f-1, components()]  * (1 + projections[f, paste0(components(), "_g")])
+}
+
+aggregate <- function(df, total, federal, state){
+  df %>%
+    mutate({{total}} := if_else(date > last_hist_date, {{federal}} + {{state}}, {{total}})
+    )
+}
+total_forecast <- function(df){
+  df %>%
+    aggregate(gtfp, gftfp, gstfp) %>%
+    aggregate(yptx, gfrpt, gsrpt) %>%
+    aggregate(ytpi, gfrpri, gsrpri) %>%
+    aggregate(grcsi, gfrs, gsrs) %>%
+    aggregate(grcsi, gfrs, gsrs) %>%
+    aggregate(yctlg, gfrcp, gsrcp) %>%
+    aggregate(gsub, gfsub, gssub)
+}
+
+projections <-
+  projections %>%
+  total_forecast() %>%
+  medicaid_reallocation()
+
+
+
+
 

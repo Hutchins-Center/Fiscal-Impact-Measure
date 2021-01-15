@@ -1,9 +1,6 @@
 
 # Packages ------------------------------------------------------------------------------------
-packages <- 
-  c('tidyverse', 'ggtext','gridExtra','grid','wesanderson','tinytex', 'glue', 'here',
-    'lubridate')
-lapply(packages, require, character.only = TRUE)
+
 
 # CONSTANTS --------------------------------------------------------------------------------------
 start <- as_date("2000-01-01")
@@ -12,23 +9,33 @@ last_hist_date <- end - years(2)
 end_date_reccession <- last_hist_date + months(1)
 
 # Load data -----------------------------------------------------------------------------------
-thismonth <- format(Sys.Date(), "%m-%Y")
-contributions <- 
-  readxl::read_xlsx(glue("results/{thismonth}/fim.xlsx")) %>%
-  select(date, starts_with('fim'), ends_with('cont'), recession) %>%
-  mutate(date = as_date(date)) %>% 
-  filter(date > start & date <= end)
+read_contributions <- function(){
+  start <- as_date("2000-01-01")
+  end <- as_date("2022-12-31")
+  
+  current_month <- glue('{month(today())}-{year(today())}')
 
-max_y <-
-  contributions%>%
-  select(fim_bars:subsidies_cont) %>%
-  max() %>%
-  ceiling() + 1
-min_y <-
-  contributions %>%
-  select(fim_bars:subsidies_cont) %>%
-  min() %>%
-  floor() - 1
+    readxl::read_xlsx(glue("results/{current_month}/fim.xlsx")) %>%
+    select(date, fiscal_impact, fiscal_impact_moving_average,
+           ends_with('cont'), recession) %>%
+    mutate(date = as_date(date)) %>% 
+    filter(date > start & date <= end)
+}
+
+contributions <-
+  read_contributions()
+
+  max_y <-
+    contributions %>%
+    select(fiscal_impact) %>%
+    max() %>%
+    ceiling() + 1
+  min_y <-
+    contributions %>%
+    select(fiscal_impact:subsidies_cont) %>%
+    min() %>%
+    floor() - 1
+
 
 # Theme --------------------------------------------------------------------------------------
 # set plot formats, theme 
@@ -108,12 +115,12 @@ fim_plot <-
                stat = 'identity', width = 50) +
       geom_line(
         aes(x = date,
-            y = fim_bars_ma,
+            y = fiscal_impact_moving_average,
             colour = "4-quarter moving-average")
       ) +
       geom_point(
         aes(x = date,
-            y = fim_bars_ma,
+            y = fiscal_impact_moving_average,
             colour = "4-quarter moving-average"), size = 1
       ) +
       labs(
@@ -149,16 +156,16 @@ fim_plot <-
 ## Regular -----------------------------------------------------------------------------------
 total <-
   contributions %>%
-  select(date, fim_bars, fim_bars_ma) %>%
-  pivot_longer(cols = -c(date, fim_bars_ma), names_to = 'variable') %>%
+  select(date, fiscal_impact, fiscal_impact_moving_average) %>%
+  pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
   fim_plot(title = 'Total') +
   scale_fill_manual(labels = " Quarterly fiscal impact",
                     values = total_pink)
  
 components <-
   contributions %>%
-  select(date, state_local_cont, federal_cont, taxes_transfers_cont, fim_bars_ma) %>%
-  pivot_longer(cols = -c(date, fim_bars_ma), names_to = 'variable') %>%
+  select(date, state_local_cont, federal_cont, taxes_transfers_cont, fiscal_impact_moving_average) %>%
+  pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
   fim_plot(title = 'Components') +
   scale_fill_manual(
     labels = c(" State & Local Purchases", " Federal Purchases", " Taxes, Transfers, & Subsidies"),
@@ -167,9 +174,9 @@ components <-
 ## Expanded ----------------------------------------------------------------------------------
 components_govt <-
   contributions %>%
-    select(date, fim_bars_ma, state_local_cont, state_taxes_transfers_cont, 
+    select(date, fiscal_impact_moving_average, state_local_cont, state_taxes_transfers_cont, 
            federal_cont, federal_taxes_transfers_cont) %>%
-  pivot_longer(cols = -c(date, fim_bars_ma), names_to = 'variable') %>%
+  pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
   fim_plot(title = "Components by Government") +
   scale_fill_brewer(labels = c(" State & Local Purchases",
                                " State & Local Taxes, Transfers, & Subsidies",
@@ -178,11 +185,11 @@ components_govt <-
                     )
 taxes_transfers <-
   contributions %>%
-  select(date, fim_bars_ma,
-         health_cont, social_benefits_cont, 
-         noncorp_cont, corporate_cont,
+  select(date, fiscal_impact_moving_average,
+         health_outlays_cont, social_benefits_cont, 
+         noncorp_taxes_cont, corporate_taxes_cont,
          purchases_cont, subsidies_cont) %>%
-  pivot_longer(cols = -c(date, fim_bars_ma), names_to = 'variable') %>%
+  pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
   fim_plot(title = "Taxes and Transfers Components") +
   scale_fill_brewer(labels = c(" Health Outlays", " Social Benefits",
                               " Noncorporate Taxes", " Corporate Taxes", 

@@ -34,6 +34,11 @@ data3 <-
             start.date = START)
 
 
+data3 <-
+  pull_data(c('LASGOVA', 'LALGOVA','CPGS' ),
+            'usecon',
+            start.date = START) %>%
+  as_tibble()
 
 # Write csv to current month's folder
 haver_raw_list <- 

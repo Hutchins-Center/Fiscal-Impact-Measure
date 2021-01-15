@@ -1,0 +1,3 @@
+state taxes grow with nominal gdp. That is, state_tax = lag(state_tax)*(1 + nominal_gdp_growth)
+
+Federal social benefits in the nipas is equal to 
