@@ -28,6 +28,11 @@ data2 <-
             "usecon",
             start.date = START)
 
+data3 <-
+  pull_data(c('LASGOVA', 'LALGOVA','CPGS' ),
+            'usecon',
+            start.date = START)
+
 
 data3 <-
   pull_data(c('LASGOVA', 'LALGOVA','CPGS' ),
