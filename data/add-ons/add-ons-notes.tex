@@ -1,0 +1,217 @@
+\documentclass[a4paper]{article}
+% !TEX program = XeLaTeX+shell-escape
+\input{preamble.tex}
+\usepackage{hyperref}
+\DeclareMathOperator{\Res}{Res}
+\title{Add-ons methodology}
+\begin{document}
+  \maketitle
+  \section{State Taxes} 
+State taxes growth with nominal gdp. Let $s_i$ denote state taxes where $i = \text{personal,
+corporate, production and imports, and social insurance}$, $y$ refer to nominal gdp growth,  and $t$ denote time. Then, the forecasted state taxes are
+given by 
+state taxes grow with nominal gdp. That is, 
+
+\[
+  s_{i,t}= s_{i,t-1} * y_{t}
+.\]
+\section{Grants}
+
+\subsection{Medicaid NIPA's}
+In the NIPA's, all medicaid spending is registered as state spending. The nipa definition of
+medicaid spending in Haver is \textbf{yptmdx}. In the forecast period, we use the annual
+CBO projections for Medicaid spending until Q3 of 2021.
+\[
+  \text{yptmdx}_{y, q} = \text{yptmdx}_{y, q-1}  * (\frac{CBO_{y}}{CBO_{y-1}})^{g}
+.\] 
+where the growth rate $g$ is  $0.18$ in Q4 of 2020 and Q1 of 2021 and  $0.1$ in Q2 of 2021.
+\begin{align*}
+  g = \begin{cases}
+    0.18 & \text{in Q4 of 2020 and Q1 of 2021} \\
+    0.10 & \text{in Q2 of 2021} \\
+    0 & \text{ after Q2 of 2021 }
+  \end{cases} 
+.\end{align*}
+Therefore, we assume medicaid spending is constant after Q2 of 2021.
+\subsection{Federal Medicaid grants}
+In Haver, federal medicaid grants are \textbf{gfeghdx} 
+In the forecast period, we assume these grants are a specific share of the Medicaid spending in the
+NIPA's. That is, 
+\[
+\text{gfeghdx}_t = \text{federal share} * \text{yptmdx}
+.\] 
+where 
+\begin{align*}
+  \text{Federal share} = \begin{cases}
+    0.74 & \text{Q4 2020 } \le t \le \text{Q1 of 2022} \\
+    0.68 & t > \text{Q1 of 2022}
+  \end{cases}
+.\end{align*}
+
+\[
+\text{gfeghdx}_t= 
+.\] 
+\subsection{All Non-medicaid grants}
+Using haver codes, non Medicaid grants are
+\[
+\text{Non-medicaid grants} = gfegx - gfeghdx
+.\] 
+where \textbf{gfegx} denotes all grants to states and \textbf{gfeghdx} refers to Medicaid grants. The $x$ at the end
+of these codes specifies that they are in millions of dollars. We \emph{only} define this for the
+\textbf{historical period}
+
+\subsection{BEA legislation grants}
+Haver code is \textbf{gfegl}. 
+\subsection{Non-medicaid grants excluding legislation}
+In the historical period we simply define this to be the difference between BEA's grants legislation
+ and all non-medicaid grants.
+
+In the forecast period we grow non-medicaid grants excluding legislation by nominal federal
+purchases (\textbf{gf}). Let $\mu$ be non-medicaid grants exluding legislation. Then, in the
+forecast period we have 
+ \[
+   \mu_t = \mu_{t-1} * gf_{g, t}
+.\] 
+\subsection{Our estimate of legislation grants}
+Our estimates of the legislation grants start in Q2 of 2020 and go through Q1 of 2023. They are
+defined as 
+\[
+  \text{Grants} = \text{Grants to State and Local Govt's} + \text{Support for hospitals
+  (state)}+\text{Education}
+.\] 
+Equivalently letting, $\lambda_{i}$ where  $i =  \text{ S\&L Govt's, Hospitals, and Education } $
+we can rewrite this more compactly as 
+\[
+  \lambda^{*}_{t} = \sum_{i=1}^{3} \lambda_i 
+.\] 
+\remark
+Currently, these values are hardcoded but I'm assuming they come from scores?
+\subsection{All grants to states}
+
+In haver, all grants to states is \textbf{gfeg} (in billions) and \textbf{gfegx}(in millions).
+In the forecast period, all grants to states is equal Non medicaid grants excluding legislation plus the sum of our
+estimate of the grants legislation from Q3 2020 through Q4 of 2022 divided by 6. In other words,
+it's all non medicaid grants to states plus our estimate of the total grants in legislation for
+COVID distributed equally over the six quarters. 
+
+Let $\gamma$ be all grants to states, $\mu$ refer to non-medicaid grants exluding legislation and $\lambda^{*}$ refer to our estimate 
+of the legislation. Then, in the forecast period 
+\[
+  \boxed{\gamma = \mu + \frac{1}{6} \sum_{t=1}^{6} \lambda^{*}_{t}}
+.\] 
+
+\remark
+I think we can make this more explicit in this spreadsheet by creating a row that is the sum of all our legislation
+estimate divided by 6 for 6 quarters. 
+
+\subsection{Consumption grants}
+We define consumption grants as the difference between all grants to states $\gamma$ and federal medicaid
+grants (\textbf{gfeghdx}). Letting $\mu$ equal non-medicaid grants minus legislation, 
+\[
+\psi = \lambda^{*} + \delta
+.\] 
+where $\psi = \text{ consumption grants }$
+\section{State purchases}
+\subsection{Real}
+Real state purchases (\textbf{gsz}) are from haver in the historical period.
+In the forecast period, we use the growth rates from CBO
+\subsection{Nominal}
+Nominal state purchases(\textbf{gsx}) are from haver in the historical period. 
+\remark
+Currently, the projections are hardcoded. 
+\section{State Social Benefits (FIM Definition)}
+We treat state social benefits a bit differently than the NIPA's. Specifically, we reallocate UI
+from federal to state and a portion of Medicaid from State spending to Federal spending.
+Therefore, 
+
+\[
+  FIM_{\text{state s.b.}} = NIPA_{\text{state s.b.}} + \text{State UI}
+  - \text{Federal medicaid grants}
+.\] 
+\section{FIM State Health Outlays}
+Since we take out federal medicaid grants from state medicaid spending, state health outlays are 
+
+\[
+\text{State health} = \text{Medicaid in the NIPA's} - \text{Federal medicaid grants}
+.\] 
+\section{Federal social benefits}
+Federal social benefits in the nipas is equal to medicare, total unemployment insurance (BEA UI,
+Federal UI, Lost Wages Supplemental Payment Assistance program (WLA), and State UI), and the remainder of total social benefits. We make this
+decomposition because the BEA did not include the Trump UI (WLA) in their UI category.  
+\subsection{Medicare}
+Our medicare forecast is based on CBO's annual projections, after making some adjustments to
+translate these projections to the nipas. Since we need to translate annual projections to quarterly
+ones our forecast formula for medicare is
+\[
+  M_{y, q} = M_{y, q-1}*(\frac{M'_{y}}{M'_{y-1}})
+.\] 
+where $y$ refers to the fiscal year, $q$ to the quarter, $M$ to medicare in the NIPA's and $M'$ to
+medicare in the annual CBO projections.
+
+\subsection{Unemployment Insurance}
+The UI projections come from line items 22-25 from
+\href{https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwiKrurfj5zuAhWsGVkFHak3C7MQFjAEegQIAhAC&url=https%3A%2F%2Fwww.bea.gov%2Fsystem%2Ffiles%2F2020-07%2Feffects-of-selected-federal-pandemic-response-programs-on-personal-income-2020q2-advance.pdf&usg=AOvVaw0M-6ew-4iD7r1mb5f7WIFx}{Effects
+of Selected Federal Pandemic Response Programs on Personal Income, July 2020}
+\remark
+We need more clarity on how these projections were constructed.
+\subsection{Remainder}
+In the historical period, the remainder is defined simply as the difference between the federal social benefits line item in
+the NIPA's (found in Table 3.2) and our calculations for Medicare, Rebate checks, total Unemployment
+Insurance, and PPP and provider relief in personal income.
+\[
+\epsilon=\text{Medicare} - \text{Rebate Checks} - UI - PPP
+.\]
+where $\epsilon$ refers to the remainder.
+In the forecast period, we grow the remaindre $\epsilon$ by $-0.75 \%$ until  2021 Q3 and by $1.5\%$
+until 2022 Q3, and then by  $1\%$ in Q4 of 2022
+\remark
+We need more clarity on where these growth rates are coming from. 
+\subsection{PPP}
+These numbers come from CBO scores.
+
+\section{Subsidies}
+Subsidies are defined as
+\[
+\text{Subsidies} = \text{PPP}+\text{Aviation}+\text{Employee retention}+\text{Paid sick leave}
+.\] 
+All these numbers come from CBO scores on the impact of stimulus legislation. They can be found in
+Haver PPP(gfsubp), the sum of the other three subsidies (gsubl), aviation (gfsubg), employee
+retention (gsube), and paid sick leave (gfsubk)
+
+\section{Add factors}
+Currently, the FIM code incorporates COVID legislation from CBO projections. However, CBO doesn't
+reallocate spending in the same way we do (particularly for UI and Medicaid) and makes different
+timing assumptions (all spending happens in a single quarter). Basically, CBO will say when states
+will \emph{recieve} grants but in order to construct the FIM we need to know when the money
+will be \emph{spent}. Therefore, we need to spread out the
+legislation score and reallocate Federal Medicaid Grants to federal spending as well as Unemployment
+legislation. To make these adjustments, the current
+methodology is to run the code and compare the output of health outlays, social benefits, taxes,
+subsidies, and consumption grants to the calculations described above present in the add factors
+spreadsheet. Let $\alpha$ denote the add factor $x$ be the output from the code for these variables 
+and $x^{*}$ be the variable in the spreadsheet which accounts for COVID legislation. Then, the add
+factors are defined as
+\[
+\alpha = x^{*} - x
+.\] 
+
+We then go back into the code and add the add factor  $\alpha$ to each $x$. Therefore, we manually
+put
+ \[
+x^{*} = x + \alpha
+.\] 
+in the code. 
+
+\remark
+We could either 
+\begin{itemize}
+  \item Read the variables $x^{*}$ in the spreadsheet directly into the code so that they override the
+    original  $x$'s 
+  \item Perform these calculations directly in the code.   
+\end{itemize}
+
+We could do the first one pretty easily but in the long term we should try to make the latter option
+work. 
+
+
+\end{document}
