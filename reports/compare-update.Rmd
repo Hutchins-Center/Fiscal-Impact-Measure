@@ -35,6 +35,7 @@ library('fim')
 library('lubridate')
 library('glue')
 library('readxl')
+library('tsibble')
 ```
 
 
@@ -50,16 +51,15 @@ old <-
   read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
   filter(date >= '2017-12-31' & date <= last_proj_date) %>%
-  mutate(key = 'old')
+  mutate(key = 'old',
+         date = yearquarter(date)) 
 
 new <- read_excel(glue('results/{current_month}/fim-{current_month}.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
   filter(date >= '2017-12-31' & date <= last_proj_date) %>%
-  mutate(key = 'new')
-foo <- function(variable){
-variable <- enquo(variable)
-new %>% select(date, !!variable) 
-}
+  mutate(key = 'new',
+         date = yearquarter(date)) 
+
 ```
 
 ## Total Quarterly Fiscal Impact
@@ -84,8 +84,22 @@ comparison_plot <- function(df = old, df_new = new, variable = fiscal_impact, ti
     theme(plot.title.position = 'plot')
 }
 
-comparison_plot(title = 'Quarterly Fiscal Impact')
+comparison_plot(title = 'Quarterly Fiscal Impact') +
+  scale_x_yearquarter(breaks = waiver(),date_breaks = '3 months',
+                      date_labels = "Q%q") +
   
+    facet_grid(~ year(date), 
+             space="free_x", 
+             scales="free_x", 
+             switch="x")  +
+   theme(strip.placement = "outside",
+        strip.background = element_blank(),
+        panel.spacing=unit(0,"lines")) 
+  
+```
+```{r}
+source('reports/contribution-figures.R')
+f
 ```
 
 
