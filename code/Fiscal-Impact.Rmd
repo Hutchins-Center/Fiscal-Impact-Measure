@@ -18,6 +18,7 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 ```{r source, echo=FALSE, message=F, warning=FALSE, results='asis'}
+library('lubridate')
 source("code/04_figures.R", local = knitr::knit_global())
 ```
 

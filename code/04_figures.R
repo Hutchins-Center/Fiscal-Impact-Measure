@@ -1,6 +1,7 @@
 
 # Packages ------------------------------------------------------------------------------------
-
+source('R/packages.R')
+library('lubridate')
 
 # CONSTANTS --------------------------------------------------------------------------------------
 start <- as_date("2000-01-01")
@@ -10,8 +11,8 @@ end_date_reccession <- last_hist_date + months(1)
 
 # Load data -----------------------------------------------------------------------------------
 read_contributions <- function(){
-  start <- as_date("2000-01-01")
-  end <- as_date("2022-12-31")
+  start <- lubridate::as_date("2000-01-01")
+  end <- lubridate::as_date("2022-12-31")
   
   current_month <- glue('{month(today())}-{year(today())}')
 

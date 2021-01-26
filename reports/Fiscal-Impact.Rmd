@@ -11,7 +11,7 @@ mainfont: Arial
 \pagenumbering{gobble}
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis', fig.width = 6.5, fig.height = 4.5, fig.align = "center")
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis', fig.align = "center")
 
 ```
 
@@ -62,7 +62,8 @@ last_hist_date <-lubridate::as_date('2020-09-30')
    scale_fill_manual(labels = " Quarterly fiscal impact",
                     values = total_pink) +
     ggplot2::annotate("rect", xmin = last_hist_date + 40, xmax = end, 
-    ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow")
+    ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow") +
+    recession_shade
 
  contributions %>%
   select(date,  state_local_cont, federal_cont, taxes_transfers_cont, fiscal_impact_moving_average) %>%
@@ -73,7 +74,8 @@ last_hist_date <-lubridate::as_date('2020-09-30')
     values =  c(state_local_purple, federal_blue, taxes_transfers_green)
   ) +
    ggplot2::annotate("rect", xmin = last_hist_date + 40, xmax = end, 
-    ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow")
+    ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow")+
+   recession_shade
 
 ```
 

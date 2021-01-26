@@ -1,4 +1,4 @@
-current_month <- get_current_month()
+current_month <- fim::get_current_month()
 components <- get_components_names()
 plan <- 
   drake_plan(
@@ -93,11 +93,11 @@ plan <-
         fim_nipa_consistent %>% prepare_interactive()
       ),
     output = target({
-      dir.create(glue('results/{current_month}'))
+      dir.create(glue::glue('results/{current_month}'))
       write_xlsx(fim, file_out(!!paste0('results/', current_month, '/fim-', current_month, '.xlsx')))
-      write.csv(fim_interactive, glue('results/{current_month}/fim_interactive.csv'))
-      write.xlsx(nipa_interactive, glue('results/{current_month}/nipa_interactive.xlsx'), sheetName = 'contributions')
-      write.csv(projections, file_out(!!glue('results/{get_current_month()}/projections-{get_current_month()}.csv')))
+      write.csv(fim_interactive, glue::glue('results/{current_month}/fim_interactive.csv'))
+      write.xlsx(nipa_interactive, glue::glue('results/{current_month}/nipa_interactive.xlsx'), sheetName = 'contributions')
+      write.csv(projections, file_out(!!glue::glue('results/{fim::get_current_month()}/projections-{fim::get_current_month()}.csv')))
     }),
     contributions = fim %>%
       select(date, fiscal_impact, fiscal_impact_moving_average,
@@ -110,28 +110,33 @@ plan <-
     recession_shade = contributions %>%
                       get_recession_shade(),
     hutchins_logo = knitr::include_graphics(file.path(here::here(),"images","HC_NEW_BROOKINGS_RGB.jpg")),
-    fim_report = {
+    if(file.exists(!!glue::glue('reports/{fim::get_current_month()}/Fiscal-Impact.pdf')) == TRUE){
+      file.remove('reports/{get_current_month()}/Fiscal-Impact.pdf')}
+    else {
+      
+    },
+    fim_report = target({
           rmarkdown::render(
           drake::knitr_in("reports/Fiscal-Impact.Rmd"),
           output_dir = 'reports',
-          output_file = 'Fiscal-Impact.pdf',
+          output_file = 'reports/Fiscal-Impact.pdf',
           quiet = TRUE
         )
       filesstrings::file.move('reports/Fiscal-Impact.pdf',
-                              !!glue('reports/{get_current_month()}'),
+                              !!glue::glue('reports/{fim::get_current_month()}'),
                               overwrite = TRUE)
-      },
+      }),
     fim_report_expanded = target({
-      if(file.exists(!!glue('reports/{get_current_month()}/Fiscal-Impact-Expanded.pdf')) == FALSE){
+      if(file.exists(!!glue::glue('reports/{current_month}/Fiscal-Impact-Expanded.pdf')) == FALSE){
       rmarkdown::render(
         drake::knitr_in("reports/Fiscal-Impact-Expanded.Rmd"),
         output_dir = 'reports',
-        output_file = 'Fiscal-Impact-Expanded.pdf',
+        output_file = 'reports/Fiscal-Impact-Expanded.pdf',
         quiet = TRUE
       )
         
       filesstrings::file.move('reports/Fiscal-Impact-Expanded.pdf',
-                              !!glue('reports/{get_current_month()}'),
+                              !!glue::glue('reports/{current_month}'),
                               overwrite = TRUE)
       }
       else {
@@ -148,16 +153,16 @@ plan <-
       filter(date > lubridate::today() - lubridate::years(1))
       ),
     state_local_employment_report = target({
-      current_month = get_current_month()
+      current_month = fim::get_current_month()
       rmarkdown::render(
         knitr_in("reports/state_local_employment.Rmd"),
         output_dir = 'reports',
-        output_file = 'state_local_employment.html',
+        output_file = 'reports/state_local_employment.html',
         quiet = TRUE
       )
-      file_out(!!glue('reports/{current_month}/state_local_employment.html'))
+      file_out(!!glue::glue('reports/{current_month}/state_local_employment.html'))
       filesstrings::file.move('reports/state_local_employment.html',
-                              !!glue('reports/{current_month}'), 
+                              !!glue::glue('reports/{current_month}'), 
                               overwrite = TRUE)
     }
     ),
@@ -166,12 +171,13 @@ plan <-
         render(
           knitr_in("reports/compare-update.Rmd"),
           output_dir = 'reports',
-          output_file = 'Update-Comparison.pdf',
+          output_file = 'reports/Update-Comparison.pdf',
           quiet = TRUE
         )
-        file_out(!!glue('reports/{current_month}/Update-Comparison.pdf'))
+        file_out(!!glue::glue('reports/{current_month}/Update-Comparison.pdf'))
         file.move('reports/Update-Comparison.pdf',
-                  !!glue('reports/{current_month}'))
+                  !!glue::glue('reports/{current_month}'),
+                  overwrite = TRUE)
       }
     )
   )

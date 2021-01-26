@@ -97,7 +97,8 @@ components_govt <-
                                " State & Local Taxes, Transfers, & Subsidies",
                                 " Federal Purchases",
                                " Federal Taxes, Transfers, & Subsidies")
-                    )
+                    ) +
+  recession_shade
 taxes_transfers <-
   contributions %>%
   select(date, fiscal_impact_moving_average,
@@ -111,7 +112,8 @@ taxes_transfers <-
   scale_fill_brewer(labels = c(" Health Outlays", " Social Benefits",
                               " Noncorporate Taxes", " Corporate Taxes", 
                               " Purchases", " Subsidies")
-  )
+  ) +
+  recession_shade
 ```
 ```{r}
 components_govt
