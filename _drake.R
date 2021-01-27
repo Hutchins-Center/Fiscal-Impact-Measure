@@ -10,7 +10,7 @@ ls()
 # Graph of workflow
    # nolint
 
-config <- drake_config(plan, verbose = 2)
+config <- drake_config(plan, verbose = 2, lock_envir = FALSE)
 make_impl(config = config)
 
 vis_drake_graph(plan, mode = 'all', targets_only = TRUE, build_times =  'none')   

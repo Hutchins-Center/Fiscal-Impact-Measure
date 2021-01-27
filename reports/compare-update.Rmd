@@ -2,9 +2,16 @@
 title: 'Fiscal Impact Update: Changes in Contributions Relative to Previous Update'
 author: ' Manuel Alcala Kovalski, Tyler Powell, Kadija Yilla'
 date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage[default]{sourcesanspro}
+   - \usepackage[T1]{fontenc}
+mainfont: SourceSansPro
 output:
-  pdf_document: default
-  html_document: default
+  html_document:
+    toc: true # table of content true
+    toc_depth: 2
+    number_sections: false 
+    theme: united
 vignette: |
   %\VignetteIndexEntry{Vignette Title} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
 ---
@@ -15,7 +22,7 @@ knitr::opts_chunk$set(
   comment = "#>", 
   echo = FALSE,
   fig.align = 'center',
-  warnings = FALSE,
+  warning = FALSE,
   message = FALSE,
   cache = TRUE
 )
@@ -23,159 +30,107 @@ knitr::opts_chunk$set(
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
-```{r source}
-library('drake')
-library('tidyverse')
-library('magrittr')
-library('ggthemes')
-library('ggtext')
-library('ggthemes')
-library('gridExtra')
-library('fim')
-library('lubridate')
-library('glue')
-library('readxl')
+```{r}
+source('reports/contribution-figures.R')
+
 ```
 
 
-```{r pull data, warnings = FALSE, message = FALSE, hide = TRUE, include = FALSE}
-
-loadd(last_hist_date)
-loadd(last_proj_date)
-
-last_month <- get_previous_month()
-current_month <- get_current_month()
-
-old <- 
-  read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
-  mutate(date = as_date(date)) %>%
-  filter(date >= '2017-12-31' & date <= last_proj_date) %>%
-  mutate(key = 'old')
-
-new <- read_excel(glue('results/{current_month}/fim-{current_month}.xlsx'), na = "NA") %>%
-  mutate(date = as_date(date)) %>%
-  filter(date >= '2017-12-31' & date <= last_proj_date) %>%
-  mutate(key = 'new')
-foo <- function(variable){
-variable <- enquo(variable)
-new %>% select(date, !!variable) 
-}
+```{r fiscal_impact}
+fiscal_impact
 ```
 
-## Total Quarterly Fiscal Impact
+# Purchases
 
-```{r fim}
-comparison_plot <- function(df = old, df_new = new, variable = fiscal_impact, title = ''){
-  variable <- enquo(variable)
-  df %>%
-    bind_rows(df_new) %>%
-    select(date, !!variable, key) %>%
-    group_by(key) %>%
-    pivot_longer(where(is.numeric)) %>%
-    ggplot(aes(x = date,
-               y = value,
-               fill = key)) +
-    geom_col(position = 'dodge') +
-    geom_vline(xintercept = last_hist_date, linetype = 'dotted') +
-    labs(x = '', y = '', title = title) +
-    scale_fill_brewer(name = "", labels = c('Updated', 'Previous'),
-                      type = 'qual', palette = 'Paired', direction = -1) + 
-    theme_hc() +
-    theme(plot.title.position = 'plot')
-}
+## Total 
 
-comparison_plot(title = 'Quarterly Fiscal Impact')
-  
-```
+## Grants
 
-
-```{r federal-cont}
-comparison_plot(variable = federal_cont,
-                title = 'Contribution of Federal Purchases')
-```
-
-```{r state-cont}
-comparison_plot(variable = state_local_cont, title =  'Contribution of S&L Purchases')
-```
-## Contribution of Grants
 ```{r cgrants}
-comparison_plot(variable = federal_cgrants_cont,
-        title = 'Conctribution of Federal Consumption Grants')
+federal_grants
+
 ```
 
-```{r igrants}
-comparison_plot(variable = federal_igrants_cont,
-        title = 'Conctribution of Federal Investment Grants')
-```
+# Taxes 
 
-## Taxes and Transfers
 ```{r tts}
-comparison_plot(variable = 'taxes_transfers_cont',
-                title = 'Contribution of taxes and transfers')
-```
-
-```{r federal-tts}
-comparison_plot(variable = 'federal_taxes_transfers_cont',
-                title = 'Contribution of Federal Taxes and Transfers')
+taxes
+federal_taxes
+state_taxes
 ```
 
 
-```{r state-tts}
-comparison_plot(variable = 'state_taxes_transfers_cont',
-                title = 'Contribution of State Taxes and Transfers')
+# Social Benefits 
+```{r}
+transfers_net_taxes
+```
+## Health outlays
+```{r}
+health_outlays
+federal_health_outlays
+state_health_outlays
+```
+## Unemployment Insurance
+```{r}
+ui
+federal_ui
+state_ui
 ```
 
+## Rebate checks
 
 ## Subsidies
-
 ```{r subsidies}
-comparison_plot(variable = 'subsidies_cont',
-                title = 'Contribution of Subsidies')
+subsidies
 
-comparison_plot(variable = 'federal_subsidies_cont',
-                title = 'Contribution of Federal Subsidies')
-comparison_plot(variable = 'state_subsidies_cont',
-                title = 'Contribution of State Subsidies')
 ```
 
 ```{r}
 
-comparison_plot(variable = 'taxes_cont',
+comparison_plot(variable = 'taxes',
                 title = 'Contribution of taxes')
 
-comparison_plot(variable = 'federal_taxes_cont',
+comparison_plot(variable = 'federal_taxes',
                 title = 'Contribution of Federal taxes')
-comparison_plot(variable = 'state_taxes_cont',
+comparison_plot(variable = 'state_taxes',
                 title = 'Contribution of State taxes')
 ```
+
 ```{r}
 
-comparison_plot(variable = 'transfers_cont',
+comparison_plot(variable = 'transfers',
                 title = 'Contribution of transfers')
 
-comparison_plot(variable = 'federal_transfers_cont',
+comparison_plot(variable = 'federal_transfers',
                 title = 'Contribution of Federal transfers')
-comparison_plot(variable = 'state_transfers_cont',
+comparison_plot(variable = 'state_transfers',
                 title = 'Contribution of State transfers')
 ```
 
 ```{r}
-comparison_plot(variable = 'social_benefits_cont',
+comparison_plot(variable = 'social_benefits',
                 title = 'Contribution of social_benefits')
 
-comparison_plot(variable = 'federal_social_benefits_cont',
+comparison_plot(variable = 'federal_social_benefits',
                 title = 'Contribution of Federal social_benefits')
-comparison_plot(variable = 'state_social_benefits_cont',
+comparison_plot(variable = 'state_social_benefits',
                 title = 'Contribution of State social_benefits')
 ```
-## Unemployment Insurance
+
+# Unemployment Insurance
+
 ```{r unemployment insurance}
-comparison_plot(variable = 'unemployment_insurance_cont',
+comparison_plot(variable = 'unemployment_insurance',
                 title = 'Contribution of unemployment_insurance')
 
-comparison_plot(variable = 'federal_unemployment_insurance_cont',
+comparison_plot(variable = 'federal_unemployment_insurance',
                 title = 'Contribution of Federal unemployment_insurance')
-comparison_plot(variable = 'state_unemployment_insurance_cont',
+comparison_plot(variable = 'state_unemployment_insurance',
                 title = 'Contribution of State unemployment_insurance')
 ```
 
+# Rebate Checks
+
+```{r}
+rebate_checks
+```

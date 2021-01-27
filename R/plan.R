@@ -6,7 +6,7 @@ plan <-
     fmap = read_xlsx(here('data/raw/nhe_fmap.xlsx')),
     historical = target(load_haver_data()),
     last_hist_date = target(get_last_hist_date(historical)),
-    last_proj_date = last_hist_date + lubridate::years(2),
+    last_proj_date = target(last_hist_date + lubridate::years(2)),
     cbo_projections = cbo_projections_raw %>% cola_adjustment() %>%
       smooth_budget_series() %>%
       federal_transfers_growth_rates() %>%
