@@ -5,13 +5,14 @@ header-includes:
 - \usepackage{graphicx}
 
 output: pdf_document
-geometry: "top=0cm, bottom=0cm, left=2cm, right=2cm"
-mainfont: Arial
+mainfont: Arial 
+
 ---
 \pagenumbering{gobble}
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis', fig.align = "center")
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis',
+                      fig.align = "center")
 
 ```
 
@@ -26,6 +27,7 @@ library(ggplot2)
 library(ggthemes)
 library(gridExtra)
 library('fim')
+library('glue')
 ```
 
 ```{r data, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
@@ -39,7 +41,11 @@ state_local_purple = rgb(174, 104, 169,  maxColorValue = 255)
 federal_blue = rgb(33, 152, 199,  maxColorValue = 255)
 taxes_transfers_green = rgb(27, 149, 83,  maxColorValue = 255)
 
-max_y <- contributions %>% select(fiscal_impact) %>% max() %>% ceiling()
+  max_y <-
+    contributions %>%
+    select(fiscal_impact) %>%
+    max() %>%
+    ceiling() + 1
 
 recession_shade <- 
   contributions %>%
@@ -48,34 +54,80 @@ recession_shade <-
 
 end <- lubridate::as_date("2022-12-31")
 
+guidez <- guides(
+fill = guide_legend(keywidth = unit(0.8, "cm"),
+                    keyheight = unit(0.4, "cm"), 
+                    ncol = 1),
+colour = guide_legend(keywidth = unit(0.8, "cm"),
+                      keyheight = unit(0.05, "cm"), 
+                      ncol = 1)
+)
+
 
 ```
 
+```{r}
+uni.theme <- function() {
+  theme_bw() +
+    theme(legend.position = "bottom", 
+          panel.grid.minor.x=element_blank(),
+          panel.grid.major.x=element_blank(),
+          plot.margin=unit(c(1.2,.5,.5,.5),"cm"),
+          plot.title = element_markdown(size=12),
+          plot.subtitle = element_markdown(size=10) , 
+          plot.caption = 
+            element_textbox_simple(size = 9,
+                                   lineheight = 1,
+                                   padding = margin(5.5, 5.5, 5.5, 5.5),
+                                   margin = margin(0, 0, 5.5, 0)),
+          legend.text=element_markdown(size=10), 
+          legend.title=element_blank(),
+          legend.spacing.y = unit(2, 'cm')
+    ) # , legend.margin = unit(c(rep(-.8, 4)),"cm")
+}
 
+```
 
-```{r total impact, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
-last_hist_date <-lubridate::as_date('2020-09-30')
+```{r}
+recessions <-
   contributions %>%
-   select(date, fiscal_impact, fiscal_impact_moving_average) %>%
-  pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
-  fim_plot(title = " Quarterly fiscal impact") +
-   scale_fill_manual(labels = " Quarterly fiscal impact",
-                    values = total_pink) +
-    ggplot2::annotate("rect", xmin = last_hist_date + 40, xmax = end, 
-    ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow") +
-    recession_shade
+  get_recessions()
 
- contributions %>%
-  select(date,  state_local_cont, federal_cont, taxes_transfers_cont, fiscal_impact_moving_average) %>%
+recession_shade <-
+  geom_rect(data = recessions, aes(xmin = start, xmax = end, ymin=-Inf, ymax=+Inf),
+            fill = 'grey', alpha = 0.3)
+```
+
+
+```{r total impact, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+loadd(last_hist_date)
+
+loadd(guidez)
+  contributions %>%
+  select(date, fiscal_impact, fiscal_impact_moving_average) %>%
   pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
-  fim_plot(title = 'Total') +
+  fim_plot(title = 'Total', last_hist_date = last_hist_date) +
+  scale_fill_manual(labels = " Quarterly fiscal impact",
+                    values = total_pink) +
+    guidez +
+      geom_rect(data = recessions, aes(xmin = start, xmax = end, ymin=-Inf, ymax=+Inf),
+            fill = 'grey', alpha = 0.3)
+
+  contributions %>%
+  select(date, state_local_cont, federal_cont, taxes_transfers_cont, fiscal_impact_moving_average) %>%
+  pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
+  fim_plot(title = 'Components', last_hist_date = last_hist_date) +
   scale_fill_manual(
     labels = c(" State & Local Purchases", " Federal Purchases", " Taxes, Transfers, & Subsidies"),
-    values =  c(state_local_purple, federal_blue, taxes_transfers_green)
-  ) +
-   ggplot2::annotate("rect", xmin = last_hist_date + 40, xmax = end, 
-    ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow")+
-   recession_shade
+                values =  c(state_local_purple, federal_blue, taxes_transfers_green)
+    ) +
+    uni.theme() +
+      scale_fill_manual(
+    labels = c(" State & Local Purchases", " Federal Purchases", " Taxes, Transfers, & Subsidies"),
+                values =  c(state_local_purple, federal_blue, taxes_transfers_green)
+    ) +
+    guidez +
+      geom_rect(data = recessions, aes(xmin = start, xmax = end, ymin=-Inf, ymax=+Inf), fill = 'grey', alpha = 0.3)
 
 ```
 

@@ -3,3 +3,4 @@
 
 drake::clean(destroy = TRUE) # destroy = TRUE removes the .drake/ folder too.
 unlink(c("report.html", "figure", "*.pdf"), recursive = TRUE)
+

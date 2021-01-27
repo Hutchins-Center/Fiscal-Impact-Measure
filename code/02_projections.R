@@ -31,8 +31,7 @@ cola_adjustment <- function() {
       gftfp_before_cola = gftfp,
       health_ui = SMA(yptmd + yptmr + yptu, n = 4),
       gftfp_noCOLA = SMA((gftfp - health_ui)*(1-cola_rate), n = 4),
-      gftfp =  gftfp_noCOLA * (1 + cola_rate)  + health_ui,
-    ) 
+      gftfp =  gftfp_noCOLA * (1 + cola_rate)  + health_ui) 
 } 
 smooth_budget_series <- function(df){
   # smooth all budget series except total social transfers, which we did above

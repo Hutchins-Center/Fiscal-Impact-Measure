@@ -52,3 +52,5 @@ data/.DS_Store
 # Drake history
 .drake_history
 .drake/
+*.rds
+*.rds
