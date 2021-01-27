@@ -113,6 +113,10 @@ loadd(guidez)
       geom_rect(data = recessions, aes(xmin = start, xmax = end, ymin=-Inf, ymax=+Inf),
             fill = 'grey', alpha = 0.3)
 
+
+
+```
+```{r}
   contributions %>%
   select(date, state_local_cont, federal_cont, taxes_transfers_cont, fiscal_impact_moving_average) %>%
   pivot_longer(cols = -c(date, fiscal_impact_moving_average), names_to = 'variable') %>%
@@ -128,7 +132,6 @@ loadd(guidez)
     ) +
     guidez +
       geom_rect(data = recessions, aes(xmin = start, xmax = end, ymin=-Inf, ymax=+Inf), fill = 'grey', alpha = 0.3)
-
 ```
 
 ```{r, echo=FALSE, message=F, warning=FALSE, out.width = "25%", fig.align = "right"}
