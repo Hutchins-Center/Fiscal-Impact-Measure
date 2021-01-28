@@ -26,3 +26,5 @@ vis_drake_graph(plan,
                 targets_only = TRUE,
                 build_times =  'none')
 
+readd(fim) %>%
+  select(date, subsidies) %>% View()

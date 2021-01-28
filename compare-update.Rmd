@@ -30,7 +30,7 @@ knitr::opts_chunk$set(
   fig.align = 'center',
   warning = FALSE,
   message = FALSE,
-  cache = FALSE 
+  cache = TRUE 
 )
 
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
@@ -43,8 +43,7 @@ source('reports/contribution-figures.R')
 ```{r fiscal_impact}
 fiscal_impact
 ```
-
-# Purchases 
+# Purchases {.tabset}
 
 ## Total
 
@@ -53,14 +52,17 @@ federal
 state
 ```
 
-## Excluding grants
+# Grants {.tabset}
 
-```{r purchases-without-grants}
-federal_nom  
-state_nom 
+## Levels 
+
+```{r}
+grants_levels 
+consumption_grants_levels
+investment_grants_levels
 ```
 
-## Grants
+## Contributions
 
 ```{r grants}
 grants 
@@ -68,7 +70,9 @@ consumption_grants
 investment_grants 
 ```
 
-# Taxes
+# Taxes {.tabset}
+
+## Levels
 
 ```{r tts}
 taxes
@@ -76,27 +80,68 @@ federal_taxes
 state_taxes
 ```
 
-## Non-corporate taxes
-```{r noncorp-taxes}
-noncorp_taxes
-federal_noncorp_taxes
-state_noncorp_taxes
+## Contributions
+
+# Corporate taxes {.tabset}
+
+
+## Levels
+
+```{r}
+corp_taxes_levels
+federal_corp_taxes_levels
+state_corp_taxes_levels
 ```
+## Contributions
 ```{r}
 corp_taxes
 federal_corp_taxes
 state_corp_taxes
 ```
+# Non-corporate taxes {.tabset}
 
-# Transfers
+## Levels
 
+```{r noncorp-taxes}
+noncorp_taxes_levels
+federal_noncorp_taxes_levels
+state_noncorp_taxes_levels
+```
+## Contributions
+```{r}
+noncorp_taxes
+federal_noncorp_taxes
+state_noncorp_taxes
+```
+
+# Transfers {.tabset}
+
+## Levels
+
+```{r}
+transfers_levels
+federal_transfers_levels
+state_transfers_levels
+```
+
+## Contributions
 ```{r transfers}
 transfers
 federal_transfers
 state_transfers
 ```
 
-## Health Outlays
+# Health Outlays {.tabset}
+
+## Levels
+
+```{r}
+health_outlays_levels
+federal_health_outlays_levels
+state_health_outlays_levels
+```
+
+## Contributions
 
 ```{r health}
 health_outlays
@@ -104,30 +149,63 @@ federal_health_outlays
 state_health_outlays
 ```
 
-## Subsidies
+# Subsidies {.tabset}
+## Levels
+```{r}
 
+subsidies_levels
+```
+
+## Contributions
 ```{r subsidies}
 subsidies
 
 ```
 
-## Unemployment Insurance
+# Unemployment Insurance {.tabset}
 
+## Levels
+```{r}
+
+ui_levels
+federal_ui_levels
+state_ui_levels
+```
+
+## Contributions
 ```{r unemployment insurance}
 ui
 federal_ui
 state_ui
 ```
 
-## Rebate Checks
+# Rebate Checks {.tabset}
+
+## Level
+
+```{r}
+rebate_checks_levels
+```
+
+## Contribution
 
 ```{r}
 rebate_checks
 ```
 
-## Social Benefits Remainder
+# Social Benefits Remainder {.tabset}
 
 The contributions of social benefits excluding subsidies, health outalys, unemployment insurance, and rebate checks is below.
+
+
+## Levels 
+
+```{r social-benefits-levels}
+social_benefits_levels
+federal_social_benefits_levels
+state_social_benefits_levels
+```
+## Contributions
 
 ```{r social-benefits}
 social_benefits

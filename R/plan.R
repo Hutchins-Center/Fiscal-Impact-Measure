@@ -70,15 +70,21 @@ plan <-
         override_projections() %>%
         contributions_purchases_grants_zero() %>%
         total_purchases() %>%
-        select(date, ends_with('cont'))
+        select(date, ends_with('cont')
+        )
     ),
     fim = target(
       fim_create(projections) %>%
         add_factors(last_date = last_hist_date) %>%
         override_projections() %>%
+        mutate(
+          federal_cgrants = if_else(date == '2020-12-31', 303.95, federal_cgrants)
+        ) %>%
         fill_overrides() %>%
         contributions_purchases_grants() %>%
         total_purchases() %>%
+        mutate(federal_cont = federal_cont - federal_grants_cont,
+               state_local_cont = state_local_cont + federal_grants_cont) %>%
         remove_social_benefit_components() %>%
         taxes_transfers_minus_neutral() %>%
         calculate_mpc('subsidies') %>%
