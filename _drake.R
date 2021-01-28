@@ -11,8 +11,8 @@ ls()
 # Graph of workflow
 # nolint
 
-# config <- drake_config(plan, verbose = 2, lock_envir = FALSE)
-# make_impl(config = config)
+config <- drake_config(plan, verbose = 2, lock_envir = FALSE)
+make_impl(config = config)
 
 
 # Or scale up to a supercomputer.
