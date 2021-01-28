@@ -151,32 +151,25 @@ plan <-
     hutchins_logo = knitr::include_graphics(file.path(
       here::here(), "images", "HC_NEW_BROOKINGS_RGB.jpg"
     )),
-    if (file.exists(
-      !!glue::glue('reports/{fim::get_current_month()}/Fiscal-Impact.pdf')
-    ) == TRUE) {
-      file.remove('reports/{get_current_month()}/Fiscal-Impact.pdf')
-    }
-    else {
-      
-    },
     fim_report =
       rmarkdown::render(
-        knitr_in(!!file.path(here::here(), 'reports', 'Fiscal-Impact.Rmd'),
-                 output_file = file_out(!!file.path(here::here(), 'reports', 'Fiscal-Impact.pdf')),
-                 output_dir = "reports",
-                 quiet = TRUE)
+        knitr_in('Fiscal-Impact.Rmd'),
+        output_file = file_out(!!file.path(here(), 'results', get_current_month(), 'reports', 'Fiscal-Impact.pdf')),
+        quiet  = TRUE
+      ),
+    fim_report_expanded =
+      rmarkdown::render(
+        knitr_in('Fiscal-Impact-Expanded.Rmd'),
+        output_file = file_out(!!file.path(here(), 'results', get_current_month(),  'reports', 'Fiscal-Impact-Expanded.pdf')),
+        quiet  = TRUE
+      ),
+    compare_update =
+      rmarkdown::render(
+        knitr_in('compare-update.Rmd'),
+        output_file = file_out(!!file.path(here(), 'results', get_current_month(), 'reports', 'Update-Comparison.html')),
+        quiet = TRUE
       )
-    # fim_report = target({
-    #       rmarkdown::render(
-    #       drake::knitr_in("reports/Fiscal-Impact.Rmd"),
-    #       output_dir = 'reports',
-    #       output_file = 'reports/Fiscal-Impact.pdf',
-    #       quiet = TRUE
-    #     )
-    #   filesstrings::file.move('reports/Fiscal-Impact.pdf',
-    #                           !!glue::glue('reports/{fim::get_current_month()}'),
-    #                           overwrite = TRUE)
-    #   }),
+
     # fim_report_expanded = target({
     #   if(file.exists(!!glue::glue('reports/{current_month}/Fiscal-Impact-Expanded.pdf')) == FALSE){
     #   rmarkdown::render(

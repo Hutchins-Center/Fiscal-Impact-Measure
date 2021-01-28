@@ -49,17 +49,15 @@ fiscal_impact
 ## Total
 
 ```{r}
-federal <- comparison_plot(federal, title = 'Federal Purchases')
-state <- comparison_plot(state_local, title = 'State purchases')
+federal
+state
 ```
 
 ## Excluding grants
 
 ```{r purchases-without-grants}
-federal_nom  <-
-  comparison_plot(federal_nom, title = 'Federal Purchases Without Grants')
-state_nom  <-
-  comparison_plot(state_local_nom, title = 'State Purchases Without Grants')
+federal_nom  
+state_nom 
 ```
 
 ## Grants
