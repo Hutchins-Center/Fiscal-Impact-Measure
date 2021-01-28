@@ -159,6 +159,13 @@ plan <-
     else {
       
     },
+    fim_report =
+      rmarkdown::render(
+        knitr_in(!!file.path(here::here(), 'reports', 'Fiscal-Impact.Rmd'),
+                 output_file = file_out(!!file.path(here::here(), 'reports', 'Fiscal-Impact.pdf')),
+                 output_dir = "reports",
+                 quiet = TRUE)
+      )
     # fim_report = target({
     #       rmarkdown::render(
     #       drake::knitr_in("reports/Fiscal-Impact.Rmd"),
