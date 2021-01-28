@@ -1,6 +1,5 @@
 ---
-title: 'Fiscal Impact Update'
-subtitle: 'Changes in contributions relative to previous update'
+title: 'Fiscal Impact Update: Changes in Contributions Relative to Previous Update'
 author: ' Manuel Alcala Kovalski, Tyler Powell, Kadija Yilla'
 date: "`r Sys.Date()`"
 header-includes:
@@ -10,14 +9,9 @@ mainfont: SourceSansPro
 output:
   html_document:
     toc: true # table of content true
-    toc_float: true
     toc_depth: 2
     number_sections: false 
     theme: united
-    highlight: zenburn 
-    hig.retina: 3
-    self_contained: yes
-    css: [style.css]
 vignette: |
   %\VignetteIndexEntry{Vignette Title} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
 ---
@@ -36,41 +30,28 @@ knitr::opts_chunk$set(
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
-```{r source}
+```{r}
 source('reports/contribution-figures.R')
+
 ```
+
 
 ```{r fiscal_impact}
 fiscal_impact
 ```
 
-# Purchases 
+# Purchases
 
-## Total
-
-```{r}
-federal <- comparison_plot(federal, title = 'Federal Purchases')
-state <- comparison_plot(state_local, title = 'State purchases')
-```
-
-## Excluding grants
-
-```{r purchases-without-grants}
-federal_nom  <-
-  comparison_plot(federal_nom, title = 'Federal Purchases Without Grants')
-state_nom  <-
-  comparison_plot(state_local_nom, title = 'State Purchases Without Grants')
-```
+## Total 
 
 ## Grants
 
-```{r grants}
-grants 
-consumption_grants 
-investment_grants 
+```{r cgrants}
+federal_grants
+
 ```
 
-# Taxes
+# Taxes 
 
 ```{r tts}
 taxes
@@ -78,49 +59,78 @@ federal_taxes
 state_taxes
 ```
 
-# Transfers
 
-```{r transfers}
-transfers
-federal_transfers
-state_transfers
+# Social Benefits 
+```{r}
+transfers_net_taxes
 ```
-
-## Health Outlays
-
-```{r health}
+## Health outlays
+```{r}
 health_outlays
 federal_health_outlays
 state_health_outlays
 ```
-
-## Subsidies
-
-```{r subsidies}
-subsidies
-
-```
-
 ## Unemployment Insurance
-
-```{r unemployment insurance}
+```{r}
 ui
 federal_ui
 state_ui
 ```
 
-## Rebate Checks
+## Rebate checks
+
+## Subsidies
+```{r subsidies}
+subsidies
+
+```
+
+```{r}
+
+comparison_plot(variable = 'taxes',
+                title = 'Contribution of taxes')
+
+comparison_plot(variable = 'federal_taxes',
+                title = 'Contribution of Federal taxes')
+comparison_plot(variable = 'state_taxes',
+                title = 'Contribution of State taxes')
+```
+
+```{r}
+
+comparison_plot(variable = 'transfers',
+                title = 'Contribution of transfers')
+
+comparison_plot(variable = 'federal_transfers',
+                title = 'Contribution of Federal transfers')
+comparison_plot(variable = 'state_transfers',
+                title = 'Contribution of State transfers')
+```
+
+```{r}
+comparison_plot(variable = 'social_benefits',
+                title = 'Contribution of social_benefits')
+
+comparison_plot(variable = 'federal_social_benefits',
+                title = 'Contribution of Federal social_benefits')
+comparison_plot(variable = 'state_social_benefits',
+                title = 'Contribution of State social_benefits')
+```
+
+# Unemployment Insurance
+
+```{r unemployment insurance}
+comparison_plot(variable = 'unemployment_insurance',
+                title = 'Contribution of unemployment_insurance')
+
+comparison_plot(variable = 'federal_unemployment_insurance',
+                title = 'Contribution of Federal unemployment_insurance')
+comparison_plot(variable = 'state_unemployment_insurance',
+                title = 'Contribution of State unemployment_insurance')
+```
+
+# Rebate Checks
 
 ```{r}
 rebate_checks
-```
-
-## Social Benefits Remainder
-
-The contributions of social benefits excluding subsidies, health outalys, unemployment insurance, and rebate checks is below.
-
-```{r social-benefits}
-social_benefits
-federal_social_benefits
-state_social_benefits
 ```

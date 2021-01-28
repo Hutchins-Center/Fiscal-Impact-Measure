@@ -55,5 +55,4 @@ data/.DS_Store
 *.rds
 *.rds
 .drake/keys/meta/n-MRYGY6LSHI5G25LUMF2GK
-.drake/**
-*.rds
+.drake
