@@ -1,0 +1,61 @@
+R version 4.0.3 (2020-10-10)
+Platform: x86_64-apple-darwin17.0 (64-bit)
+Running under: macOS Big Sur 10.16
+
+Matrix products: default
+LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] stats     graphics  grDevices datasets  utils     methods   base     
+
+other attached packages:
+ [1] future.batchtools_0.10.0 future_1.21.0-9000      
+ [3] openxlsx_4.2.3           filesstrings_3.2.1      
+ [5] fim_0.0.0.9000           drake_7.13.0.9000       
+ [7] vroom_1.3.2              glue_1.4.2              
+ [9] tsibble_0.9.3            here_1.0.1              
+[11] tinytex_0.29             wesanderson_0.3.6       
+[13] gridExtra_2.3            ggtext_0.1.0            
+[15] ggthemes_4.2.0           writexl_1.3.1           
+[17] readxl_1.3.1             magrittr_2.0.1          
+[19] data.table_1.13.6        TTR_0.24.2              
+[21] rmarkdown_2.6            zoo_1.8-8               
+[23] forcats_0.5.1            stringr_1.4.0           
+[25] dplyr_1.0.3              purrr_0.3.4             
+[27] readr_1.4.0              tidyr_1.1.2             
+[29] tibble_3.0.5             ggplot2_3.3.3           
+[31] tidyverse_1.3.0         
+
+loaded via a namespace (and not attached):
+ [1] colorspace_2.0-0    ellipsis_0.3.1      rprojroot_2.0.2    
+ [4] fs_1.5.0            gridtext_0.1.1      rstudioapi_0.13    
+ [7] listenv_0.8.0       remotes_2.2.0       bit64_4.0.5        
+[10] fansi_0.4.2         lubridate_1.7.9.2   xml2_1.3.2         
+[13] codetools_0.2-18    knitr_1.31          pkgload_1.1.0      
+[16] jsonlite_1.7.2      broom_0.7.3         anytime_0.3.9      
+[19] dbplyr_2.0.0        BiocManager_1.30.10 compiler_4.0.3     
+[22] httr_1.4.2          backports_1.2.1     assertthat_0.2.1   
+[25] cli_2.2.0           htmltools_0.5.1.1   prettyunits_1.1.1  
+[28] tools_4.0.3         igraph_1.2.6        gtable_0.3.0       
+[31] rappdirs_0.3.1      batchtools_0.9.15   Rcpp_1.0.6         
+[34] cellranger_1.1.0    vctrs_0.3.6         xfun_0.20          
+[37] globals_0.14.0      ps_1.5.0            testthat_3.0.1     
+[40] rvest_0.3.6         lifecycle_0.2.0     renv_0.12.5        
+[43] devtools_2.3.2      scales_1.1.1        hms_1.0.0          
+[46] parallel_4.0.3      yaml_2.2.1          strex_1.4.1        
+[49] curl_4.3            memoise_1.1.0       stringi_1.5.3      
+[52] desc_1.2.0          checkmate_2.0.0     filelock_1.0.2     
+[55] pkgbuild_1.2.0      zip_2.1.1           storr_1.2.5        
+[58] rlang_0.4.10        pkgconfig_2.0.3     evaluate_0.14      
+[61] lattice_0.20-41     bit_4.0.4           tidyselect_1.1.0   
+[64] processx_3.4.5      parallelly_1.23.0   R6_2.5.0           
+[67] generics_0.1.0      base64url_1.4       txtq_0.2.3         
+[70] DBI_1.1.1           pillar_1.4.7        haven_2.3.1        
+[73] withr_2.4.1         xts_0.12.1          modelr_0.1.8       
+[76] crayon_1.3.4        progress_1.2.2      usethis_1.6.3      
+[79] grid_4.0.3          callr_3.5.1         reprex_1.0.0       
+[82] digest_0.6.27       brew_1.0-6          munsell_0.5.0      
+[85] sessioninfo_1.1.1  
