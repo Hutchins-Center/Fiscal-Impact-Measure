@@ -30,7 +30,7 @@ knitr::opts_chunk$set(
   fig.align = 'center',
   warning = FALSE,
   message = FALSE,
-  cache = TRUE
+  cache = FALSE 
 )
 
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
@@ -74,6 +74,18 @@ investment_grants
 taxes
 federal_taxes
 state_taxes
+```
+
+## Non-corporate taxes
+```{r noncorp-taxes}
+noncorp_taxes
+federal_noncorp_taxes
+state_noncorp_taxes
+```
+```{r}
+corp_taxes
+federal_corp_taxes
+state_corp_taxes
 ```
 
 # Transfers

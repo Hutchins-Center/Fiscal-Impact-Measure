@@ -191,13 +191,13 @@ plan <-
         knitr_in('Fiscal-Impact-Expanded.Rmd'),
         output_file = file_out(!!file.path(here(), 'results', get_current_month(),  'reports', 'Fiscal-Impact-Expanded.pdf')),
         quiet  = TRUE
-      ),
-    compare_update =
-      rmarkdown::render(
-        knitr_in('compare-update.Rmd'),
-        output_file = file_out(!!file.path(here(), 'results', get_current_month(), 'reports', 'Update-Comparison.html')),
-        quiet = TRUE
       )
+    # compare_update =
+    #   rmarkdown::render(
+    #     knitr_in('compare-update.Rmd'),
+    #     output_file = file_out(!!file.path(here(), 'results', get_current_month(), 'reports', 'Update-Comparison.html')),
+    #     quiet = TRUE
+    #   )
 
     # fim_report_expanded = target({
     #   if(file.exists(!!glue::glue('reports/{current_month}/Fiscal-Impact-Expanded.pdf')) == FALSE){

@@ -138,6 +138,14 @@ taxes <- comparison_plot(taxes, 'Taxes')
 federal_taxes <- comparison_plot(taxes, 'Federal Taxes')
 state_taxes <- comparison_plot(taxes, 'State Taxes')
 
+corp_taxes <- comparison_plot(corporate_taxes, 'Taxes')
+federal_corp_taxes <- comparison_plot(corporate_taxes, 'Federal Taxes')
+state_corp_taxes <- comparison_plot(corporate_taxes, 'State Taxes')
+
+noncorp_taxes <- comparison_plot(noncorp_taxes, 'Taxes')
+federal_noncorp_taxes <- comparison_plot(noncorp_taxes, 'Federal Taxes')
+state_noncorp_taxes <- comparison_plot(noncorp_taxes, 'State Taxes')
+
 # Transfers
 transfers <- comparison_plot(transfers, 'Transfers')
 federal_transfers <- comparison_plot(federal_transfers, 'Federal Transfers')
