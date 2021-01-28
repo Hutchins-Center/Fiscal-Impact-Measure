@@ -107,6 +107,33 @@ plan <-
           state_taxes_transfers_cont
         )
     ),
+    fim_no_addons =
+      target(
+        fim %>%
+          filter(date >= '2020-03-31') %>%
+          transmute(
+            date  = yearquarter(date),
+            state_health_outlays = state_health_outlays -
+              add_state_health_outlays,
+            state_social_benefits = state_social_benefits -
+              add_state_social_benefits,
+            state_noncorp_taxes = state_noncorp_taxes -
+              add_state_noncorp_taxes,
+            state_corporate_taxes = state_corporate_taxes -
+              add_state_corporate_taxes,
+            federal_health_outlays = federal_health_outlays -
+              add_federal_health_outlays,
+            federal_social_benefits = federal_social_benefits -
+              add_federal_social_benefits,
+            federal_subsidies = federal_subsidies -
+              add_federal_subsidies,
+            federal_cgrants = federal_cgrants -
+              add_federal_cgrants
+          ) %>%
+          pivot_longer(-date, names_to = 'variables', values_to = 'values_one') %>%
+          pivot_longer(date) %>% pivot_wider(names_from = value, values_from  = values_one) %>%
+          select(-name)
+      ), 
     fim_nipa_consistent =
       target(
         fim_create(nipa_projections) %>%
@@ -122,6 +149,8 @@ plan <-
       write_xlsx(fim, file_out(
         !!paste0('results/', current_month, '/fim-', current_month, '.xlsx')
       ))
+      write.xlsx(fim_no_addons,
+                 glue('results/{current_month}/fim-no-addons.xlsx'))
       write.csv(fim_interactive,
                 glue::glue('results/{current_month}/fim_interactive.csv'))
       write.xlsx(
