@@ -134,9 +134,9 @@ investment_grants <-
   comparison_plot(federal_igrants, title = 'Investment Grants')
 
 # Taxes
-taxes <- comparison_plot(taxes, 'Taxes')
-federal_taxes <- comparison_plot(taxes, 'Federal Taxes')
-state_taxes <- comparison_plot(taxes, 'State Taxes')
+taxes<- comparison_plot(taxes, 'Taxes')
+federal_taxes<- comparison_plot(taxes, 'Federal Taxes')
+state_taxes<- comparison_plot(taxes, 'State Taxes')
 
 corp_taxes <- comparison_plot(corporate_taxes, 'Taxes')
 federal_corp_taxes <- comparison_plot(corporate_taxes, 'Federal Taxes')
@@ -193,7 +193,10 @@ old <-
   mutate(key = 'old',
          date = yearquarter(date)) %>%
   mutate(grants = federal_cgrants + federal_igrants,
-         federal_purchases = federal_nom + grants)
+         federal_purchases = federal_nom + grants,
+         taxes = corporate_taxes + noncorp_taxes,
+         federal_taxes = federal_corporate_taxes + federal_noncorp_taxes,
+         state_taxes = state_corporate_taxes + state_noncorp_taxes)
 
 
 new <-
@@ -204,7 +207,10 @@ new <-
   mutate(key = 'new',
          date = yearquarter(date)) %>%
   mutate(grants = federal_cgrants + federal_igrants,
-         federal_purchases = federal_nom + grants)
+         federal_purchases = federal_nom + grants,
+         taxes = corporate_taxes + noncorp_taxes,
+         federal_taxes = federal_corporate_taxes + federal_noncorp_taxes,
+         state_taxes = state_corporate_taxes + state_noncorp_taxes)
 
 
 
@@ -234,13 +240,17 @@ investment_grants_levels  <-
 # federal_taxes <- comparison_plot(taxes, 'Federal Taxes')
 # state_taxes <- comparison_plot(taxes, 'State Taxes')
 
-corp_taxes_levels  <- comparison_plot(corporate_taxes, 'Taxes')
-federal_corp_taxes_levels  <- comparison_plot(corporate_taxes, 'Federal Taxes')
-state_corp_taxes_levels  <- comparison_plot(corporate_taxes, 'State Taxes')
+taxes_levels <- comparison_plot(taxes, 'Taxes')
+federal_taxes_levels <- comparison_plot(federal_taxes, 'Federal Taxes')
+state_taxes_levels <- comparison_plot(taxes, 'State Taxes')
 
-noncorp_taxes_levels  <- comparison_plot(noncorp_taxes, 'Taxes')
-federal_noncorp_taxes_levels  <- comparison_plot(noncorp_taxes, 'Federal Taxes')
-state_noncorp_taxes_levels  <- comparison_plot(noncorp_taxes, 'State Taxes')
+corp_taxes_levels  <- comparison_plot(corporate_taxes, 'Corporate Taxes')
+federal_corp_taxes_levels  <- comparison_plot(corporate_taxes, 'Corporate Federal Taxes')
+state_corp_taxes_levels  <- comparison_plot(corporate_taxes, 'Corporate State Taxes')
+
+noncorp_taxes_levels  <- comparison_plot(noncorp_taxes, 'Non-Corporate Taxes')
+federal_noncorp_taxes_levels  <- comparison_plot(noncorp_taxes, 'Federal Non-Corporate Taxes')
+state_noncorp_taxes_levels  <- comparison_plot(noncorp_taxes, 'State Non-Corporate Taxes')
 
 
 # Transfers

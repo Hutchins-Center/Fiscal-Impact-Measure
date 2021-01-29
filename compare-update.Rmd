@@ -43,7 +43,8 @@ source('reports/contribution-figures.R')
 ```{r fiscal_impact}
 fiscal_impact
 ```
-# Purchases {.tabset}
+
+# Purchases
 
 ## Total
 
@@ -52,17 +53,9 @@ federal
 state
 ```
 
-# Grants {.tabset}
+## Grants {.tabset .tabset-pills}
 
-## Levels 
-
-```{r}
-grants_levels 
-consumption_grants_levels
-investment_grants_levels
-```
-
-## Contributions
+### Contributions
 
 ```{r grants}
 grants 
@@ -70,53 +63,82 @@ consumption_grants
 investment_grants 
 ```
 
-# Taxes {.tabset}
+### Levels
 
-## Levels
+```{r}
+grants_levels 
+consumption_grants_levels
+investment_grants_levels
+```
 
-```{r tts}
+# Taxes
+
+## Total {.tabset .tabset-pills}
+
+### Contributions
+
+```{r }
 taxes
 federal_taxes
 state_taxes
 ```
 
-## Contributions
+### Levels
 
-# Corporate taxes {.tabset}
+```{r tts}
+taxes_levels
+federal_taxes_levels
+state_taxes_levels
+```
 
+## Corporate taxes {.tabset .tabset-pills}
 
-## Levels
+### Contributions
+
+```{r}
+corp_taxes
+federal_corp_taxes
+state_corp_taxes
+```
+
+### Levels
 
 ```{r}
 corp_taxes_levels
 federal_corp_taxes_levels
 state_corp_taxes_levels
 ```
-## Contributions
-```{r}
-corp_taxes
-federal_corp_taxes
-state_corp_taxes
-```
-# Non-corporate taxes {.tabset}
 
-## Levels
+## Non-corporate taxes {.tabset .tabset-pills}
 
-```{r noncorp-taxes}
-noncorp_taxes_levels
-federal_noncorp_taxes_levels
-state_noncorp_taxes_levels
-```
-## Contributions
+### Contributions
+
 ```{r}
 noncorp_taxes
 federal_noncorp_taxes
 state_noncorp_taxes
 ```
 
-# Transfers {.tabset}
+### Levels
 
-## Levels
+```{r noncorp-taxes}
+noncorp_taxes_levels
+federal_noncorp_taxes_levels
+state_noncorp_taxes_levels
+```
+
+# Transfers
+
+## Total {.tabset .tabset-pills}
+### Contributions
+
+```{r transfers}
+transfers
+federal_transfers
+state_transfers
+```
+
+### Levels
 
 ```{r}
 transfers_levels
@@ -124,24 +146,9 @@ federal_transfers_levels
 state_transfers_levels
 ```
 
-## Contributions
-```{r transfers}
-transfers
-federal_transfers
-state_transfers
-```
+## Health Outlays {.tabset .tabset-pills}
 
-# Health Outlays {.tabset}
-
-## Levels
-
-```{r}
-health_outlays_levels
-federal_health_outlays_levels
-state_health_outlays_levels
-```
-
-## Contributions
+### Contributions
 
 ```{r health}
 health_outlays
@@ -149,22 +156,42 @@ federal_health_outlays
 state_health_outlays
 ```
 
-# Subsidies {.tabset}
-## Levels
-```{r}
+### Levels
 
-subsidies_levels
+```{r}
+health_outlays_levels
+federal_health_outlays_levels
+state_health_outlays_levels
 ```
 
-## Contributions
+## Subsidies {.tabset .tabset-pills}
+
+### Contributions
+
 ```{r subsidies}
 subsidies
 
 ```
 
-# Unemployment Insurance {.tabset}
+### Levels
 
-## Levels
+```{r}
+
+subsidies_levels
+```
+
+## Unemployment Insurance {.tabset .tabset-pills}
+
+### Contributions
+
+```{r unemployment insurance}
+ui
+federal_ui
+state_ui
+```
+
+### Levels
+
 ```{r}
 
 ui_levels
@@ -172,43 +199,16 @@ federal_ui_levels
 state_ui_levels
 ```
 
-## Contributions
-```{r unemployment insurance}
-ui
-federal_ui
-state_ui
-```
+## Rebate Checks {.tabset .tabset-pills}
 
-# Rebate Checks {.tabset}
-
-## Level
-
-```{r}
-rebate_checks_levels
-```
-
-## Contribution
+### Contribution
 
 ```{r}
 rebate_checks
 ```
 
-# Social Benefits Remainder {.tabset}
+### Level
 
-The contributions of social benefits excluding subsidies, health outalys, unemployment insurance, and rebate checks is below.
-
-
-## Levels 
-
-```{r social-benefits-levels}
-social_benefits_levels
-federal_social_benefits_levels
-state_social_benefits_levels
-```
-## Contributions
-
-```{r social-benefits}
-social_benefits
-federal_social_benefits
-state_social_benefits
+```{r}
+rebate_checks_levels
 ```
