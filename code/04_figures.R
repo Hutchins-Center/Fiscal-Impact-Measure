@@ -16,7 +16,7 @@ read_contributions <- function(){
   
   current_month <- glue('{month(today())}-{year(today())}')
 
-    readxl::read_xlsx(glue("results/{current_month}/fim.xlsx")) %>%
+    readxl::read_xlsx(glue("results/{current_month}/fim-{current_month}.xlsx")) %>%
     select(date, fiscal_impact, fiscal_impact_moving_average,
            ends_with('cont'), recession) %>%
     mutate(date = as_date(date)) %>% 
@@ -101,7 +101,7 @@ recessions <-
   pivot_wider(names_from = name,
               values_from = value) %>%
   select(-row)
-
+recessions[3,'end'] <- as_date('2021-01-30')
 recession_shade <-
   geom_rect(data = recessions, aes(xmin = start, xmax = end, ymin=-Inf, ymax=+Inf),
             fill = 'grey', alpha = 0.3)
@@ -138,7 +138,7 @@ fim_plot <-
                 cex = 2, 
                 fill = NA, label.color = NA, # remove background and outline
       ) +
-      annotate("rect", xmin = last_hist_date + 40, xmax = end,
+      annotate("rect", xmin = last_hist_date + 10, xmax = end,
                ymin = -Inf, ymax = Inf, alpha = 0.1, fill = 'yellow') +
       geom_rect(data = recessions,
                 aes(x = NULL, y = NULL,
