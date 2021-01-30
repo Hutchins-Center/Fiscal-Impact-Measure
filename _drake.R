@@ -11,6 +11,11 @@ ls()
 # Graph of workflow
 # nolint
 
+vis_drake_graph(plan,
+                mode = 'all',
+                targets_only = TRUE,
+                build_times =  'none')
+
 config <- drake_config(plan, verbose = 2, lock_envir = FALSE)
 make_impl(config = config)
 
@@ -21,10 +26,6 @@ make_impl(config = config)
 # future::plan(batchtools_slurm, template = "batchtools.slurm.tmpl", workers = 100)
 # make(plan, parallelism = "future_lapply")
 
-vis_drake_graph(plan,
-                mode = 'all',
-                targets_only = TRUE,
-                build_times =  'none')
 
 readd(fim) %>%
   select(date, subsidies) %>% View()
