@@ -52,7 +52,7 @@ contributions %<>%
   pivot_wider(names_from =  date,values_from = value) 
 
 pivoted <- createSheet(wb, sheetName = 'pivoted')
-xlsx.addTable(wb, pivoted, data= contributions,
+xlsx.addTable(wb, full_sheet, data= contributions,
               fontColor="darkblue", fontSize=14,
               rowFill=c("white", "lightblue")
 )
