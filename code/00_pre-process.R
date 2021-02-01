@@ -60,6 +60,11 @@ data2 <-
 
 monthly_state_ui <- c('LICL', 'LWCL', 'LUFP','LULP','LUWC','LUWP','LUBP','LUWB','LUEX','LUD','LUWBY', 'LUBPT', 'LUFPT', 'LULPT')
 
+state_ui <- pull_data(monthly_state_ui,
+                         'usecon',
+                         start.date = START) %>%
+  as_tibble() %>%
+  write_xlsx('data/supplementary/monthly_state_ui.xlsx')
 # Write csv to current month's folder
 haver_raw_list <- 
   list(national_accounts = data1,
