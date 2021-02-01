@@ -17,11 +17,11 @@ get_cbo_ui <- function(){
            peuc = pandemic_emergency_unemployment_compensation,
            pua = pandemic_unemployment_assistance, 
            puc = pandemic_unemployment_compensation_payments) 
-  # annual_to_quarter(year) %>%
-  # mutate(total_ui = total_ui + peuc,
-  #        peuc = peuc * 2) %>%
-  # mutate(fy = fiscal_year(yq)) %>%
-  # index_by(fy)
+    # annual_to_quarter(year) %>%
+    # mutate(total_ui = total_ui + peuc,
+    #        peuc = peuc * 2) %>%
+    # mutate(fy = fiscal_year(yq)) %>%
+    # index_by(fy)
 }
 legislation_weights <- function(df){
   df %>%
@@ -56,12 +56,12 @@ get_monthly_ui <- function(){
     rename(date = name) %>%
     mutate(date = as_date(as.numeric(date), origin = '1899-12-30'))  %>%
     clean_names() %>%
-    rename(
-      peuc = pandemic_emergency_unemployment_compensation,
-      pua = pandemic_unemployment_assistance, 
-      puc = pandemic_unemployment_compensation_payments,
-      wla = wages_lost_assistance_program
-    ) %>%
+  rename(
+    peuc = pandemic_emergency_unemployment_compensation,
+    pua = pandemic_unemployment_assistance, 
+    puc = pandemic_unemployment_compensation_payments,
+    wla = wages_lost_assistance_program
+  ) %>%
     mutate(peuc = 2 * peuc,
            total_ui = unemployment_insurance + wla,
            federal_ui = (peuc + pua + puc + wla),
@@ -136,7 +136,7 @@ puc_end <- function(df){
   puc_expiration_date <- '2020-12-31'
   df %>%
     mutate(pandemic_unemployment_compensation_payments = if_else(date > puc_expiration_date, 0,
-                                                                 pandemic_unemployment_compensation_payments))
+                                                                  pandemic_unemployment_compensation_payments))
 }
 annualize <- function(x){
   x * 4
@@ -181,8 +181,8 @@ get_ui_second_draw <- function(df){
 # Data ----------------------------------------------------------------------------------------
 cbo_ui_raw <- get_cbo_ui()
 #cbo_ui <- 
-
-get_cbo_ui() %>%
+  
+  get_cbo_ui() %>%
   mutate(peuc = peuc * 2, 
          legislation = peuc+pua+puc+other, 
          non_legislation = total_ui - legislation) %>%
@@ -198,19 +198,19 @@ get_cbo_ui() %>%
 
 monthly_ui <-
   get_monthly_ui() %>% 
-  monthly_to_quarterly() %>%
-  trim_quarterly()
+    monthly_to_quarterly() %>%
+    trim_quarterly()
 
-quarterly_ui <- 
+ quarterly_ui <- 
   get_quarterly_ui() %>%
-  mutate(federal_ui = (peuc + pua + puc + lwa),
-         state_ui = total_ui - federal_ui) %>%
-  select(yq, total_ui, federal_ui, state_ui)
+    mutate(federal_ui = (peuc + pua + puc + lwa),
+           state_ui = total_ui - federal_ui) %>%
+    select(yq, total_ui, federal_ui, state_ui)
 
 ui_second_draw <-  
   get_second_draw() %>%
   get_ui_second_draw()
-
+  
 ui_override <-
   monthly_ui %>%
   full_join(cbo_ui) %>%
@@ -240,8 +240,4 @@ ui_override <-
 #                                              state_unemployment_insurance),
 #    unemployment_insurance = federal_unemployment_insurance + state_unemployment_insurance 
 #   )
-
-
-
-    
-
+  
