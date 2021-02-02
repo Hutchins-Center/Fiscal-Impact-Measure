@@ -27,5 +27,4 @@ make_impl(config = config)
 # make(plan, parallelism = "future_lapply")
 
 
-readd(fim) %>%
-  select(date, subsidies) %>% View()
+

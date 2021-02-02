@@ -34,7 +34,6 @@ data1 <- data1 %>% mutate(
   gfegl = (gfegc + gfege + gfegv ) * 1000
 ) %>% select(-c(gfegc, gfege, gfegv))
 
-
 #transpose into spreadsheet layout
 data1_t <- as.data.frame(t(data1))
 
