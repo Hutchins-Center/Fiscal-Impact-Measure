@@ -88,7 +88,11 @@ nipa_consistent_fim <-
       .names = "{x}_contribution")
     ) %>%
       mutate(grants_contribution = consumption_grants_net_contribution + investment_grants_contribution)
-  
+
+nipa %>%
+  mutate(over(c('federal_purchases', 'state_purchases', 'consumption_grants_net', 'investment_grants'),
+              ~ 400 * (.("{.x}") - lag(.("{.x}")) * (1 + .("{.x}_deflator_growth"))) / lag(gross_domestic_product),
+              .names = "{x}_contribution"))
 fim <-
   nipa %>%
   mutate(

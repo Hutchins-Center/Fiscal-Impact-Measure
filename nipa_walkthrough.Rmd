@@ -2,11 +2,10 @@
 title: "NIPA Consistent Fiscal Impact Measure Walkthrough"
 author: "Manuel Alcala Kovalski"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Vignette Title}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
 ---
 
 ```{r setup, include = FALSE}
@@ -15,35 +14,27 @@ knitr::opts_chunk$set(
   comment = "#>",
   warning = FALSE,
   message = FALSE,
-  results = 'asis'
+  results = 'asis',
+  tidy.opts=list(width.cutoff=60),
+  tidy=TRUE
 )
 ```
 
-Vignettes are long form documentation commonly included in packages.
-Because they are part of the distribution of the package, they need to be as compact as possible.
-The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible.
-The `html_vignette` format:
+```{r}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
 
--   Never uses retina figures
--   Has a smaller default figure size
--   Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
-
-## Vignette Info
-
-Note the various macros within the `vignette` section of the metadata block above.
-These are required in order to instruct R how to build the vignette.
-Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
-
-## Styles
-
-The `html_vignette` template includes a basic CSS theme.
-To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## 
+```
 
 ```{r load-stuff, include = FALSE}
 source('R/packages.R')
@@ -84,6 +75,8 @@ make_excel_table <- function(df, title,  rowcolors){
 add_factors <- readxl::read_xlsx('data/add-ons/LSFIM_KY_v7.xlsx', 
                          sheet = 'FIM Add Factors')
 ```
+
+## Data
 
 ```{r}
 nipa <-
@@ -127,40 +120,48 @@ paged_table(nipa %>% to_table())
 
 The FIM is defined as the actual contributions of real government purchases and real consumption to GDP less the contributions that would have prevailed if real purchases, real taxes, and real transfers were growing with potential GDP.
 
-Define $G$ as nominal government purchases, $\π_{G}$ as the inflation rate for government purchases, C as nominal consumption, \$C\$ as nominal consumption, \$T\$ as nominal tax or transfer payments,
+Define $G$ as nominal government purchases, $\pi_{G}$ as the inflation rate for government purchases, $C$ as nominal consumption, $C$ as nominal consumption, $T$ as nominal tax or transfer payments, $Y$ as nominal GDP, and $\mu$ as real potential output growth.
 
-, $Y$ as nominal GDP, and $\mu$ as real potential output growth.
-Then the FIM is calculated as follows.
+Then the contribution of real purchases to GDP is the growth rate of real government purchases times the share of government in GDP:
 
-The contribution of real purchases to GDP is the growth rate of real government purchases times the share of government in GDP:
+$$
+\frac{G_t}{G_{t-1}} - \frac{G_{t-1}}{Y_{t-1}} \times (1 + \pi_{G} ) = \frac{G_t - G_{t-1} \times (1 + \pi_{G})}{Y_{t-1}}
+$$
+
+The counterfactual contribution of real government purchases under the assumption that real government spending rises with potential GDP is
+
+$$
+\mu \frac{G_{t-1}}{Y_{t-1}}
+$$
+
+Thus, the FIM for purchases is defined as
+
+$$
+\text{FIM}_{t}^{G} = \frac{G_t - G_{t-1} * (1 + \pi_G + \mu )}{Y_{t-1}}
+$$
 
 ## BEA Methodology
 
 ```{r}
 
-  nipa %>%
-  mutate(
-    over(
-      c(
-        'federal_purchases',
-        'state_purchases',
-        'consumption_grants_net',
-        'investment_grants'
-      ),
-      ~ 400 * (.("{.x}") - lag(.("{.x}")) * (1 + .(
-        "{.x}_deflator_growth"
-      )))  / lag(gross_domestic_product),
-      .names = "{x}_contribution")
-    ) %>%
-      mutate(grants_contribution = consumption_grants_net_contribution + investment_grants_contribution) %>%
-   mutate(across(where(is.numeric), ~ round(., digits = 2))) %>%
+
+nipa %>%
+  mutate(over(c('federal_purchases', 'state_purchases', 
+                'consumption_grants_net', 'investment_grants'),
+             .fn =  ~ 400 * (.("{.x}") - lag(.("{.x}")) * (1 + .("{.x}_deflator_growth"))) 
+              / lag(gross_domestic_product),
+              .names = "{x}_contribution"),
+         grants_contribution = consumption_grants_net_contribution +
+           investment_grants_contribution,
+         across(where(is.numeric),
+                ~ round(., digits = 2))) %>%
   select(
     date,
     federal_purchases_contribution,
     state_purchases_contribution,
     grants_contribution
   ) %>%
-  to_table() %>%
+    to_table() %>%
     paged_table()
 
 
@@ -168,32 +169,26 @@ The contribution of real purchases to GDP is the growth rate of real government 
 
 ## Hutchins Methodology
 
-```{r}
+```{r, linewidth=160}
   
   nipa %>%
   mutate(
     over(
-      c(
-        'federal_purchases',
-        'state_purchases',
-        'consumption_grants_net',
-        'investment_grants'
-      ),
-      ~ 400 * (.("{.x}") - lag(.("{.x}")) * (
-        1 + .("{.x}_deflator_growth") + real_potential_gdp_growth
-      ))  / lag(gross_domestic_product),
+      c('federal_purchases', 'state_purchases', 
+        'consumption_grants_net', 'investment_grants'),
+      .fn = ~ 400 * (.("{.x}") - 
+            lag(.("{.x}")) * 
+            (1 + .("{.x}_deflator_growth") + real_potential_gdp_growth)) 
+              / lag(gross_domestic_product),
       .names = "{x}_contribution"),
-    ) %>%
-      mutate(
-        grants_contribution = consumption_grants_net_contribution + investment_grants_contribution,
-        federal_contribution = federal_purchases_contribution + grants_contribution,
-        state_contribution = state_purchases_contribution - grants_contribution
-      ) %>%
-   mutate(across(where(is.numeric), ~ round(., digits = 2))) %>%
-  select(date,
-         federal_contribution,
-         state_contribution,
-         grants_contribution) %>%
+    
+      grants_contribution = consumption_grants_net_contribution + investment_grants_contribution,
+      federal_contribution = federal_purchases_contribution + grants_contribution,
+      state_contribution = state_purchases_contribution - grants_contribution,
+    across(where(is.numeric), ~ round(., digits = 2))) %>%
+    
+  select(date, federal_contribution,
+         state_contribution, grants_contribution) %>%
   to_table() %>%
   paged_table()
 ```
