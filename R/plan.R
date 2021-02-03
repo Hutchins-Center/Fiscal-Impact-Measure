@@ -70,7 +70,7 @@ plan <-
         override_projections() %>%
         contributions_purchases_grants_zero() %>%
         total_purchases() %>%
-        select(date, ends_with('cont')
+        select(date, ends_with('cont'), ends_with('nom')
         )
     ),
     fim = target(

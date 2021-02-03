@@ -16,7 +16,7 @@ vis_drake_graph(plan,
                 targets_only = TRUE,
                 build_times =  'none')
 
-config <- drake_config(plan, verbose = 2, lock_envir = FALSE)
+config <- drake_config(plan, verbose = 2)
 make_impl(config = config)
 
 
