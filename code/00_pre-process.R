@@ -6,6 +6,22 @@ library('readxl')
 library('writexl')
 
 source('src/functions.R')
+monthly_to_quarterly <- function(df){
+  df %>%
+    mutate(yq = tsibble::yearquarter(date)) %>%
+    as_tsibble(index = date) %>%
+    select(date, yq, everything()) %>%
+    index_by(yq) %>%
+    mutate(
+      across(
+        .cols = where(is.numeric), 
+        .fns = ~ mean(.x, na.rm = TRUE)
+      )
+    ) %>%
+    filter(row_number()== n()) %>%
+    ungroup() %>%
+    select(-yq)
+}
 
 # 0.1 Pull Raw Data---------------------------------------------------------------
 
@@ -15,31 +31,40 @@ START <- "01-01-1970"
 haver.path("//ESDATA01/DLX/DATA/")
 # BEA NIPAs 
 names_usna <- read_excel("data/auxilliary/haver_names.xlsx")
+wla <- pull_data('YPTOLM',
+                 'usna',
+                 frequency = 'monthly',
+                 start.date = START) %>%
+  monthly_to_quarterly() %>%
+  mutate(yptolm = na_if(yptolm, 'NaN'))
 data1 <-
   pull_data(names_usna$code,
             "usna",
             start.date = START) %>%
-  as_tibble()
+  as_tibble() %>%
+  left_join(wla)
 
+
+
+  
+  
 # Economic Statistics
 
 data2 <-
-  pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ"), 
+  pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ",
+              'LASGOVA', 'LALGOVA', 'CPGS'), 
             "usecon",
             start.date = START)
 
-data3 <-
-  pull_data(c('LASGOVA', 'LALGOVA','CPGS' ),
-            'usecon',
-            start.date = START)
 
 
-data3 <-
-  pull_data(c('LASGOVA', 'LALGOVA','CPGS' ),
-            'usecon',
-            start.date = START) %>%
-  as_tibble()
+monthly_state_ui <- c('LICL', 'LWCL', 'LUFP','LULP','LUWC','LUWP','LUBP','LUWB','LUEX','LUD','LUWBY', 'LUBPT', 'LUFPT', 'LULPT')
 
+state_ui <- pull_data(monthly_state_ui,
+                         'usecon',
+                         start.date = START) %>%
+  as_tibble() %>%
+  write_xlsx('data/supplementary/monthly_state_ui.xlsx')
 # Write csv to current month's folder
 haver_raw_list <- 
   list(national_accounts = data1,

@@ -29,6 +29,7 @@ library(ggthemes)
 library(gridExtra)
 library('fim')
 library('glue')
+library('lubridate')
 ```
 
 ```{r data, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
@@ -92,26 +93,25 @@ uni.theme <- function() {
 ```{r}
 recessions <-
   contributions %>%
-  get_recessions()
+  get_recessions() 
+recessions[3, 'end'] <- lubridate::as_date('2020-12-31')
 
 recession_shade <-
   geom_rect(data = recessions, aes(xmin = start, xmax = end, ymin=-Inf, ymax=+Inf),
-            fill = 'grey', alpha = 0.3)
+            fill = 'grey', alpha = 0.05)
 ```
 
 
 ```{r total impact, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 loadd(last_hist_date)
 
-loadd(guidez)
 contributions %>%
   select(date, fiscal_impact, fiscal_impact_moving_average) %>%
   pivot_longer(cols = -c(date, fiscal_impact_moving_average),
                names_to = 'variable') %>%
-  fim_plot(title = 'Total', last_hist_date = last_hist_date) +
+  fim_plot(title = 'Total') +
   scale_fill_manual(labels = " Quarterly fiscal impact",
-                    values = total_pink) +
-  guidez
+                    values = total_pink) 
 
 contributions %>%
   select(
@@ -123,7 +123,7 @@ contributions %>%
   ) %>%
   pivot_longer(cols = -c(date, fiscal_impact_moving_average),
                names_to = 'variable') %>%
-  fim_plot(title = 'Components', last_hist_date = last_hist_date) +
+  fim_plot(title = 'Components') +
   scale_fill_manual(
     labels = c(
       " State & Local Purchases",
@@ -131,8 +131,7 @@ contributions %>%
       " Taxes, Transfers, & Subsidies"
     ),
     values =  c(state_local_purple, federal_blue, taxes_transfers_green)
-  )+
-  guidez 
+  )
 ```
 
 

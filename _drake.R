@@ -11,7 +11,12 @@ ls()
 # Graph of workflow
 # nolint
 
-config <- drake_config(plan, verbose = 2, lock_envir = FALSE)
+vis_drake_graph(plan,
+                mode = 'all',
+                targets_only = TRUE,
+                build_times =  'none')
+
+config <- drake_config(plan, verbose = 2)
 make_impl(config = config)
 
 
@@ -21,8 +26,5 @@ make_impl(config = config)
 # future::plan(batchtools_slurm, template = "batchtools.slurm.tmpl", workers = 100)
 # make(plan, parallelism = "future_lapply")
 
-vis_drake_graph(plan,
-                mode = 'all',
-                targets_only = TRUE,
-                build_times =  'none')
+
 
