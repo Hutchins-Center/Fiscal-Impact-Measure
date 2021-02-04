@@ -183,7 +183,7 @@ cbo_state_health <-
 cbo_state_health_growth <-   
   cbo_state_health %>%
   filter(fy == 2021) %>%
-  pull(growth_rates) 
+  pull(growth_rate)
 
 forecasts <- 
   tibble(
@@ -230,9 +230,6 @@ usna %>%
 fill_in <- function(prev, new, growth = 0.03) {
   if_else(!is.na(new), new, prev * (1 + growth))
 }
-options(pillar.sigfig = 5)
-x %>%
-  mutate(b = accumulate(growth, fill_in))
 
 # fim_state_social_benefits = (nipa - medicare - ui - rebate_checks - nonprofit_subsidies) + rebate_checks + nonprofit_subsidies + federal_ui
 #                           = nipa - medicare + (federal_ui - ui) 
