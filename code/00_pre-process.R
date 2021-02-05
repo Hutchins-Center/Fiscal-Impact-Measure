@@ -4,6 +4,7 @@ library('tidyverse')
 library('Haver')
 library('readxl')
 library('writexl')
+library('tsibble')
 
 source('src/functions.R')
 monthly_to_quarterly <- function(df){
@@ -31,6 +32,25 @@ START <- "01-01-1970"
 haver.path("//ESDATA01/DLX/DATA/")
 # BEA NIPAs 
 names_usna <- read_excel("data/auxilliary/haver_names.xlsx")
+
+
+
+
+
+# Economic Statistics
+
+data2 <-
+  pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ",
+              'LASGOVA', 'LALGOVA', 'CPGS'), 
+            "usecon",
+            start.date = START)
+
+cpi <- 
+  pull_data(c('UI'), 'cpidata', start.date = START) %>%
+  monthly_to_quarterly()
+
+
+
 wla <- pull_data('YPTOLM',
                  'usna',
                  frequency = 'monthly',
@@ -42,20 +62,13 @@ data1 <-
             "usna",
             start.date = START) %>%
   as_tibble() %>%
-  left_join(wla)
+  left_join(wla) %>%
+  left_join(cpi) %>%
+  left_join(data2)
 
 
 
   
-  
-# Economic Statistics
-
-data2 <-
-  pull_data(c("PCW", "GDPPOTHQ", "GDPPOTQ", "RECESSQ",
-              'LASGOVA', 'LALGOVA', 'CPGS'), 
-            "usecon",
-            start.date = START)
-
 
 
 monthly_state_ui <- c('LICL', 'LWCL', 'LUFP','LULP','LUWC','LUWP','LUBP','LUWB','LUEX','LUD','LUWBY', 'LUBPT', 'LUFPT', 'LULPT')
@@ -68,11 +81,10 @@ state_ui <- pull_data(monthly_state_ui,
 # Write csv to current month's folder
 haver_raw_list <- 
   list(national_accounts = data1,
-       economic_statistics = data2,
-       state_local_employment = data3)
+       economic_statistics = data2)
 
 # Write haver data to raw folder ------------------------------------------
-
+saveRDS(data1, 'data/raw/historical.rds')
 
 ## Exporting csv with the desired file names and into the right path
 output_xlsx <- function(data, names){ 
