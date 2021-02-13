@@ -109,7 +109,15 @@ new <-
   mutate(key = 'new',
          date = yearquarter(date))
 
-
+new <- 
+  
+  
+  mutate(date = as_date(date)) %>%
+  filter(date >= '2017-12-31' & date <= '2022-12-31') %>%
+  select(date, fiscal_impact, ends_with('cont')) %>%
+  rename_with(.fn =  ~ str_remove(.x, '_cont'), ends_with('cont')) %>%
+  mutate(key = 'new',
+         date = yearquarter(date))
 
 # Figures -------------------------------------------------------------------------------------
 
@@ -134,10 +142,16 @@ investment_grants <-
   comparison_plot(federal_igrants, title = 'Investment Grants')
 
 # Taxes
+
 taxes<- comparison_plot(taxes, 'Taxes')
 federal_taxes<- comparison_plot(taxes, 'Federal Taxes')
 state_taxes<- comparison_plot(taxes, 'State Taxes')
 
+
+new %>%
+  select(date,federal_taxes) %>%
+  pivot_longer(-date) %>%
+  ggplot(aes(x=date,y =value,fill=name))+geom_line()
 corp_taxes <- comparison_plot(corporate_taxes, 'Taxes')
 federal_corp_taxes <- comparison_plot(corporate_taxes, 'Federal Taxes')
 state_corp_taxes <- comparison_plot(corporate_taxes, 'State Taxes')

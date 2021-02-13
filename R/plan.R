@@ -113,33 +113,69 @@ plan <-
           state_taxes_transfers_cont
         )
     ),
-    fim_no_addons =
-      target(
-        fim %>%
-          filter(date >= '2020-03-31') %>%
-          transmute(
-            date  = yearquarter(date),
-            state_health_outlays = state_health_outlays -
-              add_state_health_outlays,
-            state_social_benefits = state_social_benefits -
-              add_state_social_benefits,
-            state_noncorp_taxes = state_noncorp_taxes -
-              add_state_noncorp_taxes,
-            state_corporate_taxes = state_corporate_taxes -
-              add_state_corporate_taxes,
-            federal_health_outlays = federal_health_outlays -
-              add_federal_health_outlays,
-            federal_social_benefits = federal_social_benefits -
-              add_federal_social_benefits,
-            federal_subsidies = federal_subsidies -
-              add_federal_subsidies,
-            federal_cgrants = federal_cgrants -
-              add_federal_cgrants
-          ) %>%
-          pivot_longer(-date, names_to = 'variables', values_to = 'values_one') %>%
-          pivot_longer(date) %>% pivot_wider(names_from = value, values_from  = values_one) %>%
-          select(-name)
-      ), 
+    fim_no_addons =target(  fim_create(projections) %>%
+                              mutate(
+                                federal_cgrants = if_else(date == '2020-12-31', 303.95, federal_cgrants)
+                              ) %>%
+                              contributions_purchases_grants() %>%
+                              total_purchases() %>%
+                              mutate(federal_cont = federal_cont - federal_grants_cont,
+                                     state_local_cont = state_local_cont + federal_grants_cont) %>%
+                              remove_social_benefit_components() %>%
+                              taxes_transfers_minus_neutral() %>%
+                              calculate_mpc('subsidies') %>%
+                              calculate_mpc('health_outlays') %>%
+                              calculate_mpc('social_benefits') %>%
+                              calculate_mpc('unemployment_insurance') %>%
+                              calculate_mpc('rebate_checks') %>%
+                              calculate_mpc('noncorp_taxes') %>%
+                              calculate_mpc('corporate_taxes') %>%
+                              taxes_contributions() %>%
+                              sum_taxes_contributions() %>%
+                              transfers_contributions() %>%
+                              sum_transfers_contributions() %>%
+                              sum_taxes_transfers() %>%
+                              add_social_benefit_components() %>%
+                              get_fiscal_impact() %>%
+                              arrange(
+                                date,
+                                recession,
+                                fiscal_impact,
+                                fiscal_impact_moving_average,
+                                federal_cont,
+                                state_local_cont,
+                                taxes_transfers_cont,
+                                federal_taxes_transfers_cont,
+                                state_taxes_transfers_cont
+                              )
+    ),
+    # fim_no_addons =
+    #   target(
+    #     fim %>%
+    #       filter(date >= '2020-03-31') %>%
+    #       transmute(
+    #         date  = yearquarter(date),
+    #         state_health_outlays = state_health_outlays -
+    #           add_state_health_outlays,
+    #         state_social_benefits = state_social_benefits -
+    #           add_state_social_benefits,
+    #         state_noncorp_taxes = state_noncorp_taxes -
+    #           add_state_noncorp_taxes,
+    #         state_corporate_taxes = state_corporate_taxes -
+    #           add_state_corporate_taxes,
+    #         federal_health_outlays = federal_health_outlays -
+    #           add_federal_health_outlays,
+    #         federal_social_benefits = federal_social_benefits -
+    #           add_federal_social_benefits,
+    #         federal_subsidies = federal_subsidies -
+    #           add_federal_subsidies,
+    #         federal_cgrants = federal_cgrants -
+    #           add_federal_cgrants
+    #       ) %>%
+    #       pivot_longer(-date, names_to = 'variables', values_to = 'values_one') %>%
+    #       pivot_longer(date) %>% pivot_wider(names_from = value, values_from  = values_one) %>%
+    #       select(-name)
+    #   ), 
     fim_nipa_consistent =
       target(
         fim_create(nipa_projections) %>%
