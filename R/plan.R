@@ -215,25 +215,25 @@ plan <-
         recession
       ) %>%
       mutate(date = lubridate::as_date(date)) %>%
-      filter(date > '2000-01-01' & date <= '2022-12-31'),
-    max_y = contributions %>%
-      select(fiscal_impact) %>%
-      max() %>% ceiling(),
-    hutchins_logo = knitr::include_graphics(file.path(
-      here::here(), "images", "HC_NEW_BROOKINGS_RGB.jpg"
-    )),
-    fim_report =
-      rmarkdown::render(
-        knitr_in('Fiscal-Impact.Rmd'),
-        output_file = file_out(!!file.path(here(), 'results', get_current_month(), 'reports', 'Fiscal-Impact.pdf')),
-        quiet  = TRUE
-      ),
-    fim_report_expanded =
-      rmarkdown::render(
-        knitr_in('Fiscal-Impact-Expanded.Rmd'),
-        output_file = file_out(!!file.path(here(), 'results', get_current_month(),  'reports', 'Fiscal-Impact-Expanded.pdf')),
-        quiet  = TRUE
-      )
+      filter(date > '2000-01-01' & date <= '2022-12-31') #,
+    # max_y = contributions %>%
+    #   select(fiscal_impact) %>%
+    #   max() %>% ceiling(),
+    # hutchins_logo = knitr::include_graphics(file.path(
+    #   here::here(), "images", "HC_NEW_BROOKINGS_RGB.jpg"
+    # )),
+    # fim_report =
+    #   rmarkdown::render(
+    #     knitr_in('Fiscal-Impact.Rmd'),
+    #     output_file = file_out(!!file.path(here(), 'results', get_current_month(), 'reports', 'Fiscal-Impact.pdf')),
+    #     quiet  = TRUE
+    #   ),
+    # fim_report_expanded =
+    #   rmarkdown::render(
+    #     knitr_in('Fiscal-Impact-Expanded.Rmd'),
+    #     output_file = file_out(!!file.path(here(), 'results', get_current_month(),  'reports', 'Fiscal-Impact-Expanded.pdf')),
+    #     quiet  = TRUE
+    #   )
     # compare_update =
     #   rmarkdown::render(
     #     knitr_in('compare-update.Rmd'),
