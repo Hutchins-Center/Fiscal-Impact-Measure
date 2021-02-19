@@ -85,6 +85,7 @@ haver_raw_list <-
 
 # Write haver data to raw folder ------------------------------------------
 saveRDS(data1, 'data/raw/historical.rds')
+write_xlsx(data1, 'data/raw/historical.xlsx')
 
 ## Exporting csv with the desired file names and into the right path
 output_xlsx <- function(data, names){ 
