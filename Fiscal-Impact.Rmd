@@ -109,7 +109,7 @@ contributions %>%
   select(date, fiscal_impact, fiscal_impact_moving_average) %>%
   pivot_longer(cols = -c(date, fiscal_impact_moving_average),
                names_to = 'variable') %>%
-  fim_plot(title = 'Total', hist_end = last_hist_date) +
+  fim_plot(title = 'Total') +
   scale_fill_manual(labels = " Quarterly fiscal impact",
                     values = total_pink) 
 
@@ -123,7 +123,7 @@ contributions %>%
   ) %>%
   pivot_longer(cols = -c(date, fiscal_impact_moving_average),
                names_to = 'variable') %>%
-  fim_plot(title = 'Components', last_hist_date) +
+  fim_plot(title = 'Components') +
   scale_fill_manual(
     labels = c(
       " State & Local Purchases",
