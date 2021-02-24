@@ -21,5 +21,8 @@ devtools::install_github("malcalakovalski/fim")
 library('fim')
 library('filesstrings')
 library('openxlsx')
+
+# install.packages("devtools")
+# devtools::install_github("TimTeaFan/dplyover")
 library('dplyover')
 
