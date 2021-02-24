@@ -155,3 +155,47 @@ add_factors_v2 <- function(df, last_date){
       rebate_checks = rebate_checks + add_rebate_checks
     )
 }
+
+as_state<- function(x){
+  x <- glue('state_{x}')
+  return(x)
+}
+
+as_federal<-function(x){
+  x <- glue('federal_{x}')
+  return(x)
+}
+add_factors <-function(df){
+  #load add factor file
+  state <- c('health_outlays', 'social_benefits', 'purchases') %>% as_state()
+  federal <- c('health_outlays', 'social_benefits', 'subsidies', 'purchases') %>% as_federal()
+  other <- c('consumption_grants', 'rebate_checks')
+  variables <- c(federal, state, other)
+  add_factors <- readxl::read_excel("data/add-ons/add_factors.xlsx", 
+                                    sheet = "FIM Add Factors") %>%
+    mutate(date = lubridate::as_date(date)) 
+  df %>% 
+    dplyr::full_join(add_factors,
+                     by = "date") %>%
+    dplyr::mutate(dplyr::across(
+      .cols = tidyselect::starts_with('add_'),
+      .fns = ~ coalesce(.x, 0)
+    ),
+    dplyover::over(all_of(variables),
+                   ~ if_else(id == 'projection', 
+                             .("{.x}") + .("add_{.x}"),
+                             .("{.x}"))
+    )
+    
+    ) %>% 
+    dplyr::mutate(
+      
+      
+      
+      #new category totals
+      health_outlays  = state_health_outlays  + federal_health_outlays ,
+      social_benefits  = state_social_benefits  + federal_social_benefits ,
+      subsidies   = state_subsidies + federal_subsidies,
+      rebate_checks = rebate_checks + add_rebate_checks
+    )
+}

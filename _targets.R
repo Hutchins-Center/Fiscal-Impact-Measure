@@ -69,8 +69,34 @@ plan <-
         ) %>%
         components_growth_rates() %>%
         create_projections() %>%
-        medicaid_reallocation()
-
+        medicaid_reallocation(),
+    fim = fim_create(projections) %>%
+      mutate(id =  if_else(date <= last_hist_date, 'historical', 'projection')) %>% 
+                   add_factors() %>%
+                   override_projections() %>%
+                   fill_overrides() %>%
+                   contributions_purchases_grants() %>%
+                   total_purchases() %>%
+                   remove_social_benefit_components() %>%
+                   taxes_transfers_minus_neutral() %>%
+                   calculate_mpc('subsidies') %>%
+                   calculate_mpc('health_outlays') %>%
+                   calculate_mpc('social_benefits') %>%
+                   calculate_mpc('unemployment_insurance') %>%
+                   calculate_mpc('rebate_checks') %>%
+                   calculate_mpc('noncorp_taxes') %>%
+                   calculate_mpc('corporate_taxes') %>%
+                   taxes_contributions() %>%
+                   sum_taxes_contributions() %>%
+                   transfers_contributions() %>%
+                   sum_transfers_contributions() %>%
+                   sum_taxes_transfers() %>%
+                   add_social_benefit_components() %>%
+                   get_fiscal_impact() %>%
+                   arrange(date, recession, fiscal_impact, fiscal_impact_moving_average, 
+                           federal_cont, state_local_cont, 
+                           taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
+    
 # ,
 # fim_no_addons =target(  fim_create(projections) %>%
 #                           mutate(
