@@ -16,7 +16,7 @@ output:
 
 This report will compare CBO's budget projections from February of 2021 to their projections from September of 2020
 
-```{r setup}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>", 
@@ -24,14 +24,15 @@ knitr::opts_chunk$set(
   fig.align = 'center',
   warning = FALSE,
   message = FALSE,
-  cache = TRUE 
+  cache = TRUE, 
+  dpi = 700
 )
 
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 ```{r packages}
-librarian::shelf('tidyverse', 'ggtext', 'ggthemes')
+librarian::shelf('tidyverse', 'ggtext', 'ggthemes', 'thomasp85/patchwork')
 ```
 
 ```{r data}
@@ -61,9 +62,11 @@ comparison_plot <- function(variable){
     full_join(new %>% filter(fy <= 2023) %>% select(fy, {{variable}}), by = 'fy') %>% 
     pivot_longer(-fy) %>% 
     ggplot(aes(x = fy , y = value, color = name)) +
-    geom_line(size = 1, alpha =  0.7) +
+    geom_line(size = 1, alpha =  0.5) +
+    geom_point()+
     theme_hc() +
-    scale_color_brewer(name = '', labels = c('September 2020', 'February 2021'), type = 'qual', palette = 'Set1') 
+    scale_color_brewer(name = '', labels = c('September 2020', 'February 2021'), type = 'qual', palette = 'Set1') +
+    scale_y_continuous(name = '')
    
   
     
@@ -72,10 +75,26 @@ comparison_plot <- function(variable){
 
 ```
 
+## Health Outlays
+
 ```{r}
-comparison_plot(medicaid) + labs(title = 'Medicaid ') 
-comparison_plot(medicare) + labs(title = 'Medicare ')
-comparison_plot(corporate_taxes) + labs(title = 'Corporate taxes')
-comparison_plot(noncorporate_taxes) + labs(title = 'Noncorporate taxes')
+medicaid <- comparison_plot(medicaid) + labs(title = 'Medicaid ') 
+medicare <- comparison_plot(medicare) + labs(title = 'Medicare ')
+
+medicaid  + medicare
+```
+
+## Taxes
+
+```{r taxes}
+corporate <- comparison_plot(corporate_taxes) + labs(title = 'Corporate taxes')
+noncorporate <- comparison_plot(noncorporate_taxes) + labs(title = 'Noncorporate taxes')
+
+corporate + noncorporate
+```
+
+## Unemployment Insurance
+
+```{r ui}
 comparison_plot(ui) + labs(title = 'Unemployment Insurance')
 ```
