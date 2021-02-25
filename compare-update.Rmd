@@ -54,7 +54,7 @@ state
 ```
 
 ## Grants {.tabset .tabset-pills}
-
+Previously, we weren't including Provider Relief Fund grants (12B per quarter) in our add factors for consumption grants. 
 ### Contributions
 
 ```{r grants}

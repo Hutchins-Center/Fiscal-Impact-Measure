@@ -1,0 +1,81 @@
+---
+title: "CBO Budget Projections"
+author: "Manuel Alcala Kovalski"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage[default]{sourcesanspro}
+   - \usepackage[T1]{fontenc}
+mainfont: SourceSansPro
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+## Budget Projections Update
+
+This report will compare CBO's budget projections from February of 2021 to their projections from September of 2020
+
+```{r setup}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  echo = FALSE,
+  fig.align = 'center',
+  warning = FALSE,
+  message = FALSE,
+  cache = TRUE 
+)
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r packages}
+librarian::shelf('tidyverse', 'ggtext', 'ggthemes')
+```
+
+```{r data}
+
+clean_data <- function(df){
+  df %>% 
+    rename(social_benefits = gftfp,
+                                                                                                              personal_taxes = gfrpt,
+                                                                                                              production_taxes = gfrpri,
+                                                                                                              corporate_taxes = gfrcp,
+                                                                                                              payroll_taxes = gfrs, 
+                                                                                                              medicare = yptmr,
+                                                                                                              medicaid = yptmd,
+                                                                                                              ui = yptu) %>% 
+  mutate(noncorporate_taxes = personal_taxes + payroll_taxes + production_taxes) 
+}
+new <- readxl::read_excel('data/raw/cbo/cbo_budget_nipas_proj_annual.xlsx') %>% mutate(id = 'new') %>% clean_data()
+old <- readxl::read_excel('data/raw/cbo/archive/budget_projections_09_2020.xlsx') %>% mutate(id = 'old') %>% clean_data()
+```
+
+```{r}
+comparison_plot <- function(variable){
+  
+  old %>% 
+    select(fy ,{{variable}}) %>% 
+    filter(fy <= 2023) %>% 
+    full_join(new %>% filter(fy <= 2023) %>% select(fy, {{variable}}), by = 'fy') %>% 
+    pivot_longer(-fy) %>% 
+    ggplot(aes(x = fy , y = value, color = name)) +
+    geom_line(size = 1, alpha =  0.7) +
+    theme_hc() +
+    scale_color_brewer(name = '', labels = c('September 2020', 'February 2021'), type = 'qual', palette = 'Set1') 
+   
+  
+    
+}
+
+
+```
+
+```{r}
+comparison_plot(medicaid) + labs(title = 'Medicaid ') 
+comparison_plot(medicare) + labs(title = 'Medicare ')
+comparison_plot(corporate_taxes) + labs(title = 'Corporate taxes')
+comparison_plot(noncorporate_taxes) + labs(title = 'Noncorporate taxes')
+comparison_plot(ui) + labs(title = 'Unemployment Insurance')
+```
