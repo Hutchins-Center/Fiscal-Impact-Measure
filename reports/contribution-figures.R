@@ -2,7 +2,7 @@
 
 # Packages ------------------------------------------------------------------------------------
 
-library('drake')
+library('targets')
 library('tidyverse')
 library('magrittr')
 library('ggthemes')
@@ -81,13 +81,12 @@ comparison_plot <-
 # Data ----------------------------------------------------------------------------------------
 
 
-loadd(last_hist_date)
-last_proj_date <- last_hist_date + years(2)
 
 
 last_month <- get_previous_month()
 current_month <- get_current_month()
-
+tar_load(last_hist_date)
+tar_load(last_proj_date)
 old <-
   read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
@@ -109,15 +108,7 @@ new <-
   mutate(key = 'new',
          date = yearquarter(date))
 
-new <- 
-  
-  
-  mutate(date = as_date(date)) %>%
-  filter(date >= '2017-12-31' & date <= '2022-12-31') %>%
-  select(date, fiscal_impact, ends_with('cont')) %>%
-  rename_with(.fn =  ~ str_remove(.x, '_cont'), ends_with('cont')) %>%
-  mutate(key = 'new',
-         date = yearquarter(date))
+
 
 # Figures -------------------------------------------------------------------------------------
 
