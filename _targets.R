@@ -28,7 +28,8 @@ plan <-
   tar_plan(
     cbo_projections_raw = load_cbo_projections(),
     fmap = read_xlsx(here('data/raw/nhe_fmap.xlsx')),
-    historical = load_national_accounts() %>% mutate(date = as_date(date)),
+    historical = load_national_accounts() %>% mutate(date = as_date(date)) %>% 
+      mutate(gfrcp = if_else(date == '2020-12-31', 207, gfrcp)),
     last_hist_date = get_last_hist_date(historical),
     last_proj_date = last_hist_date + lubridate::years(2),
     cbo_projections = load_cbo_projections() %>%
@@ -129,6 +130,12 @@ plan <-
     hutchins_logo = knitr::include_graphics(file.path(
       here::here(), "images", "HC_NEW_BROOKINGS_RGB.jpg"
     )),
+    interactive = 
+      fim %>% 
+      filter(date <= '2022-12-31') %>% 
+      prepare_interactive() %>%
+      readr::write_csv(glue('results/{current_month}/fim-interactive-{Sys.Date()}.csv')),
+    
     tar_render(Fiscal-Impact, 'Fiscal-Impact.Rmd'),
     tar_render(compare-update, 'compare-update.Rmd')
     

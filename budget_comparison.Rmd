@@ -11,10 +11,10 @@ output:
     theme: architect
     highlight: github
 ---
+This report will compare CBO's budget projections from February of 2021 to their projections from September of 2020 and their economic projections from July of 2020 relative to their February 2021 projections.
+# Budget Projections Update
 
-## Budget Projections Update
 
-This report will compare CBO's budget projections from February of 2021 to their projections from September of 2020
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
@@ -32,7 +32,8 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 ```{r packages}
-librarian::shelf('tidyverse', 'ggtext', 'ggthemes', 'thomasp85/patchwork')
+librarian::shelf('tidyverse', 'ggtext', 'ggthemes', 'thomasp85/patchwork', 'magrittr',
+                 'tsibble', 'fim')
 ```
 
 ```{r data}
@@ -98,3 +99,53 @@ corporate + noncorporate
 ```{r ui}
 comparison_plot(ui) + labs(title = 'Unemployment Insurance')
 ```
+
+# Economic Projections
+
+```{r}
+july <- readxl::read_xlsx('data/raw/cbo/archive/economic_projections_072020.xlsx')
+feb <- readxl::read_xlsx('data/raw/cbo/cbo_econ_proj_quarterly.xlsx')
+```
+
+```{r}
+clean_economic_projections <- function(df){
+  df %>% 
+    mutate(date = tsibble::yearquarter(date)) %>% 
+    as_tsibble(index = date) %>% 
+    rename(purchases = g,
+           federal_purchases = gf,
+           state_purchases = gs,
+           real_gdp = gdph,
+           real_potential_gdp = gdppothq,
+           potential_gdp = gdppotq) %>% 
+    filter_index('2020 Q1' ~ '2022 Q4') %>% 
+    mutate(across(where(is.numeric), 
+                  ~ q_g(.x),
+                  .names = "{.col}_growth"))
+    
+}
+
+july %<>% clean_economic_projections()
+feb %<>% clean_economic_projections()
+```
+
+```{r}
+econ_comparison_plot <- function(variable){
+  july %>% 
+    select(date ,{{variable}}) %>% 
+    full_join(feb %>% select(date, {{variable}}), by = 'date') %>% 
+    pivot_longer(-date) %>% 
+    ggplot(aes(x = date , y = value, color = name)) +
+    geom_line(size = 1, alpha =  0.5) +
+    geom_point() +
+    theme_hc() +
+    scale_color_brewer(name = '', labels = c('July 2020', 'February 2021'), type = 'qual', palette = 'Set1') +
+    scale_y_continuous(name = '') +
+    labs(title =  as_label( enquo(variable)))
+}
+purrr::map(names(feb[2:16]), econ_comparison_plot)
+```
+```{r}
+purrr::map(feb %>% as_tibble() %>% select(ends_with('growth')) %>% names(), econ_comparison_plot)
+```
+

@@ -90,7 +90,9 @@ contributions %>%
                names_to = 'variable') %>%
   fim_plot(title = 'Total', last_date = last_hist_date) +
   scale_fill_manual(labels = " Quarterly fiscal impact",
-                    values = total_pink) 
+                    values = total_pink) +
+  fim_theme() +
+  guidez
 
 contributions %>%
   select(
@@ -110,7 +112,9 @@ contributions %>%
       " Taxes, Transfers, & Subsidies"
     ),
     values =  c(state_local_purple, federal_blue, taxes_transfers_green)
-  )
+  ) + 
+ fim_theme() + 
+  guidez
 ```
 
 

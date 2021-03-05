@@ -166,7 +166,7 @@ as_federal<-function(x){
   return(x)
 }
 add_factors <- function(df) {
-  add_factors <- readxl::read_excel("data/add-ons/LSFIM_KY_v7.xlsx",
+  add_factors <- readxl::read_excel("data/add-ons/add_factors.xlsx",
                                     sheet = "FIM Add Factors") %>% mutate(date = lubridate::as_date(date))
   df %>% dplyr::full_join(
     add_factors %>% dplyr::select(-tidyselect::ends_with("override")) %>%
@@ -197,10 +197,6 @@ add_factors <- function(df) {
       federal_health_outlays,
     social_benefits = state_social_benefits +
       federal_social_benefits,
-    noncorp_taxes = state_noncorp_taxes +
-      federal_noncorp_taxes,
-    corporate_taxes = state_corporate_taxes +
-      federal_corporate_taxes,
     subsidies = state_subsidies +
       federal_subsidies,
     federal_rebate_checks = federal_rebate_checks +
