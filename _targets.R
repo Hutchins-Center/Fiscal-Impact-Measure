@@ -2,12 +2,13 @@ library(targets)
 library(tarchetypes)
 source('R/packages.R')
 source('R/functions.R')
-library('lubridate')
 library('conflicted')
 conflict_prefer('filter', 'dplyr')
 conflict_prefer("month", "lubridate")
+conflict_prefer('year', 'lubridate')
 conflict_prefer('lag', 'dplyr')
-current_month <- fim::get_current_month()
+
+current_month <- glue::glue(lubridate::month(lubridate::today()), '-', lubridate::year(lubridate::today()))
 components <- get_components_names()
 # This is an example _targets.R file. Every
 # {targets} pipeline needs one.

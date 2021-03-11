@@ -14,6 +14,10 @@ library('lubridate')
 library('glue')
 library('readxl')
 library('tsibble')
+library('gghutchins')
+conflicted::conflict_prefer('filter', 'dplyr')
+conflicted::conflict_prefer('geom_col', 'ggplot2')
+conflicted::conflict_prefer('geom_line', 'ggplot2')
 # Functions -----------------------------------------------------------------------------------
 comparison_theme <- function() {
   theme(
@@ -59,13 +63,11 @@ comparison_plot <-
                  fill = key)) +
       geom_col(position = 'dodge') +
       geom_vline(xintercept = last_hist_date - 45, linetype = 'dotted') +
-      labs(x = '', y = '', title = title) +
-      scale_fill_brewer(
+      labs(x = '', y = '', title = paste0(title, '<br>')) +
+      scale_fill_hutchins(
         name = "",
         labels = c('Updated', 'Previous'),
-        type = 'qual',
-        palette = 'Paired',
-        direction = -1
+        pal = 'cool',
       ) +
       scale_x_yearquarter(breaks = waiver(),
                           date_breaks = '3 months',
@@ -74,9 +76,9 @@ comparison_plot <-
                   space = "free_x",
                   scales = "free_x",
                   switch = "x")  +
-      theme_hc() +
-      comparison_theme()
+      theme_hutchins() 
   }
+
 
 # Data ----------------------------------------------------------------------------------------
 
