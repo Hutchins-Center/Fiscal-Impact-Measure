@@ -108,12 +108,18 @@ new <-
   mutate(key = 'new',
          date = yearquarter(date))
 
-
+new <- tar_read(fim) %>% 
+  mutate(date = as_date(date)) %>%
+  filter(date >= '2017-12-31' & date <= last_proj_date) %>%
+  select(date, fiscal_impact, ends_with('cont')) %>%
+  rename_with(.fn =  ~ str_remove(.x, '_cont'), ends_with('cont')) %>%
+  mutate(key = 'new',
+         date = yearquarter(date))
+  
 
 # Figures -------------------------------------------------------------------------------------
 
 
-fiscal_impact <-
   comparison_plot(title = 'Quarterly Fiscal Impact')
 # Purchases
 ## Total
@@ -176,8 +182,8 @@ state_ui <-
   comparison_plot(state_unemployment_insurance, title = ' State Unemployment Insurance')
 
 # Rebate checks
-rebate_checks <-
-  comparison_plot(variable = rebate_checks, title = 'Rebate checks')
+(rebate_checks <-
+  comparison_plot(variable = rebate_checks, title = 'Rebate checks'))
 # Social benefits
 social_benefits <-
   comparison_plot(social_benefits, title = 'Social Benefits Remainder')

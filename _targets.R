@@ -2,6 +2,7 @@ library(targets)
 library(tarchetypes)
 source('R/packages.R')
 source('R/functions.R')
+source('R/mpc.R')
 library('lubridate')
 library('conflicted')
 conflict_prefer('filter', 'dplyr')
@@ -87,10 +88,15 @@ plan <-
                    calculate_mpc('subsidies') %>%
                    calculate_mpc('health_outlays') %>%
                    calculate_mpc('social_benefits') %>%
-                   calculate_mpc('unemployment_insurance') %>%
-                   calculate_mpc('rebate_checks') %>%
                    calculate_mpc('noncorp_taxes') %>%
                    calculate_mpc('corporate_taxes') %>%
+                   mutate(rebate_checks_post_mpc = mpc_rebate_checks(rebate_checks_minus_neutral),
+                          federal_rebate_checks_post_mpc = mpc_rebate_checks(federal_rebate_checks_minus_neutral),
+                          state_rebate_checks_post_mpc = mpc_rebate_checks(state_rebate_checks_minus_neutral)
+                          ) %>% 
+                   mutate(federal_unemployment_insurance_post_mpc = mpc_unemployment_insurance(federal_unemployment_insurance_minus_neutral),
+                          state_unemployment_insurance_post_mpc = mpc_unemployment_insurance(state_unemployment_insurance_minus_neutral),
+                          unemployment_insurance_post_mpc = state_unemployment_insurance_post_mpc + federal_unemployment_insurance_post_mpc ) %>%  
                    taxes_contributions() %>%
                    sum_taxes_contributions() %>%
                    transfers_contributions() %>%
