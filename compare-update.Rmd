@@ -54,7 +54,6 @@ state
 ```
 
 ## Grants {.tabset .tabset-pills}
-
 ### Contributions
 
 ```{r grants}

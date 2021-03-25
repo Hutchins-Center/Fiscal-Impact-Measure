@@ -7,9 +7,7 @@ header-includes:
 
 output: pdf_document
 mainfont: Arial 
-geometry: "top=0cm, bottom=0cm, left=2cm, right=2cm"
 ---
-\pagenumbering{gobble}
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis',
@@ -18,7 +16,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 
 ```
 
 ```{r libraries, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
-library(drake)
+library('targets')
 library('tidyverse')
 library('magrittr')
 library('ggthemes')
@@ -30,11 +28,12 @@ library(gridExtra)
 library('fim')
 library('glue')
 library('lubridate')
+source('R/functions.R')
 ```
 
 ```{r data, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
-loadd(historical)
-loadd(contributions)
+tar_load(historical)
+tar_load(contributions)
 ```
 
 ```{r constants, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
@@ -68,27 +67,7 @@ colour = guide_legend(keywidth = unit(0.8, "cm"),
 
 ```
 
-```{r}
-uni.theme <- function() {
-  theme_bw() +
-    theme(legend.position = "bottom", 
-          panel.grid.minor.x=element_blank(),
-          panel.grid.major.x=element_blank(),
-          plot.margin=unit(c(1.2,.5,.5,.5),"cm"),
-          plot.title = element_markdown(size=12),
-          plot.subtitle = element_markdown(size=10) , 
-          plot.caption = 
-            element_textbox_simple(size = 9,
-                                   lineheight = 1,
-                                   padding = margin(5.5, 5.5, 5.5, 5.5),
-                                   margin = margin(0, 0, 5.5, 0)),
-          legend.text=element_markdown(size=10), 
-          legend.title=element_blank(),
-          legend.spacing.y = unit(2, 'cm')
-    ) # , legend.margin = unit(c(rep(-.8, 4)),"cm")
-}
 
-```
 
 ```{r}
 recessions <-
@@ -103,15 +82,17 @@ recession_shade <-
 
 
 ```{r total impact, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
-loadd(last_hist_date)
+tar_load(last_hist_date)
 
 contributions %>%
   select(date, fiscal_impact, fiscal_impact_moving_average) %>%
   pivot_longer(cols = -c(date, fiscal_impact_moving_average),
                names_to = 'variable') %>%
-  fim_plot(title = 'Total') +
+  fim_plot(title = 'Total', last_date = last_hist_date) +
   scale_fill_manual(labels = " Quarterly fiscal impact",
-                    values = total_pink) 
+                    values = total_pink) +
+  fim_theme() +
+  guidez
 
 contributions %>%
   select(
@@ -123,7 +104,7 @@ contributions %>%
   ) %>%
   pivot_longer(cols = -c(date, fiscal_impact_moving_average),
                names_to = 'variable') %>%
-  fim_plot(title = 'Components') +
+  fim_plot(title = 'Components',  last_date = last_hist_date) +
   scale_fill_manual(
     labels = c(
       " State & Local Purchases",
@@ -131,7 +112,9 @@ contributions %>%
       " Taxes, Transfers, & Subsidies"
     ),
     values =  c(state_local_purple, federal_blue, taxes_transfers_green)
-  )
+  ) + 
+ fim_theme() + 
+  guidez
 ```
 
 

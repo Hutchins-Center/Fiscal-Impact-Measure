@@ -2,7 +2,7 @@
 
 # Packages ------------------------------------------------------------------------------------
 
-library('drake')
+library('targets')
 library('tidyverse')
 library('magrittr')
 library('ggthemes')
@@ -14,6 +14,10 @@ library('lubridate')
 library('glue')
 library('readxl')
 library('tsibble')
+library('gghutchins')
+conflicted::conflict_prefer('filter', 'dplyr')
+conflicted::conflict_prefer('geom_col', 'ggplot2')
+conflicted::conflict_prefer('geom_line', 'ggplot2')
 # Functions -----------------------------------------------------------------------------------
 comparison_theme <- function() {
   theme(
@@ -59,13 +63,11 @@ comparison_plot <-
                  fill = key)) +
       geom_col(position = 'dodge') +
       geom_vline(xintercept = last_hist_date - 45, linetype = 'dotted') +
-      labs(x = '', y = '', title = title) +
-      scale_fill_brewer(
+      labs(x = '', y = '', title = paste0(title, '<br>')) +
+      scale_fill_hutchins(
         name = "",
         labels = c('Updated', 'Previous'),
-        type = 'qual',
-        palette = 'Paired',
-        direction = -1
+        pal = 'cool',
       ) +
       scale_x_yearquarter(breaks = waiver(),
                           date_breaks = '3 months',
@@ -74,20 +76,19 @@ comparison_plot <-
                   space = "free_x",
                   scales = "free_x",
                   switch = "x")  +
-      theme_hc() +
-      comparison_theme()
+      theme_hutchins() 
   }
+
 
 # Data ----------------------------------------------------------------------------------------
 
 
-loadd(last_hist_date)
-last_proj_date <- last_hist_date + years(2)
 
 
 last_month <- get_previous_month()
 current_month <- get_current_month()
-
+tar_load(last_hist_date)
+tar_load(last_proj_date)
 old <-
   read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
@@ -134,10 +135,16 @@ investment_grants <-
   comparison_plot(federal_igrants, title = 'Investment Grants')
 
 # Taxes
+
 taxes<- comparison_plot(taxes, 'Taxes')
 federal_taxes<- comparison_plot(taxes, 'Federal Taxes')
 state_taxes<- comparison_plot(taxes, 'State Taxes')
 
+
+new %>%
+  select(date,federal_taxes) %>%
+  pivot_longer(-date) %>%
+  ggplot(aes(x=date,y =value,fill=name))+geom_line()
 corp_taxes <- comparison_plot(corporate_taxes, 'Taxes')
 federal_corp_taxes <- comparison_plot(corporate_taxes, 'Federal Taxes')
 state_corp_taxes <- comparison_plot(corporate_taxes, 'State Taxes')

@@ -1,3 +1,12 @@
+millions_to_billions <- function(df){
+  df %>% 
+    dplyr::mutate(
+      dplyr::across(.cols = any_of(c('gftfbusx', 'gfeghhx', 'gfeghdx', 'gfeigx')),
+                    .fns = ~ . / 1000)
+    )
+}
+
+
 create_override <- function(df, var, start, end, values){
   override <- 
     tibble(date = df %>%
@@ -145,4 +154,92 @@ add_factors_v2 <- function(df, last_date){
       federal_rebate_checks = federal_rebate_checks + add_rebate_checks,
       rebate_checks = rebate_checks + add_rebate_checks
     )
+}
+
+as_state<- function(x){
+  x <- glue('state_{x}')
+  return(x)
+}
+
+as_federal<-function(x){
+  x <- glue('federal_{x}')
+  return(x)
+}
+add_factors <- function(df) {
+  add_factors <- readxl::read_excel("data/add-ons/add_factors.xlsx",
+                                    sheet = "FIM Add Factors") %>% mutate(date = lubridate::as_date(date))
+  df %>% dplyr::full_join(
+    add_factors %>% dplyr::select(-tidyselect::ends_with("override")) %>%
+      filter(date > '2020-12-31'),
+    by = "date"
+  ) %>% dplyr::mutate(dplyr::across(
+    .cols = tidyselect::starts_with("add_"),
+    .fns = ~
+      if_else(is.na(.x), 0, .x)
+  )) %>% dplyr::mutate(
+    state_health_outlays = state_health_outlays +
+      add_state_health_outlays,
+    state_social_benefits = state_social_benefits +
+      add_state_social_benefits,
+    federal_health_outlays = federal_health_outlays +
+      add_federal_health_outlays,
+    federal_social_benefits = federal_social_benefits +
+      add_federal_social_benefits,
+    federal_subsidies = federal_subsidies +
+      add_federal_subsidies,
+    federal_cgrants = federal_cgrants +
+      add_federal_cgrants,
+    state_local_nom = state_local_nom +
+      add_state_purchases,
+    federal_nom = add_federal_purchases +
+      federal_nom,
+    health_outlays = state_health_outlays +
+      federal_health_outlays,
+    social_benefits = state_social_benefits +
+      federal_social_benefits,
+    subsidies = state_subsidies +
+      federal_subsidies,
+    federal_rebate_checks = federal_rebate_checks +
+      add_rebate_checks,
+    rebate_checks = rebate_checks + add_rebate_checks
+  )
+}
+
+
+fim_plot <- function (df, title, last_date) 
+{
+  df %>% ggplot() + geom_bar(aes(x = date, y = value, fill = variable), 
+                             stat = "identity", width = 50) + geom_line(aes(x = date, 
+                                                                            y = fiscal_impact_moving_average, colour = "4-quarter moving-average")) + 
+    geom_point(aes(x = date, y = fiscal_impact_moving_average, 
+                   colour = "4-quarter moving-average"), size = 1) + 
+    labs(title = glue("**Hutchins Center Fiscal Impact Measure: {title}**"), 
+         x = "", y = "", subtitle = "Fiscal Policy Contribution to Real GDP Growth, percentage points", 
+         caption = "Source: Hutchins Center calculations from Bureau of Economic Analysis \n        and Congressional Budget Office data; grey shaded areas indicate recessions \n        and yellow shaded areas indicate projection.") + 
+    geom_richtext(aes(x = Sys.Date() + 350, y = 16), label = "Projection", 
+                  cex = 2, fill = NA, label.color = NA, ) + annotate("rect", 
+                                                                     xmin = last_date + 40, xmax = lubridate::as_date("2022-12-31"), 
+                                                                     ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "yellow") + 
+    scale_x_date(breaks = 0, date_breaks = "2 years", date_labels = "%Y", 
+                 expand = c(0, 0)) + scale_color_manual(" ", values = c(`4-quarter moving-average` = "black", 
+                                                                        `4-quarter moving-average` = "black")) + uni.theme()
+}
+
+uni.theme <- function() {
+  theme_bw() +
+    theme(legend.position = "bottom", 
+          panel.grid.minor.x=element_blank(),
+          panel.grid.major.x=element_blank(),
+          plot.margin=unit(c(1.2,.5,.5,.5),"cm"),
+          plot.title = element_markdown(size=12),
+          plot.subtitle = element_markdown(size=10) , 
+          plot.caption = 
+            element_textbox_simple(size = 9,
+                                   lineheight = 1,
+                                   padding = margin(5.5, 5.5, 5.5, 5.5),
+                                   margin = margin(0, 0, 5.5, 0)),
+          legend.text=element_markdown(size=10), 
+          legend.title=element_blank(),
+          legend.spacing.y = unit(2, 'cm')
+    ) # , legend.margin = unit(c(rep(-.8, 4)),"cm")
 }

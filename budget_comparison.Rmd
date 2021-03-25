@@ -1,0 +1,151 @@
+---
+title: "CBO Budget Projections"
+author: "Manuel Alcala Kovalski"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage[default]{sourcesanspro}
+   - \usepackage[T1]{fontenc}
+mainfont: SourceSansPro
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+This report will compare CBO's budget projections from February of 2021 to their projections from September of 2020 and their economic projections from July of 2020 relative to their February 2021 projections.
+# Budget Projections Update
+
+
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  echo = FALSE,
+  fig.align = 'center',
+  warning = FALSE,
+  message = FALSE,
+  cache = TRUE, 
+  dpi = 700
+)
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r packages}
+librarian::shelf('tidyverse', 'ggtext', 'ggthemes', 'thomasp85/patchwork', 'magrittr',
+                 'tsibble', 'fim')
+```
+
+```{r data}
+
+clean_data <- function(df){
+  df %>% 
+    rename(social_benefits = gftfp,
+                                                                                                              personal_taxes = gfrpt,
+                                                                                                              production_taxes = gfrpri,
+                                                                                                              corporate_taxes = gfrcp,
+                                                                                                              payroll_taxes = gfrs, 
+                                                                                                              medicare = yptmr,
+                                                                                                              medicaid = yptmd,
+                                                                                                              ui = yptu) %>% 
+  mutate(noncorporate_taxes = personal_taxes + payroll_taxes + production_taxes) 
+}
+new <- readxl::read_excel('data/raw/cbo/cbo_budget_nipas_proj_annual.xlsx') %>% mutate(id = 'new') %>% clean_data()
+old <- readxl::read_excel('data/raw/cbo/archive/budget_projections_09_2020.xlsx') %>% mutate(id = 'old') %>% clean_data()
+```
+
+```{r}
+comparison_plot <- function(variable){
+  
+  old %>% 
+    select(fy ,{{variable}}) %>% 
+    filter(fy <= 2023) %>% 
+    full_join(new %>% filter(fy <= 2023) %>% select(fy, {{variable}}), by = 'fy') %>% 
+    pivot_longer(-fy) %>% 
+    ggplot(aes(x = fy , y = value, color = name)) +
+    geom_line(size = 1, alpha =  0.5) +
+    geom_point()+
+    theme_hc() +
+    scale_color_brewer(name = '', labels = c('September 2020', 'February 2021'), type = 'qual', palette = 'Set1') +
+    scale_y_continuous(name = '')
+   
+  
+    
+}
+
+
+```
+
+## Health Outlays
+
+```{r}
+medicaid <- comparison_plot(medicaid) + labs(title = 'Medicaid ') 
+medicare <- comparison_plot(medicare) + labs(title = 'Medicare ')
+
+medicaid  + medicare
+```
+
+## Taxes
+
+```{r taxes}
+corporate <- comparison_plot(corporate_taxes) + labs(title = 'Corporate taxes')
+noncorporate <- comparison_plot(noncorporate_taxes) + labs(title = 'Noncorporate taxes')
+
+corporate + noncorporate
+```
+
+## Unemployment Insurance
+
+```{r ui}
+comparison_plot(ui) + labs(title = 'Unemployment Insurance')
+```
+
+# Economic Projections
+
+```{r}
+july <- readxl::read_xlsx('data/raw/cbo/archive/economic_projections_072020.xlsx')
+feb <- readxl::read_xlsx('data/raw/cbo/cbo_econ_proj_quarterly.xlsx')
+```
+
+```{r}
+clean_economic_projections <- function(df){
+  df %>% 
+    mutate(date = tsibble::yearquarter(date)) %>% 
+    as_tsibble(index = date) %>% 
+    rename(purchases = g,
+           federal_purchases = gf,
+           state_purchases = gs,
+           real_gdp = gdph,
+           real_potential_gdp = gdppothq,
+           potential_gdp = gdppotq) %>% 
+    filter_index('2020 Q1' ~ '2022 Q4') %>% 
+    mutate(across(where(is.numeric), 
+                  ~ q_g(.x),
+                  .names = "{.col}_growth"))
+    
+}
+
+july %<>% clean_economic_projections()
+feb %<>% clean_economic_projections()
+```
+
+```{r}
+econ_comparison_plot <- function(variable){
+  july %>% 
+    select(date ,{{variable}}) %>% 
+    full_join(feb %>% select(date, {{variable}}), by = 'date') %>% 
+    pivot_longer(-date) %>% 
+    ggplot(aes(x = date , y = value, color = name)) +
+    geom_line(size = 1, alpha =  0.5) +
+    geom_point() +
+    theme_hc() +
+    scale_color_brewer(name = '', labels = c('July 2020', 'February 2021'), type = 'qual', palette = 'Set1') +
+    scale_y_continuous(name = '') +
+    labs(title =  as_label( enquo(variable)))
+}
+purrr::map(names(feb[2:16]), econ_comparison_plot)
+```
+```{r}
+purrr::map(feb %>% as_tibble() %>% select(ends_with('growth')) %>% names(), econ_comparison_plot)
+```
+

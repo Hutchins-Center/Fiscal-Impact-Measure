@@ -127,7 +127,6 @@ contribution_nipas <- function(.data, var){
 
 
 
-
 annual_to_quarter <- function(df, var){
  
    year_to_quarter <- function(df, year){
@@ -138,16 +137,16 @@ annual_to_quarter <- function(df, var){
     df %>%
       uncount(4) %>%
       mutate(yq = paste({{year}}, q) %>% 
-               yearquarter(fiscal_start = 12)
+               yearquarter(fiscal_start = 10)
       ) %>%
       as_tsibble(index = yq)
   }
   df %>%
     year_to_quarter({{var}}) %>%
-    mutate(date = glue('{year(yq)}-{month(yq)}') %>% 
-             as.yearmon() %>% as_date() + months(1) - days(1),
-           yq = yearquarter(yq)
-    ) %>%
+    mutate(date = glue('{{lubridate::year(yq)}}-{{lubridate::month(yq)}}') %>% 
+             zoo::as.yearmon() %>% lubridate::as_date() + base::months(1) - lubridate::days(1),
+           yq = tsibble::yearquarter(yq)
+    ) %>% 
     select(-{{var}}) %>%
     select(date, yq, everything())
 }
