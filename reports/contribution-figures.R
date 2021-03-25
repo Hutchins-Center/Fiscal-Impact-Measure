@@ -67,7 +67,7 @@ comparison_plot <-
       scale_fill_hutchins(
         name = "",
         labels = c('Updated', 'Previous'),
-        pal = 'cool',
+        pal = 'qual',
       ) +
       scale_x_yearquarter(breaks = waiver(),
                           date_breaks = '3 months',

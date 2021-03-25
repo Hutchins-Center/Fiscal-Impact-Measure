@@ -30,7 +30,7 @@ knitr::opts_chunk$set(
   fig.align = 'center',
   warning = FALSE,
   message = FALSE,
-  cache = TRUE 
+  cache = FALSE
 )
 
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
