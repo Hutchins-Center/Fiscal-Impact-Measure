@@ -243,3 +243,132 @@ uni.theme <- function() {
           legend.spacing.y = unit(2, 'cm')
     ) # , legend.margin = unit(c(rep(-.8, 4)),"cm")
 }
+
+
+annual_to_quarter <- function(df) {
+  year <-
+    df %>%
+    tsibble::index_var()
+  min <-
+    df %>%
+    select(rlang::enexpr(year)) %>%
+    min()
+  
+  max <-
+    df %>%
+    select(rlang::enexpr(year)) %>%
+    max()
+  start <- tsibble::yearquarter(glue::glue('{min} Q1'))
+  end <- tsibble::yearquarter(glue::glue('{max} Q4'))
+  x <- seq(start,  end, by = 1)
+  
+  df %>%
+    as_tibble() %>%
+    slice(rep(1:n(), each = 4)) %>%
+    mutate(date = tsibble::yearquarter(x, fiscal_start =  1)) %>%
+    relocate(date, .before =  everything()) %>%
+    tsibble::as_tsibble(index = date)
+}
+
+
+
+transfers_contributions <- function (df)
+{
+  transfers <- c(
+    "social_benefits",
+    "health_outlays",
+    "subsidies",
+    "unemployment_insurance",
+    "rebate_checks") %>% paste0("_post_mpc")
+  
+  arp_transfers <- c('federal_ui_arp',
+                     'state_ui_arp',
+                     'rebate_checks_arp',
+                     'other_direct_aid',
+                     'other_vulnerable',
+                     'aid_to_small_businesses',
+                     'health_grants_arp') %>%  paste0('_minus_neutral_post_mpc')
+  all_transfers <-
+    c(glue("{transfers}"),
+      glue("federal_{transfers}"),
+      glue("state_{transfers}"))
+  df %>% mutate(across(
+    .cols = all_of(all_transfers),
+    .fns = ~ 400 *
+      .x / lag(gdp),
+    .names = "{.col}_cont"
+  )) %>% rename_with( ~ gsub("post_mpc_cont",
+                             "cont", .x)) %>% 
+    mutate(across(.cols = all_of(arp_transfers), 
+                  .fns = ~ 400 * .x / lag(gdp),
+                  .names = '{.col}_cont')) %>% 
+    rename_with(~gsub('minus_neutral_post_mpc_cont', 
+                      'cont', .x))
+}
+
+
+
+sum_transfers_contributions <-function (df){
+  transfers <- c(
+    "social_benefits",
+    "health_outlays",
+    "subsidies",
+    "unemployment_insurance",
+    "rebate_checks"
+  )
+  df %>% mutate(
+    transfers_cont = rowSums(select(., .dots = all_of(
+      str_glue("{transfers}_cont")
+    )),
+    na.rm = TRUE),
+    federal_transfers_cont = rowSums(select(.,
+                                            .dots = all_of(
+                                              str_glue("federal_{transfers}_cont")
+                                            )),
+                                     na.rm = TRUE),
+    state_transfers_cont = rowSums(select(.,
+                                          .dots = all_of(
+                                            str_glue("state_{transfers}_cont")
+                                          )),
+                                   na.rm = TRUE)
+  ) %>% 
+    mutate(
+      federal_transfers_cont_no_arp = federal_transfers_cont,
+      state_transfers_cont_no_arp = state_transfers_cont,
+      transfers_cont_no_arp = transfers_cont,
+      
+      
+      federal_transfers_cont = federal_transfers_cont_no_arp + federal_ui_arp_cont + rebate_checks_arp_cont + other_vulnerable_cont + other_direct_aid_cont + aid_to_small_businesses_cont +  health_grants_arp_cont, 
+      
+      state_transfers_cont = state_transfers_cont_no_arp + state_ui_arp_cont,
+      transfers_cont = federal_transfers_cont + state_transfers_cont)
+}
+
+
+
+coalesce_join <- function(x, y, 
+                          by = NULL, suffix = c(".x", ".y"), 
+                          join = dplyr::full_join, ...) {
+  joined <- join(x, y, by = by, suffix = suffix, ...)
+  # names of desired output
+  cols <- union(names(x), names(y))
+  
+  to_coalesce <- names(joined)[!names(joined) %in% cols]
+  suffix_used <- suffix[ifelse(endsWith(to_coalesce, suffix[1]), 1, 2)]
+  # remove suffixes and deduplicate
+  to_coalesce <- unique(substr(
+    to_coalesce, 
+    1, 
+    nchar(to_coalesce) - nchar(suffix_used)
+  ))
+  
+  coalesced <- purrr::map_dfc(to_coalesce, ~dplyr::coalesce(
+    joined[[paste0(.x, suffix[1])]], 
+    joined[[paste0(.x, suffix[2])]]
+  ))
+  names(coalesced) <- to_coalesce
+  
+  dplyr::bind_cols(joined, coalesced)[cols]
+}
+
+source('R/mpc.R')

@@ -44,14 +44,20 @@ source('reports/contribution-figures.R')
 fiscal_impact
 ```
 
-# Purchases
+# Purchases  {.tabset .tabset-pills}
 
-## Total
+## Contributions
 
 ```{r}
 federal
 state
 ```
+## Levels 
+```{r}
+federal_levels
+state_levels
+```
+
 
 ## Grants {.tabset .tabset-pills}
 ### Contributions

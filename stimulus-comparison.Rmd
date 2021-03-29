@@ -1,0 +1,204 @@
+---
+title: 'Stimulus Comparison'
+subtitle: 'Comparison of projected spending due to 2020 stimulus legislation vs due to the American Rescue Plan'
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage[default]{sourcesanspro}
+   - \usepackage[T1]{fontenc}
+mainfont: Roboto
+output:
+  html_document:
+    theme: united
+    highlight: zenburn 
+    hig.retina: 3
+    self_contained: yes
+    css: [style.css]
+vignette: |
+  %\VignetteIndexEntry{Vignette Title} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  echo = FALSE,
+  fig.align = 'center',
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE,
+  fig.path = 'figures/knitr'
+)
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+
+```{r cars}
+library(targets)
+library(tarchetypes)
+source('R/packages.R')
+source('R/functions.R')
+library('conflicted')
+conflict_prefer('filter', 'dplyr')
+conflict_prefer("month", "lubridate")
+conflict_prefer('year', 'lubridate')
+conflict_prefer('lag', 'dplyr')
+
+current_month <- glue::glue(lubridate::month(lubridate::today()), '-', lubridate::year(lubridate::today()))
+components <- get_components_names()
+
+library('targets')
+library('tidyverse')
+library('magrittr')
+library('ggthemes')
+library('ggtext')
+library('ggthemes')
+library('gridExtra')
+library('fim')
+library('lubridate')
+library('glue')
+library('readxl')
+library('tsibble')
+library('gghutchins')
+conflicted::conflict_prefer('filter', 'dplyr')
+conflicted::conflict_prefer('geom_col', 'ggplot2')
+conflicted::conflict_prefer('geom_line', 'ggplot2')
+
+
+last_month <- get_previous_month()
+current_month <- get_current_month()
+tar_load(last_hist_date)
+tar_load(last_proj_date)
+tar_load(fim)
+theme_set(theme_hutchins())
+```
+
+
+
+
+
+```{r pressure, include = FALSE, echo=FALSE}
+tar_load(fim)
+df <- 
+  fim %>% 
+  select(date, federal_unemployment_insurance, federal_subsidies, rebate_checks, federal_cgrants, federal_ui_arp, aid_to_small_businesses, non_health_grants, rebate_checks_arp)  %>%
+  mpc_arp_non_health_grants() %>% 
+  summarise(date, 
+            federal_ui_2020 = mpc_unemployment_insurance(federal_unemployment_insurance),
+            federal_ui_arp = mpc_vulnerable_arp(federal_ui_arp),
+            federal_subsidies_2020 = if_else(date < '2021-03-31',
+                                             mpc_subsidies(federal_subsidies),
+                                             mpc_subsidies_second_draw(federal_subsidies)),
+            aid_to_small_businesses = mpc_small_businesses_arp(aid_to_small_businesses),
+            non_health_grants = non_health_grants_post_mpc,
+            rebate_checks_2020 = mpc_rebate_checks(rebate_checks),
+            rebate_checks_arp = mpc_direct_aid_arp(rebate_checks_arp),
+            federal_cgrants
+            
+            )
+```
+
+
+ 
+## UI
+```{r}
+legend <- c('CARES Act+ December Stimulus', 'American Rescue Plan')
+
+df %>% 
+  select(date, federal_ui_arp, federal_ui_2020) %>% 
+  pivot_longer(-date) %>% 
+  filter(date > '2019-12-31' & date < '2023-12-31') %>% 
+  mutate(date = yearquarter(date)) %>% 
+  ggplot(aes(x = date, y = value, fill = name)) +
+  geom_col(position = 'dodge') +
+  scale_fill_hutchins(labels = c('CARES Act+ December Stimulus', 'American Rescue Plan')) +
+  theme(legend.position = 'top') +
+  labs(title = 'Spending due to Federal Unemployment Insurance',
+       subtitle = 'UI from 2020 legislation starts dropping off in Q2 2021 until Q1 2023.') +
+      scale_x_yearquarter(breaks = waiver(),
+                          date_breaks = '3 months',
+                          date_labels = "Q%q") +
+      facet_grid( ~ year(date),
+                  space = "free_x",
+                  scales = "free_x",
+                  switch = "x")  
+```
+
+
+## Rebate checks
+
+```{r}
+df %>% 
+  select(date, rebate_checks_2020, rebate_checks_arp
+         ) %>% 
+  pivot_longer(-date) %>% 
+  filter(date > '2019-12-31' & date <= '2023-12-31') %>% 
+  mutate(date = yearquarter(date)) %>% 
+  ggplot(aes(x = date, y = value, fill = name)) +
+  geom_col(position = 'dodge') +
+  scale_fill_hutchins(labels = c('CARES Act+ December Stimulus', 'American Rescue Plan')) +
+  theme(legend.position = 'top') +
+  labs(title = 'Spending due to Rebate Checks',
+       subtitle = 'Rebate checks from 2020 legislation starts dropping off in Q2 2021 until Q3 2023.') +
+      scale_x_yearquarter(breaks = waiver(),
+                          date_breaks = '3 months',
+                          date_labels = "Q%q") +
+      facet_grid( ~ year(date),
+                  space = "free_x",
+                  scales = "free_x",
+                  switch = "x")  
+```
+
+## Aid to S&L Governments
+
+```{r}
+df %>% 
+  select(date, federal_cgrants, non_health_grants) %>% 
+  pivot_longer(-date) %>% 
+  arrange(desc(name)) %>% 
+  filter(date > '2019-12-31' & date < '2030-12-31') %>% 
+  mutate(date = yearquarter(date)) %>% 
+  ggplot(aes(x = date, y = value, fill = name)) +
+  geom_col(position = 'dodge') +
+  scale_fill_hutchins(rev = FALSE,
+                      labels = c('Federal Consumption Grants without ARP', 'ARP aid to S&L governments') ) +
+  theme(legend.position = 'top') +
+  labs(title = 'Federal Consumption Grants',
+       subtitle = 'Spending by S&L governments due to federal  grants ',
+       caption = '<br>**Note**: We never separated Grants from 2020 legislation from other consumption grants since they were included as an add factor. Therefore, we cant separate spending from Aid to S&L governments into CARES Act + December stimulus in this case.') +
+      scale_x_yearquarter(breaks = waiver(),
+                          date_breaks = '3 months',
+                          date_labels = "Q%q") +
+      facet_grid( ~ year(date),
+                  space = "free_x",
+                  scales = "free_x",
+                  switch = "x")  
+```
+
+
+## Subsidies
+
+```{r}
+df %>% 
+  select(date, federal_subsidies_2020, aid_to_small_businesses) %>% 
+  pivot_longer(-date) %>% 
+  arrange(desc(name)) %>% 
+  filter(date > '2019-12-31' & date < '2025-12-31') %>% 
+  mutate(date = yearquarter(date)) %>% 
+  ggplot(aes(x = date, y = value, fill = factor(name, levels = c("federal_subsidies_2020", "aid_to_small_businesses")))) +
+  geom_col(position = 'dodge') +
+  scale_fill_hutchins(rev = FALSE,
+                      labels = c('Subsidies without ARP', 'ARP Subsidies (Aid to small businesses)') ) +
+  theme(legend.position = 'top') +
+  labs(title = 'Spending due to Federal Subsidies',
+       subtitle = 'Federal Subsidies without the American Rescue Plan stimulus starts dropping off in Q3 2021.',
+       caption = '<br>**Note**: We never separated PPP from other subsidies since PPP was included as an add factor. Therefore, we cant separate subsidies into CARES Act + December stimulus in this case.') +
+      scale_x_yearquarter(breaks = waiver(),
+                          date_breaks = '3 months',
+                          date_labels = "Q%q") +
+      facet_grid( ~ year(date),
+                  space = "free_x",
+                  scales = "free_x",
+                  switch = "x")  
+```
+

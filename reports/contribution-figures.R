@@ -61,13 +61,15 @@ comparison_plot <-
       ggplot(aes(x = date,
                  y = value,
                  fill = key)) +
-      geom_col(position = 'dodge') +
+      geom_col(position=position_dodge2(reverse = TRUE)) +
       geom_vline(xintercept = last_hist_date - 45, linetype = 'dotted') +
+      theme_hutchins() +
       labs(x = '', y = '', title = paste0(title, '<br>')) +
       scale_fill_hutchins(
         name = "",
         labels = c('Updated', 'Previous'),
         pal = 'qual',
+        rev = FALSE
       ) +
       scale_x_yearquarter(breaks = waiver(),
                           date_breaks = '3 months',
@@ -76,7 +78,9 @@ comparison_plot <-
                   space = "free_x",
                   scales = "free_x",
                   switch = "x")  +
-      theme_hutchins() 
+      theme(legend.position = 'top') +
+      guides(fill = guide_legend(reverse = TRUE)) 
+
   }
 
 
@@ -114,9 +118,19 @@ new <-
 
 # Figures -------------------------------------------------------------------------------------
 
+theme_set(theme_hutchins())
+new %>% 
+  mutate(arp_cont = federal_ui_arp + rebate_checks_arp + aid_to_small_businesses + health_grants_arp + non_health_grants + other_direct_aid + other_vulnerable) %>% 
+  select(date, arp_cont) %>% 
+  pivot_longer(arp_cont) %>% 
+  ggplot(aes(x = date, y = value, fill = name)) +
+  geom_col() +
+  labs(title = 'Contribution of the American Rescue Plan',
+       subtitle = 'Includes unemployment insurance, rebate checks, aid to small businesses, health grants, grants to S&L governments, direct aid to households and aid to vulnerable individuals')  +
+  scale_fill_hutchins()
 
-fiscal_impact <-
-  comparison_plot(title = 'Quarterly Fiscal Impact')
+(fiscal_impact <-
+  comparison_plot(title = 'Quarterly Fiscal Impact'))
 # Purchases
 ## Total
 federal <- comparison_plot(federal_nom, title = 'Federal Purchases')
