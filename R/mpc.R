@@ -54,7 +54,7 @@ mpc_vulnerable_arp <- function(x){
 mpc_direct_aid_arp <- function(x){
   
   mpc <- 1
-  weights <- c(0.08, rep(0.09, 2), rep(0.05, 7), 0.03)
+  weights <- c(0.18, rep(0.09, 2), rep(0.05, 7), 0.03)
   mpc * roll::roll_sum(x, width = length(weights), weights = rev(weights), 
                        online = FALSE, min_obs = 1)
   
