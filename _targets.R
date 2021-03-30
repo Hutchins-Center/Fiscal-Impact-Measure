@@ -149,7 +149,10 @@ plan <-
              state_transfers = state_social_benefits + state_health_outlays + state_subsidies,
              transfers = federal_transfers + state_transfers) %>% 
       get_fiscal_impact() %>%
-      mutate(fiscal_impact = federal_cont + state_local_cont + taxes_cont + state_transfers_cont +  federal_transfers_cont_no_arp + federal_ui_arp_cont + rebate_checks_arp_cont + aid_to_small_businesses_cont + health_grants_arp_cont + other_direct_aid_cont + other_vulnerable_cont) %>% 
+      mutate(fiscal_impact = federal_cont + state_local_cont + taxes_cont + state_transfers_cont +  federal_transfers_cont_no_arp + federal_ui_arp_cont + rebate_checks_arp_cont + aid_to_small_businesses_cont + health_grants_arp_cont + other_direct_aid_cont + other_vulnerable_cont,
+             arp_cont =  health_grants_arp_cont + non_health_grants_cont +
+               federal_ui_arp_cont + rebate_checks_arp_cont + other_direct_aid_cont + other_vulnerable_cont + aid_to_small_businesses_cont) %>% 
+      
       arrange(date, recession, fiscal_impact, fiscal_impact_moving_average,
               federal_cont, state_local_cont,
               taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont),
