@@ -34,6 +34,8 @@ knitr::opts_chunk$set(
   message = FALSE,
   cache = FALSE,
   fig.path = 'figures/knitr'
+  
+  
 )
 
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
@@ -66,6 +68,7 @@ library('glue')
 library('readxl')
 library('tsibble')
 library('gghutchins')
+
 conflicted::conflict_prefer('filter', 'dplyr')
 conflicted::conflict_prefer('geom_col', 'ggplot2')
 conflicted::conflict_prefer('geom_line', 'ggplot2')
@@ -177,7 +180,7 @@ arp_spending %>%
   scale_fill_hutchins() +
   scale_y_continuous(labels = scales::dollar_format()) 
 ```
-```{r}
+```{r arp-components}
 tar_load(fim)
 arp_cont <-
   fim %>% 
@@ -244,11 +247,82 @@ arp_cont %>%
             arp_cont =  health_grants_arp_cont + non_health_grants_cont +
             federal_ui_arp_cont + rebate_checks_arp_cont + other_direct_aid_cont + other_vulnerable_cont + aid_to_small_businesses_cont ) %>% 
   pivot_longer(-date) %>% 
+  mutate(date =  yearquarter(date)) %>% 
   ggplot(aes(x = date, y = value, fill = name)) +
   geom_col() +
   scale_fill_hutchins() +
-  scale_y_continuous(labels = scales::label_percent(scale = 1)) +
-  labs(title = 'Contribution of the American Rescue Plan')
+  scale_y_continuous(labels = scales::label_percent(scale = 1, accuracy = 1),
+                     breaks = seq(-2, 6, 1)) +
+       scale_x_yearquarter(breaks = waiver(),
+                          date_breaks = '3 months',
+                          date_labels = "Q%q") +
+      facet_grid( ~ year(date),
+                  space = "free_x",
+                  scales = "free_x",
+                  switch = "x")  +
+geom_hline(yintercept = 0, size = 0.4, linetype = 2, alpha =  1, color = 'black') +
+  labs(title = 'Contribution of the American Rescue Plan to real GDP growth', 
+       caption =  '**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data')
+```
+```{r arp-commponents-dos}
+arp_cont %>% 
+  select(date, 
+            health_grants_arp_cont , non_health_grants_cont ,
+            federal_ui_arp_cont , rebate_checks_arp_cont , other_direct_aid_cont, other_vulnerable_cont, aid_to_small_businesses_cont ) %>% 
+  mutate(date =  yearquarter(date)) %>% 
+  pivot_longer(-date) %>% 
+  filter(date < yearquarter('2025 Q1')) %>% 
+  ggplot(aes(x = date, y = value, fill = name)) +
+  geom_col(width = 30) +
+  scale_fill_hutchins(labels = c('Aid to small businesses','Unemployment insurance',  'Health grants', 'Aid to S&L governments', 'Other direct aid', 'Aid to vulnerable households', 'Rebate Checks' )) +
+  scale_y_continuous(labels = scales::label_percent(scale = 1, accuracy  =  1),
+                     breaks = seq(-3, 6, 1)) +
+  scale_x_yearquarter(breaks = '6 months') +
+  labs(title = 'Components of the contribution of the American Rescue Plan Act to real GDP growth', 
+       caption = '**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data') +
+  theme(legend.position = 'bottom',
+        legend.direction  = 'horizontal',
+        legend.justification = 'left') +
+  guides(fill=guide_legend(nrow=3)) +
+      scale_x_yearquarter(breaks = waiver(),
+                          date_breaks = '3 months',
+                          date_labels = "Q%q") +
+      facet_grid( ~ year(date),
+                  space = "free_x",
+                  scales = "free_x",
+                  switch = "x")  +
+geom_hline(yintercept = 0, size = 0.35, linetype = 2, alpha =  0.8)
+```
+
+```{r arp-dodge}
+arp_cont %>% 
+  select(date, 
+            health_grants_arp_cont , non_health_grants_cont ,
+            federal_ui_arp_cont , rebate_checks_arp_cont , other_direct_aid_cont, other_vulnerable_cont, aid_to_small_businesses_cont ) %>% 
+  mutate(date =  yearquarter(date)) %>% 
+  pivot_longer(-date) %>% 
+  filter(date < yearquarter('2023 Q1')) %>% 
+  ggplot(aes(x = date, y = value, fill = name)) +
+  geom_col(
+           position = 'dodge') +
+  scale_fill_hutchins(labels = c('Aid to small businesses','Unemployment insurance',  'Health grants', 'Aid to S&L governments', 'Other direct aid', 'Aid to vulnerable households', 'Rebate Checks' )) +
+  scale_y_continuous(labels = scales::label_percent(scale = 1, accuracy  =  1),
+                     breaks = seq(-3, 6, 1)) +
+  scale_x_yearquarter(breaks = '6 months') +
+  labs(title = 'Components of the contribution of the American Rescue Plan Act to real GDP growth', 
+       caption = '**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data') +
+  theme(legend.position = 'bottom',
+        legend.direction  = 'horizontal',
+        legend.justification = 'left') +
+  guides(fill=guide_legend(nrow=3)) +
+      scale_x_yearquarter(breaks = waiver(),
+                          date_breaks = '3 months',
+                          date_labels = "Q%q") +
+      facet_grid( ~ year(date),
+                  space = "free_x",
+                  scales = "free_x",
+                  switch = "x")  +
+geom_hline(yintercept = 0, size = 0.35, linetype = 2, alpha =  0.8)
 ```
 
 ```{r}
