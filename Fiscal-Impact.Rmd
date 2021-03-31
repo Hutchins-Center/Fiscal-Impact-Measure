@@ -28,7 +28,12 @@ library(gridExtra)
 library('fim')
 library('glue')
 library('lubridate')
+library('gghutchins')
+theme_set(theme_hutchins())
 source('R/functions.R')
+conflict_prefer('geom_bar', 'ggplot2')
+conflict_prefer('geom_line', 'ggplot2')
+conflict_prefer('geom_point', 'ggplot2')
 ```
 
 ```{r data, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
@@ -105,14 +110,12 @@ contributions %>%
   pivot_longer(cols = -c(date, fiscal_impact_moving_average),
                names_to = 'variable') %>%
   fim_plot(title = 'Components',  last_date = last_hist_date) +
-  scale_fill_manual(
-    labels = c(
+  scale_fill_hutchins(labels = c(
       " State & Local Purchases",
       " Federal Purchases",
       " Taxes, Transfers, & Subsidies"
     ),
-    values =  c(state_local_purple, federal_blue, taxes_transfers_green)
-  ) + 
+    rev = TRUE) + 
  fim_theme() + 
   guidez
 ```
