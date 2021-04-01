@@ -274,15 +274,17 @@ arp_cont %>%
   filter(date < yearquarter('2025 Q1')) %>% 
   ggplot(aes(x = date, y = value, fill = name)) +
   geom_col(width = 30) +
-  scale_fill_hutchins(labels = c('Aid to small businesses','Unemployment insurance',  'Health grants', 'Aid to S&L governments', 'Other direct aid', 'Aid to vulnerable households', 'Rebate Checks' )) +
+  scale_fill_hutchins(labels = c('Aid to small businesses','Unemployment insurance',  'Medicaid expansion', 'Aid to S&L governments', 'Other direct aid', 'Aid to vulnerable households', 'Rebate Checks' )) +
+    theme(legend.position = 'bottom',
+        legend.direction  = 'horizontal',
+        legend.justification = 'left') +
   scale_y_continuous(labels = scales::label_percent(scale = 1, accuracy  =  1),
                      breaks = seq(-3, 6, 1)) +
   scale_x_yearquarter(breaks = '6 months') +
   labs(title = 'Components of the contribution of the American Rescue Plan Act to real GDP growth', 
-       caption = '**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data') +
-  theme(legend.position = 'bottom',
-        legend.direction  = 'horizontal',
-        legend.justification = 'left') +
+       caption = '**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data. 
+       **Note:** Other aid to vulnerable households includes ') +
+
   guides(fill=guide_legend(nrow=3)) +
       scale_x_yearquarter(breaks = waiver(),
                           date_breaks = '3 months',

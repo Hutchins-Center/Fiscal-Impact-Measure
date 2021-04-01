@@ -10,25 +10,14 @@ mainfont: Arial
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis',
-                      fig.align = "center")
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis', fig.align = "center", fig.path = "figures/knitr")
 
 ```
 
 ```{r libraries, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
-library('targets')
-library('tidyverse')
-library('magrittr')
-library('ggthemes')
-library('ggtext')
-library('tinytex')
-library(ggplot2)
-library(ggthemes)
-library(gridExtra)
-library('fim')
-library('glue')
-library('lubridate')
-library('gghutchins')
+librarian::shelf('targets', "tidyverse", "magrittr", "ggthemes", "ggtext", "tinytex", "ggthemes", "gridExtra", "fim", "glue", "lubridate", "gghutchins",
+"conflicted")
+
 theme_set(theme_hutchins())
 source('R/functions.R')
 conflict_prefer('geom_bar', 'ggplot2')
@@ -86,7 +75,7 @@ recession_shade <-
 ```
 
 
-```{r total impact, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+```{r impact-expanded, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 tar_load(last_hist_date)
 
 contributions %>%
@@ -115,6 +104,7 @@ contributions %>%
       " Federal Purchases",
       " Taxes, Transfers, & Subsidies"
     ),
+    pal = 'main',
     rev = TRUE) + 
  fim_theme() + 
   guidez
