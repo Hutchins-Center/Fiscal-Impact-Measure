@@ -99,13 +99,12 @@ contributions %>%
   pivot_longer(cols = -c(date, fiscal_impact_moving_average),
                names_to = 'variable') %>%
   fim_plot(title = 'Components',  last_date = last_hist_date) +
-  scale_fill_hutchins(labels = c(
-      " State & Local Purchases",
+  scale_fill_manual(labels = c(
       " Federal Purchases",
+      " State & Local Purchases",
       " Taxes, Transfers, & Subsidies"
     ),
-    pal = 'main',
-    rev = TRUE) + 
+     values =  c(federal_blue, state_local_purple, taxes_transfers_green)) + 
  fim_theme() + 
   guidez
 ```

@@ -17,7 +17,9 @@ output:
     number_sections: false 
     theme: united
     highlight: zenburn 
-    hig.retina: 3
+    fig.retina: 3
+    fig_width: 4
+    fig_heigth: 6
     self_contained: yes
     css: [style.css]
 vignette: |
@@ -33,15 +35,19 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE,
   cache = FALSE,
-  fig.path = 'figures/knitr'
-  
+  fig.path = 'figures/',
+  fig.show = "hold",
+  fig.width=8, 
+  fig.asp=0.9,
+  out.width = "100%",
+  fig.retina = 2
   
 )
 
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
-```{r}
+```{r libs}
 library(targets)
 library(tarchetypes)
 source('R/packages.R')
@@ -180,7 +186,7 @@ arp_spending %>%
   scale_fill_hutchins() +
   scale_y_continuous(labels = scales::dollar_format()) 
 ```
-```{r arp-components}
+```{r arp-components-dodge}
 tar_load(fim)
 arp_cont <-
   fim %>% 
@@ -197,16 +203,7 @@ arp_cont %>%
   theme(legend.position = 'top')
  
 ```
-```{r}
-arp_cont %>% 
-  select(date, aid_to_small_businesses_cont, health_grants_arp_cont, non_health_grants_cont) %>% 
-  pivot_longer(-date) %>% 
-  ggplot(aes(x = date, y = value / 100, fill = name)) +
-  geom_col(position = 'dodge') + 
-  scale_fill_hutchins(labels = c('Aid to small businesses', 'Health grants', 'Non-health grants')) +
-  theme(legend.position = 'top')  +
-  scale_y_continuous(labels = scales::label_percent(),limits = c(-0.02, 0.02), breaks = seq(-0.02, 0.02, 0.0025))
-```
+
 ```{r}
 
 arp_cont %>% 
@@ -264,27 +261,29 @@ geom_hline(yintercept = 0, size = 0.4, linetype = 2, alpha =  1, color = 'black'
   labs(title = 'Contribution of the American Rescue Plan to real GDP growth', 
        caption =  '**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data')
 ```
-```{r arp-commponents-dos}
+```{r arp-commponents-stacked}
 arp_cont %>% 
   select(date, 
             health_grants_arp_cont , non_health_grants_cont ,
             federal_ui_arp_cont , rebate_checks_arp_cont , other_direct_aid_cont, other_vulnerable_cont, aid_to_small_businesses_cont ) %>% 
   mutate(date =  yearquarter(date)) %>% 
   pivot_longer(-date) %>% 
-  filter(date < yearquarter('2025 Q1')) %>% 
+  filter(date <= yearquarter('2026 Q1')) %>% 
   ggplot(aes(x = date, y = value, fill = name)) +
   geom_col(width = 30) +
-  scale_fill_hutchins(labels = c('Aid to small businesses','Unemployment insurance',  'Medicaid expansion', 'Aid to S&L governments', 'Other direct aid', 'Other aid to vulnerable households', 'Rebate Checks' )) +
-    theme(legend.position = 'bottom',
+  scale_fill_hutchins(labels = c('Aid to small businesses','Unemployment insurance',  'Medicaid expansion', 'Federal discretionary spending^1', 'Other direct aid^2', 'Other aid to vulnerable households^3', 'Rebate Checks' ), pal = 'mixed', rev = TRUE) +
+    theme(legend.position = 'top',
         legend.direction  = 'horizontal',
         legend.justification = 'left') +
   scale_y_continuous(labels = scales::label_percent(scale = 1, accuracy  =  1),
                      breaks = seq(-3, 6, 1)) +
-  scale_x_yearquarter(breaks = '6 months') +
   labs(title = 'Components of the contribution of the American Rescue Plan Act to real GDP growth', 
-       caption = '**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data. 
-       **Note:** Other aid to vulnerable households includes food, housing and emergency assistance, ratepayer protection, assistance for older Americans, premium tax credits, and subsidies for COBRA premiums; other direct aid includes the Child Tax Credit, the Earned Income Tax Credit, child care for workers, and dependent care for families.') + 
-  guides(fill=guide_legend(nrow=3)) +
+       caption = '<br>**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data.<br><br>
+    ^1 Federal discretionary spending includes COVID-19 containment and vaccination, aid to state and local governments, and other discretionary spending;<br>
+       ^2 Other direct aid includes the Child Tax Credit, the Earned Income Tax Credit, child care for workers, and dependent care for families; <br>
+       ^3 Other aid to vulnerable households includes food, housing and emergency assistance, ratepayer protection, assistance for older Americans, premium tax credits, and subsidies for COBRA premiums.
+') + 
+  guides(fill=guide_legend(ncol = 2)) +
       scale_x_yearquarter(breaks = waiver(),
                           date_breaks = '3 months',
                           date_labels = "Q%q") +
@@ -391,5 +390,15 @@ df %>%
   geom_line() +
   scale_color_hutchins() +
   theme(legend.position = 'top')
+```
+
+```{r}
+
+fim %>% 
+  select(date, federal_cgrants) %>% 
+  filter(date > '2020-09-30' & date < '2021-12-31') %>%
+  mutate(date = tsibble::yearquarter(date)) %>% 
+  ggplot2::ggplot(aes(x = date, y = federal_cgrants)) +
+  ggplot2::geom_line() 
 ```
 
