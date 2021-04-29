@@ -24,6 +24,73 @@ components <- get_components_names()
 # Set target-specific options such as packages.
 tar_option_set(packages = "dplyr")
 
+load_unemployment_insurance_override <- function (){
+  readxl::read_excel(drake::file_in("data/add-ons/add_factors.xlsx"),
+                     sheet = "FIM Add Factors") %>% dplyr::mutate(date = lubridate::as_date(date)) %>%
+    dplyr::select(date, tidyselect::contains("unemployment_insurance"))
+}
+
+override_projections <-function (df) {
+  override <- readxl::read_excel("data/add-ons/add_factors.xlsx", 
+                                 sheet = "FIM Add Factors") %>% dplyr::select(date, 
+                                                                              ends_with("override")) %>% mutate(date = lubridate::as_date(date))
+  Q2_2020 <- "2020-06-30"
+  Q3_2020 <- "2020-09-30"
+  last_override <- "2022-12-31"
+  df %>% left_join(override, by = "date") %>% mutate(unemployment_insurance = if_else(date >= 
+                                                                                        Q3_2020 & date <= last_override, unemployment_insurance_override, 
+                                                                                      unemployment_insurance), federal_unemployment_insurance = if_else(date >= 
+                                                                                                                                                          Q2_2020 & date <= last_override, federal_unemployment_insurance_override, 
+                                                                                                                                                        federal_unemployment_insurance), state_unemployment_insurance = if_else(date >= 
+                                                                                                                                                                                                                                  Q2_2020 & date <= last_override, state_unemployment_insurance_override, 
+                                                                                                                                                                                                                                state_unemployment_insurance), federal_cgrants = if_else(date >= 
+                                                                                                                                                                                                                                                                                           Q2_2020 & date <= Q3_2020, federal_cgrants_override, 
+                                                                                                                                                                                                                                                                                         federal_cgrants))
+}
+
+
+add_factors <-
+  function(df) {
+    add_factors <- readxl::read_excel("data/add-ons/add_factors.xlsx",
+                                      sheet = "FIM Add Factors") %>% mutate(date = lubridate::as_date(date))
+    df %>% dplyr::full_join(
+      add_factors %>% dplyr::select(-tidyselect::ends_with("override")) %>%
+        filter(date > '2021-03-31'),
+      by = "date"
+    ) %>% dplyr::mutate(dplyr::across(
+      .cols = tidyselect::starts_with("add_"),
+      .fns = ~
+        if_else(is.na(.x), 0, .x)
+    )) %>% dplyr::mutate(
+      state_health_outlays = state_health_outlays +
+        add_state_health_outlays,
+      state_social_benefits = state_social_benefits +
+        add_state_social_benefits,
+      federal_health_outlays = federal_health_outlays +
+        add_federal_health_outlays,
+      federal_social_benefits = federal_social_benefits +
+        add_federal_social_benefits,
+      federal_subsidies = federal_subsidies +
+        add_federal_subsidies,
+      federal_cgrants = federal_cgrants +
+        add_federal_cgrants,
+      state_local_nom = state_local_nom +
+        add_state_purchases,
+      federal_nom = add_federal_purchases +
+        federal_nom,
+      health_outlays = state_health_outlays +
+        federal_health_outlays,
+      social_benefits = state_social_benefits +
+        federal_social_benefits,
+      subsidies = state_subsidies +
+        federal_subsidies,
+      federal_rebate_checks = federal_rebate_checks +
+        add_rebate_checks,
+      rebate_checks = rebate_checks + add_rebate_checks
+    )
+  }
+
+
 # End this file with a list of target objects.
 
     cbo_projections_raw = load_cbo_projections()
@@ -71,8 +138,12 @@ tar_option_set(packages = "dplyr")
         values = c(rep(0.0025, 3), 0.005, 0.0075, 0.01)
       ) %>%
       components_growth_rates() %>%
-      create_projections() %>%
-      medicaid_reallocation()
+      mutate(gftfp = gftfp - federal_unemployment_insurance_override - gftfpe, gtfp = gstfp + gftfp) %>%
+     create_projections() %>%
+
+      
+      
+      medicaid_reallocation() 
     
     fim =
       fim_create(projections) %>%
@@ -83,13 +154,13 @@ tar_option_set(packages = "dplyr")
       mutate(date2 = yearquarter(date)) %>% 
       as_tsibble(index = date2) %>% 
       full_join(read_xlsx('data/pandemic-legislation/arp_summary.xlsx') %>% 
-                  mutate(date2 = yearquarter(date)) %>% filter(date > yearquarter('2021 Q1')), by = 'date2') %>% 
+                  mutate(date2 = yearquarter(date)) %>% filter(date2 > yearquarter('2021 Q1')), by = 'date2') %>% 
       rename(date = date.x) %>% 
       as_tibble() %>% 
       mutate(federal_cgrants = coalesce(federal_cgrants_override, federal_cgrants)) %>%
       contributions_purchases_grants() %>%
       total_purchases() %>%
-      remove_social_benefit_components() %>%
+     # remove_social_benefit_components() %>%
       taxes_transfers_minus_neutral() %>%
       mutate(across(where(is.numeric),
                     ~ coalesce(.x, 0))) %>% 
@@ -159,6 +230,4 @@ tar_option_set(packages = "dplyr")
     
 fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)  
     
-    
-    
-    
+write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')   

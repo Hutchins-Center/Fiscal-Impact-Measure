@@ -246,6 +246,9 @@ federal_levels  <-
   comparison_plot(federal_nom, title = 'Federal Purchases')
 state_levels  <-
   comparison_plot(state_local_nom, title = 'State Purchases')
+#difference_fed_state_levels <-
+   # comparison_plot(TO DO)
+
 
 ## Grants
 grants_levels  <-
