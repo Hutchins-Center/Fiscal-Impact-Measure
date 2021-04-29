@@ -83,7 +83,7 @@ tar_option_set(packages = "dplyr")
       mutate(date2 = yearquarter(date)) %>% 
       as_tsibble(index = date2) %>% 
       full_join(read_xlsx('data/pandemic-legislation/arp_summary.xlsx') %>% 
-                  mutate(date2 = yearquarter(date)) , by = 'date2') %>% 
+                  mutate(date2 = yearquarter(date)) %>% filter(date > yearquarter('2021 Q1')), by = 'date2') %>% 
       rename(date = date.x) %>% 
       as_tibble() %>% 
       mutate(federal_cgrants = coalesce(federal_cgrants_override, federal_cgrants)) %>%
@@ -157,7 +157,7 @@ tar_option_set(packages = "dplyr")
             taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
     
     
-    
+fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)  
     
     
     
