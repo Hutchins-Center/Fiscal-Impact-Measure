@@ -10,11 +10,11 @@ mainfont: Arial
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis', fig.align = "center", fig.path = "figures/knitr")
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'asis', fig.align = "center")
 
 ```
 
-```{r libraries, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
+```{r libraries, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis', include = FALSE}
 librarian::shelf('targets', "tidyverse", "magrittr", "ggthemes", "ggtext", "tinytex", "ggthemes", "gridExtra", "fim", "glue", "lubridate", "gghutchins",
 "conflicted")
 
@@ -106,7 +106,7 @@ contributions %>%
     ),
      values =  c(federal_blue, state_local_purple, taxes_transfers_green)) + 
  fim_theme() + 
-  guidez
+  guidez 
 ```
 
 

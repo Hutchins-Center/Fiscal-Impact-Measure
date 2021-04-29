@@ -17,34 +17,49 @@ output:
     number_sections: false 
     theme: united
     highlight: zenburn 
-    fig.retina: 3
+    fig.retina: 2 
     fig_width: 4
     fig_heigth: 6
     self_contained: yes
     css: [style.css]
+    background: #FAFAFA
 vignette: |
   %\VignetteIndexEntry{Vignette Title} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
+knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>", 
-  echo = FALSE,
-  fig.align = 'center',
+  comment = "#>",
   warning = FALSE,
   message = FALSE,
-  cache = FALSE,
-  fig.path = 'figures/',
+  results = 'asis',
+  tidy.opts=list(width.cutoff=60),
+  tidy=TRUE, 
+  echo = FALSE,
+
+  
+  #cache = TRUE,
+  fig.align = "center",
   fig.show = "hold",
   fig.width=8, 
   fig.asp=0.9,
-  out.width = "100%",
-  fig.retina = 2
+  out.width = "1000px",
+  fig.path = "results/3-2021/figures-arp/",
+  fig.retina = 2,
+  fig.showtext = TRUE,
+  fig.pos = "t",
+  dpi = if (knitr::is_latex_output()) 72 else 300,
+  dev.args = list(png = list(type = "cairo-png")), 
+  optipng = "-o1 -quiet"
+)
   
 )
-
+library(knitr)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::knit_hooks$set(optipng = hook_optipng)
+knitr::knit_hooks$set(pngquant = hook_pngquant)
 ```
 
 ```{r libs}
@@ -74,6 +89,7 @@ library('glue')
 library('readxl')
 library('tsibble')
 library('gghutchins')
+library('showtext')
 
 conflicted::conflict_prefer('filter', 'dplyr')
 conflicted::conflict_prefer('geom_col', 'ggplot2')
@@ -89,30 +105,7 @@ theme_set(theme_hutchins())
 ```
 
 
-```{r}
-
-
-fim %>% 
-  filter(date > '2020-12-31' & date < '2026-12-31') %>% 
-  mutate(arp_cont = federal_ui_arp + rebate_checks_arp + aid_to_small_businesses + health_grants_arp + non_health_grants + other_direct_aid + other_vulnerable) %>% 
-  select(date, arp_cont) %>% 
-  pivot_longer(arp_cont) %>% 
-  ggplot(aes(x = date, y = value, fill = name)) +
-  geom_col() +
-  labs(title = 'Money spent due to American Rescue Plan',
-       subtitle = 'Includes unemployment insurance, rebate checks, aid to small businesses, health grants, grants to S&L governments, direct aid to households and aid to vulnerable individuals')  +
-  scale_fill_hutchins() +
-  scale_y_continuous(labels = scales::dollar_format(),
-                     limits = c(0, 3000), breaks = seq(0, 3000, 500))
-
-
-fim %>% 
-  filter(date > '2020-12-31' & date < '2026-12-31') %>% 
-  mutate(arp_cont = federal_ui_arp + rebate_checks_arp + aid_to_small_businesses + health_grants_arp + non_health_grants + other_direct_aid + other_vulnerable) %>% 
-  select(date, arp_cont) %>% 
-  summarise(cumsum(arp_cont))
-```
-```{r}
+```{r, include = FALSE}
 arp_spending <-
   fim %>% 
    mpc_arp_non_health_grants() %>% 
@@ -128,117 +121,16 @@ arp_spending <-
       ) %>% 
   rename_with(~ gsub('_post_mpc', '', .x)) %>% 
     filter(date > '2020-12-31' & date < '2025-03-30')
-```
 
-```{r social-benefits}
-
-library(directlabels)
-arp_spending %>% 
-  mutate(date = yearquarter(date)) %>% 
-  as_tsibble(index = date) %>% 
-  select(date, federal_ui_arp,  rebate_checks_arp, other_vulnerable, other_direct_aid) %>% 
-  pivot_longer(-date) %>% 
-  ggplot(aes(x = date, y = value, fill = name)) +
-  # geom_line(alpha = 0.5) +
-  # ggplot2::geom_point() +
-  geom_col(position = 'dodge') +
-  scale_fill_hutchins(labels = c('Federal UI',  'Rebate checks', 'Other vulnerable', 'Other direct aid'), pal = 'mixed') +
-  theme(
-    legend.position = 'top'
-  ) +
-  scale_x_yearquarter() +
-  labs(title  = 'Social benefits American Rescue Plan') 
-  
-```
-
-```{r other}
-arp_spending %>% 
-  mutate(date = yearquarter(date)) %>% 
-  as_tsibble(index = date) %>% 
-  select(date, health_grants_arp, non_health_grants, aid_to_small_businesses) %>% 
-  pivot_longer(-date) %>% 
-  ggplot(aes(x = date, y = value, fill = name)) +
-  # geom_line(alpha = 0.5) +
-  # ggplot2::geom_point() +
-  geom_col(position = 'dodge', aes(fill = name)) +
-  scale_fill_hutchins(rev = TRUE) +
-  theme(
-    legend.position = 'top'
-  ) +
-  scale_x_yearquarter() +
-  labs(title  = 'Social benefits American Rescue Plan') 
-
-fim %>% 
-  select(date, non_health_grants) %>% 
-  filter(date > '2020-12-31') %>% 
-  pivot_longer(non_health_grants) %>% 
-  ggplot(aes(x = date, y = value, fill =  name)) +
-  geom_col() +
-  scale_fill_hutchins()
-```
-```{r}
-arp_spending %>% 
-  summarise(date, 
-            arp_spending = health_grants_arp + non_health_grants + aid_to_small_businesses + federal_ui_arp +  rebate_checks_arp + other_vulnerable + other_direct_aid) %>% 
-  pivot_longer(arp_spending) %>% 
-  ggplot(mapping = aes(x = date, y = value, fill = name)) +
-  geom_col() +
-  scale_fill_hutchins() +
-  scale_y_continuous(labels = scales::dollar_format()) 
-```
-```{r arp-components-dodge}
-tar_load(fim)
 arp_cont <-
   fim %>% 
    filter(date > '2020-12-31' & date < '2024-12-31') %>% 
    select(date, federal_ui_arp_cont, rebate_checks_arp_cont, other_direct_aid_cont, other_vulnerable_cont, aid_to_small_businesses_cont, non_health_grants_cont, health_grants_arp_cont,
           federal_cont, federal_cont_no_arp, fiscal_impact)
-
-arp_cont %>% 
-  select(date, federal_ui_arp_cont, rebate_checks_arp_cont, other_direct_aid_cont, other_vulnerable_cont) %>% 
-  pivot_longer(-date) %>% 
-  ggplot(aes(x = date, y = value, fill = name)) +
-  geom_col(position = 'dodge') + 
-  scale_fill_hutchins(labels = c('UI',  'Other Direct Aid', 'Other Vulnerable', 'Rebate Checks')) +
-  theme(legend.position = 'top')
- 
-```
-
-```{r}
-
-arp_cont %>% 
-  summarise(date, 
-           federal_cont_no_arp,
-            federal_cont, fiscal_impact) %>% 
-  pivot_longer(-date) %>% 
-  ggplot(aes(x = date, y = value, fill = name)) +
-  geom_col(position = 'dodge') +
-  scale_fill_hutchins(rev = TRUE) +
-  scale_y_continuous(labels = scales::label_percent(scale = 1)) +
-  labs(title = 'Contribution of the Federal Transfers in the American Rescue Plan') +
-  theme(legend.position = 'top')
-
-```
-
-```{r}
-arp_cont %>% 
-  summarise(date, 
-            arp_transfers =  health_grants_arp_cont +
-            federal_ui_arp_cont + rebate_checks_arp_cont + other_direct_aid_cont + other_vulnerable_cont + aid_to_small_businesses_cont,
-            arp_grants = non_health_grants_cont,
-            federal_cont) %>% 
-  pivot_longer(-date) %>% 
-  ggplot(aes(x = date, y = value, fill = name)) +
-  geom_col() +
-  scale_fill_hutchins(rev = TRUE, labels = c('Grants', 'Transfers', 'Federal Purchases')) +
-  scale_y_continuous(labels = scales::label_percent(scale = 1)) +
-  labs(title = 'Contribution of the Federal Transfers in the American Rescue Plan') +
-  theme(legend.position = 'top')
-  
 ```
 
 
-```{r arpa}
+```{r arpa-final}
 arp_cont %>% 
   summarise(date, 
             arp_cont =  health_grants_arp_cont + non_health_grants_cont +
@@ -248,7 +140,10 @@ arp_cont %>%
   ggplot(aes(x = date, y = value, fill = name)) +
   geom_col() +
   scale_fill_hutchins() +
-  scale_y_continuous(labels = scales::label_percent(scale = 1, accuracy = 1),
+    theme(axis.title.y = element_text(angle = 90, vjust = 0.5, hjust=0.5),
+          legend.position = 'none') +
+  scale_y_continuous(name = "Percentage points", 
+                     labels = scales::label_percent(scale = 1, accuracy = 1),
                      breaks = seq(-2, 6, 1)) +
        scale_x_yearquarter(breaks = waiver(),
                           date_breaks = '3 months',
@@ -259,7 +154,8 @@ arp_cont %>%
                   switch = "x")  +
 geom_hline(yintercept = 0, size = 0.4, linetype = 2, alpha =  1, color = 'black') +
   labs(title = 'Contribution of the American Rescue Plan to real GDP growth', 
-       caption =  '**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data')
+       caption =  '**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data') +
+  theme(plot.background = element_rect(fill = '#FAFAFA', colour = '#FAFAFA'))
 ```
 ```{r arp-commponents-stacked}
 arp_cont %>% 
@@ -271,18 +167,13 @@ arp_cont %>%
   filter(date <= yearquarter('2026 Q1')) %>% 
   ggplot(aes(x = date, y = value, fill = name)) +
   geom_col(width = 30) +
-  scale_fill_hutchins(labels = c('Aid to small businesses','Unemployment insurance',  'Medicaid expansion', 'Federal discretionary spending^1', 'Other direct aid^2', 'Other aid to vulnerable households^3', 'Rebate Checks' ), pal = 'mixed', rev = TRUE) +
+  scale_fill_hutchins(labels = c('Aid to small businesses','Unemployment insurance',  'Medicaid expansion', 'Federal purchases^1', 'Other direct aid^2', 'Other aid to vulnerable households^3', 'Rebate Checks' ), pal = 'categorical', rev = TRUE) +
     theme(legend.position = 'top',
         legend.direction  = 'horizontal',
         legend.justification = 'left') +
-  scale_y_continuous(labels = scales::label_percent(scale = 1, accuracy  =  1),
+  scale_y_continuous(name = 'Percentage points', labels = scales::label_percent(scale = 1, accuracy  =  1),
                      breaks = seq(-3, 6, 1)) +
-  labs(title = 'Components of the contribution of the American Rescue Plan Act to real GDP growth', 
-       caption = '<br>**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data.<br><br>
-    ^1 Federal discretionary spending includes COVID-19 containment and vaccination, aid to state and local governments, and other discretionary spending;<br>
-       ^2 Other direct aid includes the Child Tax Credit, the Earned Income Tax Credit, child care for workers, and dependent care for families; <br>
-       ^3 Other aid to vulnerable households includes food, housing and emergency assistance, ratepayer protection, assistance for older Americans, premium tax credits, and subsidies for COBRA premiums.
-') + 
+
   guides(fill=guide_legend(ncol = 2)) +
       scale_x_yearquarter(breaks = waiver(),
                           date_breaks = '3 months',
@@ -291,114 +182,18 @@ arp_cont %>%
                   space = "free_x",
                   scales = "free_x",
                   switch = "x")  +
-geom_hline(yintercept = 0, size = 0.35, linetype = 2, alpha =  0.8)
-```
+geom_hline(yintercept = 0, size = 0.35, linetype = 2, alpha =  0.8) +
+  theme(axis.title.y = element_text(angle = 90, vjust = 0.5, hjust=0.5)) +
+  labs(
+    ylab = 'Percentage points',
+    title = 'Components of the contribution of the American Rescue Plan Act to real GDP growth', 
+       caption = '<br>**Source:** Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data.<br><br>
+    ^1 Federal purchases include direct federal spending related to COVID-19 containment and vaccination as well as state and local purchases financed by federal grants;<br>
+       ^2 Other direct aid includes the Child Tax Credit, the Earned Income Tax Credit, child care for workers, and dependent care for families; <br>
+       ^3 Other aid to vulnerable households includes food, housing and emergency assistance, ratepayer protection, assistance for older Americans, premium tax credits, and subsidies for COBRA premiums.
+') +
+   theme(plot.background = element_rect(fill = '#FAFAFA', colour = '#FAFAFA'))
 
-```{r arp-dodge}
-arp_cont %>% 
-  select(date, 
-            health_grants_arp_cont , non_health_grants_cont ,
-            federal_ui_arp_cont , rebate_checks_arp_cont , other_direct_aid_cont, other_vulnerable_cont, aid_to_small_businesses_cont ) %>% 
-  mutate(date =  yearquarter(date)) %>% 
-  pivot_longer(-date) %>% 
-  filter(date < yearquarter('2023 Q1')) %>% 
-  ggplot(aes(x = date, y = value, fill = name)) +
-  geom_col(
-           position = 'dodge') +
-  scale_fill_hutchins(labels = c('Aid to small businesses','Unemployment insurance',  'Health grants', 'Aid to S&L governments', 'Other direct aid', 'Aid to vulnerable households', 'Rebate Checks' )) +
-  scale_y_continuous(labels = scales::label_percent(scale = 1, accuracy  =  1),
-                     breaks = seq(-3, 6, 1)) +
-  scale_x_yearquarter(breaks = '6 months') +
-  labs(title = 'Components of the contribution of the American Rescue Plan Act to real GDP growth', 
-       caption = '**Source**: Hutchins Center calculations from Bureau of Economic Analysis and Congressional Budget Office data. 
-       **Note:** Other aid to vulnerable households includes food, housing and emergency assistance, ratepayer protection, assistance for older Americans, premium tax credits, and subsidies for COBRA premiums; other direct aid includes the Child Tax Credit, the Earned Income Tax Credit, child care for workers, and dependent care for families.') + 
-  theme(legend.position = 'bottom',
-        legend.direction  = 'horizontal',
-        legend.justification = 'left') +
-  guides(fill=guide_legend(nrow=3)) +
-      scale_x_yearquarter(breaks = waiver(),
-                          date_breaks = '3 months',
-                          date_labels = "Q%q") +
-      facet_grid( ~ year(date),
-                  space = "free_x",
-                  scales = "free_x",
-                  switch = "x")  +
-geom_hline(yintercept = 0, size = 0.35, linetype = 2, alpha =  0.8)
-```
-
-```{r}
-
-df <- 
-  fim %>% 
-  select(date, federal_unemployment_insurance, federal_subsidies, rebate_checks, federal_cgrants, federal_ui_arp, aid_to_small_businesses, non_health_grants, rebate_checks_arp)  %>%
-  mpc_arp_non_health_grants() %>% 
-  summarise(date, 
-            federal_ui_2020 = mpc_unemployment_insurance(federal_unemployment_insurance),
-            federal_ui_arp = mpc_vulnerable_arp(federal_ui_arp),
-            federal_subsidies_2020 = if_else(date < '2021-03-31',
-                                             mpc_subsidies(federal_subsidies),
-                                             mpc_subsidies_second_draw(federal_subsidies)),
-            aid_to_small_businesses = mpc_small_businesses_arp(aid_to_small_businesses),
-            non_health_grants = non_health_grants_post_mpc,
-            rebate_checks_2020 = mpc_rebate_checks(rebate_checks),
-            rebate_checks_arp = mpc_direct_aid_arp(rebate_checks_arp),
-            federal_cgrants
-            
-            )
-```
-
-```{r ui}
-df %>% 
-  select(date, federal_ui_arp, federal_ui_2020) %>% 
-  pivot_longer(-date) %>% 
-  filter(date > '2019-12-31' & date < '2023-12-31') %>% 
-  ggplot(aes(x = date, y = value, fill = name)) +
-  geom_col(position = 'dodge') +
-  scale_fill_hutchins() +
-  theme(legend.position = 'top')
-```
-```{r}
-df %>% 
-  select(date, rebate_checks_2020, rebate_checks_arp) %>% 
-  pivot_longer(-date) %>% 
-  filter(date > '2019-12-31' & date < '2023-12-31') %>% 
-  ggplot(aes(x = date, y = value, fill = name)) +
-  geom_col(position = 'dodge') +
-  scale_fill_hutchins() +
-  theme(legend.position = 'top') +
-  scale_y_continuous(limits = c(0, 500)) +
-  scale_x_yearquarter(date_breaks = '6 months')
-```
-
-```{r}
-df %>% 
-  select(date, federal_subsidies_2020, aid_to_small_businesses) %>% 
-  pivot_longer(-date) %>% 
-  filter(date > '2019-12-31' & date < '2023-12-31') %>% 
-  ggplot(aes(x = date, y = value, fill = name)) +
-  geom_col(position = 'dodge') +
-  scale_fill_hutchins() +
-  theme(legend.position = 'top')
-```
-
-```{r}
-df %>% 
-  select(date, federal_cgrants, non_health_grants) %>% 
-  pivot_longer(-date) %>% 
-  filter(date > '2019-12-31' & date < '2030-12-31') %>% 
-  ggplot(aes(x = date, y = value, color = name)) +
-  geom_line() +
-  scale_color_hutchins() +
-  theme(legend.position = 'top')
-```
-
-```{r}
-
-fim %>% 
-  select(date, federal_cgrants) %>% 
-  filter(date > '2020-09-30' & date < '2021-12-31') %>%
-  mutate(date = tsibble::yearquarter(date)) %>% 
-  ggplot2::ggplot(aes(x = date, y = federal_cgrants)) +
-  ggplot2::geom_line() 
+knitr::include_graphics(file.path(here::here(),"images","HC_NEW_BROOKINGS_RGB.jpg"))
 ```
 
