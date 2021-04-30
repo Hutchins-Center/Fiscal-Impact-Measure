@@ -236,7 +236,8 @@ add_factors <-
       mutate(fiscal_impact = federal_cont + state_local_cont + taxes_cont + state_transfers_cont +  federal_transfers_cont_no_arp + federal_ui_arp_cont + state_ui_arp_cont + rebate_checks_arp_cont + aid_to_small_businesses_cont + health_grants_arp_cont + other_direct_aid_cont + other_vulnerable_cont,
              arp_cont =  health_grants_arp_cont + non_health_grants_cont +
                federal_ui_arp_cont + rebate_checks_arp_cont + other_direct_aid_cont + other_vulnerable_cont + aid_to_small_businesses_cont) %>% 
-      mutate(federal_unemployment_insurance = federal_unemployment_insurance + federal_ui_arp, federal_unemployment_insurance_cont = federal_unemployment_insurance_cont + federal_ui_arp_cont, state_unemployment_insurance = state_unemployment_insurance + state_ui_arp, state_unemployment_insurance_cont = state_unemployment_insurance_cont + state_ui_arp_cont) %>% 
+      mutate(federal_unemployment_insurance = federal_unemployment_insurance + federal_ui_arp, federal_unemployment_insurance_cont = federal_unemployment_insurance_cont + federal_ui_arp_cont, state_unemployment_insurance = state_unemployment_insurance + state_ui_arp, state_unemployment_insurance_cont = state_unemployment_insurance_cont + state_ui_arp_cont, federal_purchases_with_grants = federal_nom + federal_cgrants + federal_igrants, state_purchases_with_grants = state_local_nom - federal_cgrants - federal_igrants) %>% 
+      
       
       arrange(date, recession, fiscal_impact, fiscal_impact_moving_average,
               federal_cont, state_local_cont,
@@ -245,6 +246,8 @@ add_factors <-
     
 fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)  
     
+
+
 # projections %>% fim_create() %>%  select(date, state_health_outlays,
 #                          state_social_benefits,
 #                          state_noncorp_taxes,
@@ -256,4 +259,11 @@ fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)
 #   write_xlsx('data/add-ons/fim_no_addons.xlsx')
 
 write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')   
+
+interactive =
+  fim %>%
+  filter(date <= '2022-12-31') %>%
+  prepare_interactive() %>%
+  readr::write_csv(glue('results/{current_month}/fim-interactive-{Sys.Date()}.csv')) 
+
 

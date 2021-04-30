@@ -89,7 +89,7 @@ comparison_plot <-
 
 # Data ----------------------------------------------------------------------------------------
 
-
+#These are data for contributions, not levels
 
 
 last_month <- get_previous_month()
@@ -136,10 +136,10 @@ new %>%
   geom_col()
 (fiscal_impact <-
   comparison_plot(title = 'Quarterly Fiscal Impact'))
-# Purchases
-## Total   EDITING HERE
-federal <- comparison_plot(federal_cont_ex_grants, title = 'Federal purchases without grants')
-state <- comparison_plot(state_local_nom, title = 'State purchases without grants')
+# Purchases with Grants
+## Total   
+federal <- comparison_plot(federal, title = 'Federal Purchases with Grants')
+state <- comparison_plot(state_local, title = 'State Purchases with Grants')
 ## Excluding grants
 # federal_nom  <-
 #   comparison_plot(federal_nom, title = 'Federal Purchases Without Grants')
@@ -152,6 +152,7 @@ consumption_grants <-
   comparison_plot(federal_cgrants, title = 'Consumption Grants')
 investment_grants <-
   comparison_plot(federal_igrants, title = 'Investment Grants')
+arp_grants <- comparison_plot(non_health_grants, title = 'ARP Grants')
 
 # Taxes
 
@@ -215,11 +216,12 @@ state_social_benefits <-
 old <-
   read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
-  filter(date >= '2017-12-31' & date <= last_proj_date) %>%
+  filter(date >= '2017-12-31' & date <= last_proj_date) %>% 
   mutate(key = 'old',
          date = yearquarter(date)) %>%
   mutate(grants = federal_cgrants + federal_igrants + non_health_grants,
          federal_purchases = federal_nom + grants,
+         state_purchases = state_local_nom - grants,
          taxes = corporate_taxes + noncorp_taxes,
          federal_taxes = federal_corporate_taxes + federal_noncorp_taxes,
          state_taxes = state_corporate_taxes + state_noncorp_taxes,
@@ -234,8 +236,9 @@ new <-
   filter(date >= '2017-12-31' & date <= last_proj_date) %>%
   mutate(key = 'new',
          date = yearquarter(date)) %>%
-  mutate(grants = federal_cgrants + federal_igrants + non_health_grants,
-         federal_purchases = federal_nom + grants,
+  mutate(grants = federal_cgrants + federal_igrants,
+         federal_purchases = federal_purchases_with_grants,
+         state_purchases = state_purchases_with_grants,
          taxes = corporate_taxes + noncorp_taxes,
          federal_taxes = federal_corporate_taxes + federal_noncorp_taxes,
          state_taxes = state_corporate_taxes + state_noncorp_taxes,
@@ -251,9 +254,9 @@ new <-
 # Purchases
 ## Total
 federal_levels  <-
-  comparison_plot(federal_nom, title = 'Federal Purchases without grants')
+  comparison_plot(federal_purchases, title = 'Federal Purchases')
 state_levels  <-
-  comparison_plot(state_local_nom, title = 'State Purchases without grants')
+  comparison_plot(state_purchases, title = 'State Purchases')
 #difference_fed_state_levels <-
    # comparison_plot(TO DO)
 
@@ -265,6 +268,8 @@ consumption_grants_levels  <-
   comparison_plot(federal_cgrants, title = 'Consumption Grants')
 investment_grants_levels  <-
   comparison_plot(federal_igrants, title = 'Investment Grants')
+arp_grants_levels <- 
+    comparison_plot(non_health_grants, title = 'ARP Grants')
 
 
 # Taxes
