@@ -18,6 +18,8 @@ library('gghutchins')
 conflicted::conflict_prefer('filter', 'dplyr')
 conflicted::conflict_prefer('geom_col', 'ggplot2')
 conflicted::conflict_prefer('geom_line', 'ggplot2')
+#Timezone
+Sys.setenv(TZ='UTC')
 # Functions -----------------------------------------------------------------------------------
 comparison_theme <- function() {
   theme(
@@ -97,12 +99,11 @@ old <-
   read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
   filter(date >= '2017-12-31' & date <= last_proj_date) %>%
-  select(date, fiscal_impact, ends_with('cont')) %>%
+  select(date, fiscal_impact, ends_with('cont'), federal_cont_ex_grants) %>% 
   rename_with(.fn =  ~ str_remove(.x, '_cont'), ends_with('cont')) %>%
   mutate(key = 'old',
-         date = yearquarter(date))
-
-
+         date = yearquarter(date)) %>% 
+  mutate(federal_unemployment_insurance = federal_unemployment_insurance + federal_ui_arp,  state_unemployment_insurance = state_unemployment_insurance + state_ui_arp)
 
 new <-
   read_excel(glue('results/{current_month}/fim-{current_month}.xlsx'),
@@ -132,9 +133,9 @@ new %>%
 (fiscal_impact <-
   comparison_plot(title = 'Quarterly Fiscal Impact'))
 # Purchases
-## Total
-federal <- comparison_plot(federal_nom, title = 'Federal Purchases')
-state <- comparison_plot(state_local_nom, title = 'State purchases')
+## Total   EDITING HERE
+federal <- comparison_plot(federal_cont_ex_grants, title = 'Federal Purchases')
+state <- comparison_plot(state_local_ex_grants, title = 'State purchases')
 ## Excluding grants
 # federal_nom  <-
 #   comparison_plot(federal_nom, title = 'Federal Purchases Without Grants')
@@ -217,7 +218,8 @@ old <-
          federal_purchases = federal_nom + grants,
          taxes = corporate_taxes + noncorp_taxes,
          federal_taxes = federal_corporate_taxes + federal_noncorp_taxes,
-         state_taxes = state_corporate_taxes + state_noncorp_taxes)
+         state_taxes = state_corporate_taxes + state_noncorp_taxes) %>%  
+  mutate(federal_unemployment_insurance = federal_unemployment_insurance + federal_ui_arp,  state_unemployment_insurance = state_unemployment_insurance + state_ui_arp)
 
 
 new <-
@@ -246,6 +248,9 @@ federal_levels  <-
   comparison_plot(federal_nom, title = 'Federal Purchases')
 state_levels  <-
   comparison_plot(state_local_nom, title = 'State Purchases')
+#difference_fed_state_levels <-
+   # comparison_plot(TO DO)
+
 
 ## Grants
 grants_levels  <-
