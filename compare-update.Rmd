@@ -68,7 +68,6 @@ state_levels
 grants 
 consumption_grants 
 investment_grants 
-arp_grants
 ```
 
 ## Levels
@@ -77,7 +76,6 @@ arp_grants
 grants_levels 
 consumption_grants_levels
 investment_grants_levels
-arp_grants_levels
 ```
 
 # Taxes
