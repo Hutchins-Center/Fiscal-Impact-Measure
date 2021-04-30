@@ -134,6 +134,7 @@ new %>%
   comparison_plot(title = 'Quarterly Fiscal Impact'))
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Purchases with Grants
 ## Total   
 federal <- comparison_plot(federal, title = 'Federal Purchases with Grants')
@@ -145,10 +146,15 @@ federal <- comparison_plot(federal_cont_ex_grants, title = 'Federal Purchases')
 state <- comparison_plot(state_local_ex_grants, title = 'State purchases')
 >>>>>>> parent of d9e5f2f9... manu changes for his computer
 =======
+=======
+>>>>>>> parent of 0de0fca0... Merge branch 'master' of https://github.com/Hutchins-Center/Fiscal-Impact-Measure
 # Purchases
 ## Total   EDITING HERE
 federal <- comparison_plot(federal_cont_ex_grants, title = 'Federal purchases without grants')
 state <- comparison_plot(state_local_nom, title = 'State purchases without grants')
+<<<<<<< HEAD
+>>>>>>> parent of 0de0fca0... Merge branch 'master' of https://github.com/Hutchins-Center/Fiscal-Impact-Measure
+=======
 >>>>>>> parent of 0de0fca0... Merge branch 'master' of https://github.com/Hutchins-Center/Fiscal-Impact-Measure
 ## Excluding grants
 # federal_nom  <-
@@ -244,6 +250,7 @@ new <-
   mutate(key = 'new',
          date = yearquarter(date)) %>%
 <<<<<<< HEAD
+<<<<<<< HEAD
   mutate(grants = federal_cgrants + federal_igrants,
 <<<<<<< HEAD
          federal_purchases = federal_purchases_with_grants,
@@ -251,6 +258,10 @@ new <-
 =======
          federal_purchases = federal_nom + grants,
 >>>>>>> parent of d9e5f2f9... manu changes for his computer
+=======
+  mutate(grants = federal_cgrants + federal_igrants + non_health_grants,
+         federal_purchases = federal_nom + grants,
+>>>>>>> parent of 0de0fca0... Merge branch 'master' of https://github.com/Hutchins-Center/Fiscal-Impact-Measure
 =======
   mutate(grants = federal_cgrants + federal_igrants + non_health_grants,
          federal_purchases = federal_nom + grants,
@@ -271,6 +282,7 @@ new <-
 federal_levels  <-
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   comparison_plot(federal_purchases, title = 'Federal Purchases')
 state_levels  <-
   comparison_plot(state_purchases, title = 'State Purchases')
@@ -279,6 +291,11 @@ state_levels  <-
 state_levels  <-
   comparison_plot(state_local_nom, title = 'State Purchases')
 >>>>>>> parent of d9e5f2f9... manu changes for his computer
+=======
+  comparison_plot(federal_nom, title = 'Federal Purchases without grants')
+state_levels  <-
+  comparison_plot(state_local_nom, title = 'State Purchases without grants')
+>>>>>>> parent of 0de0fca0... Merge branch 'master' of https://github.com/Hutchins-Center/Fiscal-Impact-Measure
 =======
   comparison_plot(federal_nom, title = 'Federal Purchases without grants')
 state_levels  <-
