@@ -44,15 +44,16 @@ source('reports/contribution-figures.R')
 fiscal_impact
 ```
 
-# Purchases  {.tabset .tabset-pills}
-
+# Purchases {.tabset .tabset-pills}
 ## Contributions
 
 ```{r}
 federal
 state
 ```
+
 ## Levels 
+
 ```{r}
 federal_levels
 state_levels
@@ -60,8 +61,8 @@ state_levels
 ```
 
 
-## Grants {.tabset .tabset-pills}
-### Contributions
+# Grants {.tabset .tabset-pills}
+## Contributions
 
 ```{r grants}
 grants 
@@ -69,7 +70,7 @@ consumption_grants
 investment_grants 
 ```
 
-### Levels
+## Levels
 
 ```{r}
 grants_levels 

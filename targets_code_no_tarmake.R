@@ -68,8 +68,8 @@ add_factors <-
         add_state_social_benefits,
       federal_health_outlays = federal_health_outlays +
         add_federal_health_outlays,
-      federal_social_benefits = federal_social_benefits +
-        add_federal_social_benefits,
+     federal_social_benefits = federal_social_benefits +
+       add_federal_social_benefits,
       federal_subsidies = federal_subsidies +
         add_federal_subsidies,
       federal_cgrants = federal_cgrants +
@@ -147,6 +147,7 @@ add_factors <-
     
     fim =
       fim_create(projections) %>%
+     # projections %>%
       mutate(id =  if_else(date <= last_hist_date, 'historical', 'projection')) %>%
       add_factors() %>%
       override_projections() %>%
@@ -219,9 +220,10 @@ add_factors <-
         transfers = federal_transfers + state_transfers) %>% 
     
         get_fiscal_impact() %>%
-      mutate(fiscal_impact = federal_cont + state_local_cont + taxes_cont + state_transfers_cont +  federal_transfers_cont_no_arp + federal_ui_arp_cont + rebate_checks_arp_cont + aid_to_small_businesses_cont + health_grants_arp_cont + other_direct_aid_cont + other_vulnerable_cont,
+      mutate(fiscal_impact = federal_cont + state_local_cont + taxes_cont + state_transfers_cont +  federal_transfers_cont_no_arp + federal_ui_arp_cont + state_ui_arp_cont + rebate_checks_arp_cont + aid_to_small_businesses_cont + health_grants_arp_cont + other_direct_aid_cont + other_vulnerable_cont,
              arp_cont =  health_grants_arp_cont + non_health_grants_cont +
                federal_ui_arp_cont + rebate_checks_arp_cont + other_direct_aid_cont + other_vulnerable_cont + aid_to_small_businesses_cont) %>% 
+      mutate(federal_unemployment_insurance = federal_unemployment_insurance + federal_ui_arp, federal_unemployment_insurance_cont = federal_unemployment_insurance_cont + federal_ui_arp_cont, state_unemployment_insurance = state_unemployment_insurance + state_ui_arp, state_unemployment_insurance_cont = state_unemployment_insurance_cont + state_ui_arp_cont) %>% 
       
       arrange(date, recession, fiscal_impact, fiscal_impact_moving_average,
               federal_cont, state_local_cont,
@@ -230,4 +232,15 @@ add_factors <-
     
 fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)  
     
+# projections %>% fim_create() %>%  select(date, state_health_outlays,
+#                          state_social_benefits,
+#                          state_noncorp_taxes,
+#                          state_corporate_taxes,
+#                          federal_health_outlays,
+#                          federal_social_benefits,
+#                          federal_subsidies,
+#                          federal_cgrants) %>% filter(date > "2020-03-31") %>% 
+#   write_xlsx('data/add-ons/fim_no_addons.xlsx')
+
 write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')   
+
