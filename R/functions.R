@@ -31,7 +31,60 @@ create_projections <- function(df) {
     sum_projections(yctlg, gfrcp, gsrcp) %>%
     sum_projections(gsub, gfsub, gssub)
 }
+purchases_growth <- function(df){
+  capExpiration <- "2021-09-30"
+  df %>%
+    mutate(gf_growth = if_else(date > capExpiration,
+                          gdppothq_growth + jgdp_growth,
+                          gf_growth)
+    )
+}
 
+transfers_growth <- function(df){
+  df %>%
+    mutate(
+      gftfpnet_growth = gftfp_growth, 
+      gstfp_growth = gs_growth,
+      gstfpnet_growth =  gs_growth,
+    )
+}
+  
+health_growth <- function(df){
+  df %>%
+    mutate(
+      #  Health & Hospital grants to states growth with Medicaid
+      gfeghhx_growth = yptmd_growth, 
+      # Medicaid grants to states grow with medicaid
+      gfeghdx_growth = yptmd_growth, 
+    )
+}
+  
+subsidies_growth <-function(df){
+  df %>% 
+    mutate(
+      gfsub_growth = gdppothq_growth,
+      gssub_growth = gdppothq_growth
+    )
+}
+
+grants_growth <-function(df){
+  df %>%
+    mutate(
+      # Aid to S&L grow with federal purchases
+      grants_growth = gf_growth, 
+      # Capital grants to state and local gov'ts grow with federal purchases
+      gfeigx_growth = gf_growth
+    )
+}
+
+deflators_growth <-function(df){
+  df %>%
+    mutate(
+      jgsi_growth = jgs_growth,
+      # Consumption deflator grows with overall deflator for S&L
+      jgse_growth = jgs_growth
+    )
+}
 components_growth_rates <- function(df) {
   df %>%
     purchases_growth() %>%

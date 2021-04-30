@@ -8,6 +8,7 @@ conflict_prefer("month", "lubridate")
 conflict_prefer('year', 'lubridate')
 conflict_prefer('lag', 'dplyr')
 
+
 current_month <- glue::glue(lubridate::month(lubridate::today()), '-', lubridate::year(lubridate::today()))
 components <- get_components_names()
 # This is an example _targets.R file. Every
@@ -157,6 +158,7 @@ plan <-
               federal_cont, state_local_cont,
               taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont),
     
+write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')
 
 
     output = {

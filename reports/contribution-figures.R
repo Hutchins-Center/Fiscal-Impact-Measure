@@ -18,6 +18,8 @@ library('gghutchins')
 conflicted::conflict_prefer('filter', 'dplyr')
 conflicted::conflict_prefer('geom_col', 'ggplot2')
 conflicted::conflict_prefer('geom_line', 'ggplot2')
+conflicted::conflict_prefer("geom_bar", "ggplot2")
+
 #Timezone
 Sys.setenv(TZ='UTC')
 # Functions -----------------------------------------------------------------------------------
@@ -48,7 +50,6 @@ comparison_theme <- function() {
   )
 }
 
-
 comparison_plot <-
   function(variable = fiscal_impact,
            title = '',
@@ -76,10 +77,10 @@ comparison_plot <-
       scale_x_yearquarter(breaks = waiver(),
                           date_breaks = '3 months',
                           date_labels = "Q%q") +
-      facet_grid( ~ year(date),
-                  space = "free_x",
-                  scales = "free_x",
-                  switch = "x")  +
+      # facet_grid( ~ year(date),
+      #             space = "free_x",
+      #             scales = "free_x",
+      #             switch = "x")  +
       theme(legend.position = 'top') +
       guides(fill = guide_legend(reverse = TRUE)) 
 
@@ -93,8 +94,9 @@ comparison_plot <-
 
 last_month <- get_previous_month()
 current_month <- get_current_month()
-tar_load(last_hist_date)
-tar_load(last_proj_date)
+last_hist_date = lubridate::as_date("2021-03-31")
+last_proj_date  =  lubridate::as_date('2022-12-31')
+
 old <-
   read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
@@ -110,11 +112,10 @@ new <-
              na = "NA") %>%
   mutate(date = as_date(date)) %>%
   filter(date >= '2017-12-31' & date <= last_proj_date) %>%
-  select(date, fiscal_impact, ends_with('cont')) %>%
+  select(date, fiscal_impact, ends_with('cont'), federal_cont_ex_grants) %>%
   rename_with(.fn =  ~ str_remove(.x, '_cont'), ends_with('cont')) %>%
   mutate(key = 'new',
-         date = yearquarter(date))
-
+         date = yearquarter(date)) 
 
 
 # Figures -------------------------------------------------------------------------------------
@@ -130,12 +131,15 @@ new %>%
        subtitle = 'Includes unemployment insurance, rebate checks, aid to small businesses, health grants, grants to S&L governments, direct aid to households and aid to vulnerable individuals')  +
   scale_fill_hutchins()
 
+new %>% 
+  ggplot(aes(x = date, y = fiscal_impact)) +
+  geom_col()
 (fiscal_impact <-
   comparison_plot(title = 'Quarterly Fiscal Impact'))
 # Purchases
 ## Total   EDITING HERE
-federal <- comparison_plot(federal_cont_ex_grants, title = 'Federal Purchases')
-state <- comparison_plot(state_local_ex_grants, title = 'State purchases')
+federal <- comparison_plot(federal_cont_ex_grants, title = 'Federal purchases without grants')
+state <- comparison_plot(state_local_nom, title = 'State purchases without grants')
 ## Excluding grants
 # federal_nom  <-
 #   comparison_plot(federal_nom, title = 'Federal Purchases Without Grants')
@@ -214,11 +218,12 @@ old <-
   filter(date >= '2017-12-31' & date <= last_proj_date) %>%
   mutate(key = 'old',
          date = yearquarter(date)) %>%
-  mutate(grants = federal_cgrants + federal_igrants,
+  mutate(grants = federal_cgrants + federal_igrants + non_health_grants,
          federal_purchases = federal_nom + grants,
          taxes = corporate_taxes + noncorp_taxes,
          federal_taxes = federal_corporate_taxes + federal_noncorp_taxes,
-         state_taxes = state_corporate_taxes + state_noncorp_taxes) %>%  
+         state_taxes = state_corporate_taxes + state_noncorp_taxes,
+         federal_nom = federal_nom - non_health_grants) %>%  
   mutate(federal_unemployment_insurance = federal_unemployment_insurance + federal_ui_arp,  state_unemployment_insurance = state_unemployment_insurance + state_ui_arp)
 
 
@@ -229,11 +234,12 @@ new <-
   filter(date >= '2017-12-31' & date <= last_proj_date) %>%
   mutate(key = 'new',
          date = yearquarter(date)) %>%
-  mutate(grants = federal_cgrants + federal_igrants,
+  mutate(grants = federal_cgrants + federal_igrants + non_health_grants,
          federal_purchases = federal_nom + grants,
          taxes = corporate_taxes + noncorp_taxes,
          federal_taxes = federal_corporate_taxes + federal_noncorp_taxes,
-         state_taxes = state_corporate_taxes + state_noncorp_taxes)
+         state_taxes = state_corporate_taxes + state_noncorp_taxes,
+         federal_nom = federal_nom - non_health_grants)
 
 
 
@@ -245,9 +251,9 @@ new <-
 # Purchases
 ## Total
 federal_levels  <-
-  comparison_plot(federal_nom, title = 'Federal Purchases')
+  comparison_plot(federal_nom, title = 'Federal Purchases without grants')
 state_levels  <-
-  comparison_plot(state_local_nom, title = 'State Purchases')
+  comparison_plot(state_local_nom, title = 'State Purchases without grants')
 #difference_fed_state_levels <-
    # comparison_plot(TO DO)
 
