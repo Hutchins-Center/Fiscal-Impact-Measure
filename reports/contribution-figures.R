@@ -142,6 +142,9 @@ state <- comparison_plot(state_local, title = 'State Purchases with Grants')
 ## Total   EDITING HERE
 federal <- comparison_plot(federal_cont_ex_grants, title = 'Federal Purchases')
 state <- comparison_plot(state_local_ex_grants, title = 'State purchases')
+<<<<<<< HEAD
+>>>>>>> parent of d9e5f2f (manu changes for his computer)
+=======
 >>>>>>> parent of d9e5f2f (manu changes for his computer)
 ## Excluding grants
 # federal_nom  <-
@@ -240,9 +243,12 @@ new <-
          date = yearquarter(date)) %>%
   mutate(grants = federal_cgrants + federal_igrants,
 <<<<<<< HEAD
+<<<<<<< HEAD
          federal_purchases = federal_purchases_with_grants,
          state_purchases = state_purchases_with_grants,
 =======
+=======
+>>>>>>> parent of d9e5f2f (manu changes for his computer)
          federal_purchases = federal_nom + grants,
 >>>>>>> parent of d9e5f2f (manu changes for his computer)
          taxes = corporate_taxes + noncorp_taxes,
@@ -260,9 +266,15 @@ new <-
 ## Total
 federal_levels  <-
 <<<<<<< HEAD
+<<<<<<< HEAD
   comparison_plot(federal_purchases, title = 'Federal Purchases')
 state_levels  <-
   comparison_plot(state_purchases, title = 'State Purchases')
+=======
+  comparison_plot(federal_nom, title = 'Federal Purchases')
+state_levels  <-
+  comparison_plot(state_local_nom, title = 'State Purchases')
+>>>>>>> parent of d9e5f2f (manu changes for his computer)
 =======
   comparison_plot(federal_nom, title = 'Federal Purchases')
 state_levels  <-
