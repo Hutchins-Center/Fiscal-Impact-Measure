@@ -258,7 +258,9 @@ fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)
 #                          federal_cgrants) %>% filter(date > "2020-03-31") %>% 
 #   write_xlsx('data/add-ons/fim_no_addons.xlsx')
 
-write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')   
+write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx') 
+write_xlsx(projections, 'results/4-2021/projections-4-2021.xlsx')   
+
 
 interactive =
   fim %>%
