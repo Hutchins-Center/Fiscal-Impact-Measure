@@ -38,7 +38,8 @@ smooth_budget_series <- function(df){
   df %>%
   mutate(
     across(.cols = c("gfrpt",  "gfrpri",  "gfrcp",  "gfrs", "yptmr",  "yptmd"),
-           .fns = ~ rollapply(.x, width = 4, mean, fill = NA, align =  'right')
+           .fns = ~ roll::roll_mean(.x, width = 4, mean, fill = NA, align =  'right', min_obs = 1
+                              )
     ) 
   )
 }
