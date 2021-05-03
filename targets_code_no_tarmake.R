@@ -133,9 +133,9 @@ projections =
   group_by(forecast_period) %>%
   create_override(
     var = gs_g,
-    start = '2020-12-31',
-    end = '2022-03-31',
-    values = c(rep(0.0025, 3), 0.005, 0.0075, 0.01)
+    start = '2021-06-30',
+    end = '2023-06-30',
+    values = c(0.00625, 0.0075, rep(0.00625, 3), 0.00375, rep(0.0025,3))
   ) %>%
   components_growth_rates() %>%
   mutate(gftfp = gftfp - federal_unemployment_insurance_override - gftfpe, gtfp = gstfp + gftfp) %>%
@@ -247,8 +247,3 @@ fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)
 
 write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')   
 
-interactive =
-  fim %>%
-  filter(date <= '2022-12-31') %>%
-  prepare_interactive() %>%
-  readr::write_csv(glue('results/{current_month}/fim-interactive-{Sys.Date()}.csv')) 

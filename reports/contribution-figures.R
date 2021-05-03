@@ -93,10 +93,13 @@ comparison_plot <-
 
 last_month <- get_previous_month()
 current_month <- get_current_month()
-tar_load(last_hist_date)
-tar_load(last_proj_date)
+#tar_load(last_hist_date)
+#tar_load(last_proj_date)
+last_hist_date <- lubridate::as_date("2021-03-31")
+last_proj_date <- lubridate::as_date("2023-03-31")
 old <-
-  read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
+ # read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
+  read_excel(glue('results/3-2021/fim-3-2021.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
   filter(date >= '2017-12-31' & date <= last_proj_date) %>%
   select(date, fiscal_impact, ends_with('cont'), federal_cont_ex_grants) %>% 
@@ -106,8 +109,9 @@ old <-
   mutate(federal_unemployment_insurance = federal_unemployment_insurance + federal_ui_arp,  state_unemployment_insurance = state_unemployment_insurance + state_ui_arp)
 
 new <-
-  read_excel(glue('results/{current_month}/fim-{current_month}.xlsx'),
-             na = "NA") %>%
+ # read_excel(glue('results/{current_month}/fim-{current_month}.xlsx'), na = "NA") %>%
+  read_excel(glue('results/4-2021/fim-4-2021.xlsx'), na = "NA") %>%
+             
   mutate(date = as_date(date)) %>%
   filter(date >= '2017-12-31' & date <= last_proj_date) %>%
   select(date, fiscal_impact, ends_with('cont')) %>%
@@ -132,20 +136,16 @@ new %>%
 
 (fiscal_impact <-
   comparison_plot(title = 'Quarterly Fiscal Impact'))
-<<<<<<< HEAD
 # Purchases with Grants
 ## Total   
 federal <- comparison_plot(federal, title = 'Federal Purchases with Grants')
 state <- comparison_plot(state_local, title = 'State Purchases with Grants')
-=======
+
 # Purchases
 ## Total   EDITING HERE
-federal <- comparison_plot(federal_cont_ex_grants, title = 'Federal Purchases')
-state <- comparison_plot(state_local_ex_grants, title = 'State purchases')
-<<<<<<< HEAD
->>>>>>> parent of d9e5f2f (manu changes for his computer)
-=======
->>>>>>> parent of d9e5f2f (manu changes for his computer)
+#federal <- comparison_plot(federal_cont_ex_grants, title = 'Federal Purchases')
+#state <- comparison_plot(state_local_ex_grants, title = 'State purchases')
+
 ## Excluding grants
 # federal_nom  <-
 #   comparison_plot(federal_nom, title = 'Federal Purchases Without Grants')
@@ -220,7 +220,8 @@ state_social_benefits <-
 
 
 old <-
-  read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
+ # read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
+  read_excel(glue('results/3-2021/fim-3-2021.xlsx'), na = "NA") %>%
   mutate(date = as_date(date)) %>%
   filter(date >= '2017-12-31' & date <= last_proj_date) %>% 
   mutate(key = 'old',
@@ -235,22 +236,17 @@ old <-
 
 
 new <-
-  read_excel(glue('results/{current_month}/fim-{current_month}.xlsx'),
-             na = "NA") %>%
+ # read_excel(glue('results/{current_month}/fim-{current_month}.xlsx'),na = "NA") %>%
+  read_excel(glue('results/4-2021/fim-4-2021.xlsx'),na = "NA") %>%
   mutate(date = as_date(date)) %>%
   filter(date >= '2017-12-31' & date <= last_proj_date) %>%
   mutate(key = 'new',
          date = yearquarter(date)) %>%
   mutate(grants = federal_cgrants + federal_igrants,
-<<<<<<< HEAD
-<<<<<<< HEAD
+
          federal_purchases = federal_purchases_with_grants,
          state_purchases = state_purchases_with_grants,
-=======
-=======
->>>>>>> parent of d9e5f2f (manu changes for his computer)
-         federal_purchases = federal_nom + grants,
->>>>>>> parent of d9e5f2f (manu changes for his computer)
+
          taxes = corporate_taxes + noncorp_taxes,
          federal_taxes = federal_corporate_taxes + federal_noncorp_taxes,
          state_taxes = state_corporate_taxes + state_noncorp_taxes)
@@ -265,21 +261,12 @@ new <-
 # Purchases
 ## Total
 federal_levels  <-
-<<<<<<< HEAD
-<<<<<<< HEAD
   comparison_plot(federal_purchases, title = 'Federal Purchases')
 state_levels  <-
   comparison_plot(state_purchases, title = 'State Purchases')
-=======
-  comparison_plot(federal_nom, title = 'Federal Purchases')
-state_levels  <-
-  comparison_plot(state_local_nom, title = 'State Purchases')
->>>>>>> parent of d9e5f2f (manu changes for his computer)
-=======
-  comparison_plot(federal_nom, title = 'Federal Purchases')
-state_levels  <-
-  comparison_plot(state_local_nom, title = 'State Purchases')
->>>>>>> parent of d9e5f2f (manu changes for his computer)
+
+ 
+
 #difference_fed_state_levels <-
    # comparison_plot(TO DO)
 
