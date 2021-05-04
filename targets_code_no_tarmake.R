@@ -36,7 +36,6 @@ override_projections <-function (df) {
                                                                               ends_with("override")) %>% mutate(date = lubridate::as_date(date))
   Q2_2020 <- "2020-06-30"
   Q3_2020 <- "2020-09-30"
-  Q1_2021 <- "2021-03-31"
   last_override <- "2022-12-31"
   df %>% left_join(override, by = "date") %>% mutate(unemployment_insurance = if_else(date >= 
                                                                                         Q3_2020 & date <= last_override, unemployment_insurance_override, 
@@ -45,7 +44,7 @@ override_projections <-function (df) {
                                                                                                                                                         federal_unemployment_insurance), state_unemployment_insurance = if_else(date >= 
                                                                                                                                                                                                                                   Q2_2020 & date <= last_override, state_unemployment_insurance_override, 
                                                                                                                                                                                                                                 state_unemployment_insurance), federal_cgrants = if_else(date >= 
-                                                                                                                                                                                                                                                                                           Q2_2020 & date <= Q1_2021, federal_cgrants_override, 
+                                                                                                                                                                                                                                                                                           Q2_2020 & date <= Q3_2020, federal_cgrants_override, 
                                                                                                                                                                                                                                                                                          federal_cgrants))
 }
 
@@ -182,7 +181,6 @@ fim =
   mutate(federal_grants_cont = federal_grants_cont + non_health_grants_cont,
          federal_nom = federal_nom + non_health_grants,
          federal_nom_cont = federal_nom_cont + non_health_grants_cont,
-         federal_nom_new = federal_nom - non_health_grants,
          federal_nom_new_cont = federal_nom_cont - non_health_grants_cont,
          federal_cont_no_arp = federal_cont, 
          federal_cont = federal_cont + non_health_grants_cont,
@@ -233,17 +231,15 @@ fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)
 
 
 
- #fim  %>%  select(date, state_health_outlays,
-                        # state_social_benefits,
-                         #state_noncorp_taxes,
-                        # state_corporate_taxes,
-                        # federal_health_outlays,
-                        # federal_social_benefits,
-                        # federal_subsidies,
-                        # federal_cgrants) %>% filter(date > "2020-03-31") %>%
-  #write_xlsx('data/add-ons/fim_no_addons.xlsx')
+# projections %>% fim_create() %>%  select(date, state_health_outlays,
+#                          state_social_benefits,
+#                          state_noncorp_taxes,
+#                          state_corporate_taxes,
+#                          federal_health_outlays,
+#                          federal_social_benefits,
+#                          federal_subsidies,
+#                          federal_cgrants) %>% filter(date > "2020-03-31") %>% 
+#   write_xlsx('data/add-ons/fim_no_addons.xlsx')
 
-write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')
-
-
+write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')   
 
