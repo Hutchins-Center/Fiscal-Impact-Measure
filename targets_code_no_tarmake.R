@@ -140,9 +140,6 @@ projections =
   components_growth_rates() %>%
   mutate(gftfp = gftfp - federal_unemployment_insurance_override - gftfpe, gtfp = gstfp + gftfp) %>%
   create_projections() %>%
-  
-  
-  
   medicaid_reallocation() 
 
 fim =
@@ -184,6 +181,7 @@ fim =
   mutate(federal_grants_cont = federal_grants_cont + non_health_grants_cont,
          federal_nom = federal_nom + non_health_grants,
          federal_nom_cont = federal_nom_cont + non_health_grants_cont,
+         federal_nom_new_cont = federal_nom_cont - non_health_grants_cont,
          federal_cont_no_arp = federal_cont, 
          federal_cont = federal_cont + non_health_grants_cont,
          purchases_cont = purchases_cont + non_health_grants_cont) %>% 
@@ -211,8 +209,6 @@ fim =
     
     federal_health_outlays = federal_health_outlays + health_grants_arp,
     health_outlays = federal_health_outlays + state_health_outlays,
-    
-    
     
     
     federal_transfers = federal_social_benefits + federal_subsidies + federal_health_outlays ,

@@ -139,6 +139,7 @@ new %>%
 # Purchases with Grants
 ## Total   
 federal <- comparison_plot(federal, title = 'Federal Purchases with Grants')
+federal_new <-comparison_plot(federal_nom_new, title = "Federal Purchases (no grants) New Add Factor")
 state <- comparison_plot(state_local, title = 'State Purchases with Grants')
 
 # Purchases
@@ -261,7 +262,7 @@ new <-
 # Purchases
 ## Total
 federal_levels  <-
-  comparison_plot(federal_purchases, title = 'Federal Purchases')
+  comparison_plot(federal_nom, title = 'Federal Purchases')
 state_levels  <-
   comparison_plot(state_purchases, title = 'State Purchases')
 
