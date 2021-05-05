@@ -233,15 +233,15 @@ fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)
 
 
 
- #fim  %>%  select(date, state_health_outlays,
-                        # state_social_benefits,
-                         #state_noncorp_taxes,
-                        # state_corporate_taxes,
-                        # federal_health_outlays,
-                        # federal_social_benefits,
-                        # federal_subsidies,
-                        # federal_cgrants) %>% filter(date > "2020-03-31") %>%
-  #write_xlsx('data/add-ons/fim_no_addons.xlsx')
+ # projections %>% fim_create()  %>%  select(date, state_health_outlays,
+ #  state_social_benefits,
+ #  state_noncorp_taxes,
+ #  state_corporate_taxes,
+ #  federal_health_outlays,
+ #  federal_social_benefits,
+ #  federal_subsidies,
+ #  federal_cgrants) %>% filter(date > "2020-03-31") %>%
+ #  write_xlsx('data/add-ons/fim_no_addons.xlsx')
 
 write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')
 
