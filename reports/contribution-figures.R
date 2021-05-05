@@ -267,6 +267,9 @@ federal_levels  <-
 
 state_levels  <-
   comparison_plot(state_purchases, title = 'State Purchases')
+old%>% mutate(state_purchases_nipa = state_purchases + federal_cgrants + federal_igrants)
+new %>% mutate(state_purchases_nipa = state_purchases + federal_cgrants + federal_igrants) %>%  ggplot(aes(x= date, y= state_purchases_nipa)) + geom_col() 
+new %>% mutate(state_purchases_nipa = state_purchases + federal_cgrants + federal_igrants)%>% select(date, state_purchases_nipa) %>% View()
 
  
 
@@ -329,6 +332,8 @@ state_ui_levels  <-
     comparison_plot(state_unemployment_insurance, title = ' State Unemployment Insurance')
 
 # Rebate checks
+old <- old %>% mutate(rebate_checks = rebate_checks + rebate_checks_arp)
+
 rebate_checks_levels  <-
     comparison_plot(variable = rebate_checks, title = 'Rebate checks')
 # Social benefits

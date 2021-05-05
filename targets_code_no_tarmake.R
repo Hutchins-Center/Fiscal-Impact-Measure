@@ -228,6 +228,7 @@ fim =
           federal_cont, state_local_cont,
           taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
 
+fim <- fim %>% mutate(rebate_checks = rebate_checks + rebate_checks_arp)
 
 fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)  
 
