@@ -160,6 +160,7 @@ fim =
   contributions_purchases_grants() %>%
   total_purchases() %>%
   # remove_social_benefit_components() %>%
+  mutate(rebate_checks = if_else(date == '2021-03-31', rebate_checks - 1348, rebate_checks), rebate_checks_arp = if_else(date == '2021-03-31', 1348, rebate_checks_arp)) %>% 
   taxes_transfers_minus_neutral() %>%
   mutate(across(where(is.numeric),
                 ~ coalesce(.x, 0))) %>% 
@@ -172,7 +173,8 @@ fim =
   calculate_mpc('health_outlays') %>%
   calculate_mpc('social_benefits') %>%
   calculate_mpc('unemployment_insurance') %>%
-  calculate_mpc('rebate_checks') %>%
+ #calculate_mpc('rebate_checks') %>%
+  mutate(rebate_checks_post_mpc= fim::mpc_rebate_checks(rebate_checks_minus_neutral), federal_rebate_checks_post_mpc = fim::mpc_rebate_checks(federal_rebate_checks_minus_neutral), state_rebate_checks_post_mpc = 0) %>% 
   calculate_mpc('noncorp_taxes') %>%
   calculate_mpc('corporate_taxes') %>% 
   taxes_contributions() %>%
@@ -228,7 +230,7 @@ fim =
           federal_cont, state_local_cont,
           taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
 
-fim <- fim %>% mutate(rebate_checks = rebate_checks + rebate_checks_arp)
+fim <- fim %>% mutate(rebate_checks = rebate_checks + rebate_checks_arp) %>% mutate(rebate_checks_cont = rebate_checks_cont + rebate_checks_arp_cont)
 
 fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)  
 
