@@ -106,7 +106,7 @@ old <-
   rename_with(.fn =  ~ str_remove(.x, '_cont'), ends_with('cont')) %>%
   mutate(key = 'old',
          date = yearquarter(date)) %>% 
-  mutate(federal_unemployment_insurance = federal_unemployment_insurance + federal_ui_arp,  state_unemployment_insurance = state_unemployment_insurance + state_ui_arp) 
+  mutate(federal_unemployment_insurance = federal_unemployment_insurance + federal_ui_arp,  state_unemployment_insurance = state_unemployment_insurance + state_ui_arp)
 
 new <-
  # read_excel(glue('results/{current_month}/fim-{current_month}.xlsx'), na = "NA") %>%
@@ -137,9 +137,9 @@ new %>%
 (fiscal_impact <-
   comparison_plot(title = 'Quarterly Fiscal Impact'))
 # Purchases with Grants
-## Total 
-old <- old %>% mutate(federal_nom_new = federal_nom - non_health_grants)
-federal <- comparison_plot(federal_nom_new, title = 'Federal Purchases (No Grants)')
+## Total   
+federal <- comparison_plot(federal, title = 'Federal Purchases with Grants')
+federal_new <-comparison_plot(federal_nom_new, title = "Federal Purchases (no grants) New Add Factor")
 state <- comparison_plot(state_local, title = 'State Purchases with Grants')
 
 # Purchases
@@ -261,10 +261,8 @@ new <-
 
 # Purchases
 ## Total
-old <- old %>% mutate(federal_nom_new = federal_nom - non_health_grants)
 federal_levels  <-
-  comparison_plot(federal_nom_new, title = 'Federal Purchases')
-
+  comparison_plot(federal_nom, title = 'Federal Purchases')
 state_levels  <-
   comparison_plot(state_purchases, title = 'State Purchases')
 old%>% mutate(state_purchases_nipa = state_purchases + federal_cgrants + federal_igrants)
