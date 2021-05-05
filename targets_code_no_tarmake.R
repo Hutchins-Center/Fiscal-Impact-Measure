@@ -160,7 +160,8 @@ fim =
   contributions_purchases_grants() %>%
   total_purchases() %>%
   # remove_social_benefit_components() %>%
-  mutate(rebate_checks = if_else(date == '2021-03-31', rebate_checks - 1348, rebate_checks), rebate_checks_arp = if_else(date == '2021-03-31', 1348, rebate_checks_arp)) %>% 
+  
+  mutate(rebate_checks = if_else(date == '2021-03-31', rebate_checks - 1348, rebate_checks), rebate_checks_arp = if_else(date == '2021-03-31', 1348, rebate_checks_arp), federal_subsidies = if_else(date == '2021-03-31', 1444.08, federal_subsidies), subsidies = federal_subsidies + state_subsidies) %>% 
   taxes_transfers_minus_neutral() %>%
   mutate(across(where(is.numeric),
                 ~ coalesce(.x, 0))) %>% 
