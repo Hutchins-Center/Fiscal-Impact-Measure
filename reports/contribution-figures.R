@@ -261,10 +261,6 @@ arp_grants_levels <-
     comparison_plot(non_health_grants, title = 'ARP Grants')
 
 
-old <- old %>% mutate(grants_old = grants) 
-old_new_combined <- (new,old$grants_old) %>% 
-old_new_combined %>%mutate(grants_differences = grants - grants_old) %>% select(date, grants, grants_old, grants_differences) %>% View()
-
 # Taxes
 # taxes <- comparison_plot(taxes, 'Taxes')
 # federal_taxes <- comparison_plot(taxes, 'Federal Taxes')
