@@ -1,0 +1,128 @@
+---
+title: "Rebate checks"
+author: "Manuel Alcalá Kovalski"
+date: "5/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library('targets')
+library('tidyverse')
+library('magrittr')
+library('ggthemes')
+library('ggtext')
+library('ggthemes')
+library('gridExtra')
+library('fim')
+library('lubridate')
+library('glue')
+library('readxl')
+library('tsibble')
+```
+```{r}
+
+ # read_excel(glue('results/{last_month}/fim-{last_month}.xlsx'), na = "NA") %>%
+ march  <- 
+  read_excel(glue('results/3-2021/fim-3-2021.xlsx'), na = "NA") %>%
+  mutate(date = yearquarter(date)) %>% 
+  drop_na(date) %>% 
+  as_tsibble(index = date) %>% 
+  filter_index('2020  Q1' ~  '2023 Q1') %>% 
+  select(date, starts_with('rebate_checks'))
+
+march
+
+```
+
+```{r}
+ april <-
+  read_excel(glue('results/4-2021/fim-4-2021.xlsx'), na = "NA") %>%
+  mutate(date = yearquarter(date)) %>% 
+  drop_na(date) %>% 
+  as_tsibble(index = date) %>% 
+  filter_index('2020  Q1' ~  '2023 Q1')
+```
+
+```{r}
+
+mpc_ui <- function(x){
+
+  
+  mpc <- 0.9
+  weights <- c(rep(0.35, 2), rep(0.1, 2), rep(0.05, 2))
+  mpc * roll::roll_sum(x, width = length(weights), weights = rev(weights), 
+                       online = FALSE, min_obs = 1)
+  
+}
+april %>% 
+  select(date, starts_with('unemployment_insurance'), pi_pce, gdppoth, gdp) %>%
+   mutate(ui_spending = mpc_ui(unemployment_insurance)) %>% 
+  select(date, unemployment_insurance, ui_spending)
+  pivot_longer(ui_spending) %>% 
+  ggplot(aes(x = date, y = value, fill = name)) +
+  geom_col()
+ 
+```
+
+```{r}
+df<- read_excel(glue('results/4-2021/fim-4-2021.xlsx'), na = "NA") %>%
+  mutate(date = yearquarter(date)) %>%
+  drop_na(date) %>%
+  as_tsibble(index = date) %>%
+  filter_index('2020  Q1' ~  '2023 Q1') %>%
+  # Remove unecessary columns
+  select(date, rebate_checks, rebate_checks_arp,
+         pi_pce, gdppoth,  gdp) %>% 
+  # Undo aggregation step  
+  mutate(rebate_checks =  rebate_checks -  rebate_checks_arp) %>% 
+  mutate(rebate_checks = if_else(date == yearquarter('2021 Q1'), rebate_checks - 1348, rebate_checks), rebate_checks_arp = if_else(date ==  yearquarter('2021 Q1'), 1348, rebate_checks_arp)) %>% 
+  
+  # Consumption  amount
+  mutate(
+    rebate_checks_spending = mpc_rebate_checks(rebate_checks),
+    rebate_checks_arp_spending = mpc_direct_aid_arp(rebate_checks_arp),
+    .after=  date) %>% 
+  # Subtract counterfactual path
+  mutate(across(
+    .cols  = c(rebate_checks_spending, rebate_checks_arp_spending),
+    ~ .x - dplyr::lag(.x) * (1 + gdppoth + pi_pce),
+    .names = "{.col}_counterfactual"
+  ), .after = date) %>%
+  select(-gdppoth, -pi_pce) %>%
+  mutate(across(ends_with('counterfactual'),
+                ~ 400 * .x  / lag(gdp),
+                .names = '{.col}_contribution'),
+         .after =  date)
+df
+```
+
+```{r}
+df %>% 
+  select(date, ends_with('contribution')) %>% 
+  pivot_longer(-date) %>% 
+ 
+  ggplot(aes(x = date, y = value, color = name, fill = name))+
+  geom_col(position = position_dodge2())
+```
+
+```{r}
+df %>% 
+  select(date,ends_with('contribution')) 
+  pivot_longer(-date) %>% 
+  ggplot(aes(x = date, y = value, fill = name)) +
+  geom_col()
+```
+
+```{r}
+ df %>%  select(date,ends_with('contribution')) %>% 
+  mutate(total_rebate_checks_contribution = rebate_checks_spending_contribution + rebate_checks_arp_spending_contribution) %>%
+  pivot_longer(total_rebate_checks_contribution) %>% 
+  ggplot(aes(x = date, y = value, fill = name)) +
+  geom_col()+
+  scale_y_continuous(breaks = seq(-2, 6, by =0.5))
+```
+
