@@ -136,8 +136,7 @@ projections =
     var = gs_g,
     start = '2021-06-30',
     end = '2023-06-30',
-    values = c(0.00625, 0.0075, rep(0.00625, 3), 0.00375, rep(0.0025,3))
-  ) %>%
+   values = c(0.00625, rep(0.0075, 3), 0.00625, 0.005, rep(0.0025, 3)) )  %>%
   components_growth_rates() %>%
   mutate(gftfp = gftfp - federal_unemployment_insurance_override - gftfpe, gtfp = gstfp + gftfp) %>%
   create_projections() %>%
@@ -232,6 +231,7 @@ fim =
           taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
 
 fim <- fim %>% mutate(rebate_checks = rebate_checks + rebate_checks_arp) %>% mutate(rebate_checks_cont = rebate_checks_cont + rebate_checks_arp_cont)
+
 
 fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)  
 
