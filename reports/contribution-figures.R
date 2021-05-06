@@ -140,7 +140,9 @@ new %>%
 ## Total   
 federal <- comparison_plot(federal, title = 'Federal Purchases with Grants')
 federal_new <-comparison_plot(federal_nom_new, title = "Federal Purchases (no grants) New Add Factor")
-state <- comparison_plot(state_local, title = 'State Purchases with Grants')
+
+state <- comparison_plot(state_local, title = 'State Purchases not NIPA')
+#state_nipa <- comparison_plot(state_local_nipa, title = 'State purchases NIPA')
 
 # Purchases
 ## Total   EDITING HERE

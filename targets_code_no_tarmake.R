@@ -136,7 +136,9 @@ projections =
     var = gs_g,
     start = '2021-06-30',
     end = '2023-06-30',
-   values = c(0.00625, rep(0.0075, 3), 0.00625, 0.005, rep(0.0025, 3)) )  %>%
+   values = c(0.024113689,	0.019426547,	0.015868285,	0.015868285,	0.015868285,	0.014673846,	0.013475174,	0.012272234,	0.012272234
+
+   ))  %>%
   components_growth_rates() %>%
   mutate(gftfp = gftfp - federal_unemployment_insurance_override - gftfpe, gtfp = gstfp + gftfp) %>%
   create_projections() %>%
