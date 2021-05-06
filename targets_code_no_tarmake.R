@@ -1,5 +1,5 @@
-library(targets)
-library(tarchetypes)
+#library(targets)
+#library(tarchetypes)
 source('R/packages.R')
 source('R/functions.R')
 library('conflicted')
@@ -22,7 +22,7 @@ components <- get_components_names()
 # if you keep your functions in external scripts.
 
 # Set target-specific options such as packages.
-tar_option_set(packages = "dplyr")
+#tar_option_set(packages = "dplyr")
 
 load_unemployment_insurance_override <- function (){
   readxl::read_excel(drake::file_in("data/add-ons/add_factors.xlsx"),
@@ -248,6 +248,9 @@ fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)
  #  write_xlsx('data/add-ons/fim_no_addons.xlsx')
 
 write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')
+
+fim %>% prepare_interactive() %>% write_xlsx('results/4-2021/fim-interactive-2021-04.xlsx')
+
 
 
 
