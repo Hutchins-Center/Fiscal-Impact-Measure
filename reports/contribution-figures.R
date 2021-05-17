@@ -21,32 +21,7 @@ conflicted::conflict_prefer('geom_line', 'ggplot2')
 #Timezone
 Sys.setenv(TZ='UTC')
 # Functions -----------------------------------------------------------------------------------
-comparison_theme <- function() {
-  theme(
-    plot.title.position = 'plot',
-    text = element_text(family = "Roboto", color = "grey20"),
-    plot.title = element_textbox_simple(
-      family =  'Roboto',
-      size = 16,
-      lineheight = 1,
-      padding = margin(5.5, 5.5, 5.5, 5.5),
-      margin = margin(0, 0, 5.5, 0)
-    ),
-    axis.title.x = element_textbox_simple(
-      width = NULL,
-      padding = margin(4, 4, 4, 4),
-      margin = margin(4, 0, 0, 0)
-    ),
-    plot.caption = element_textbox_simple(),
-    strip.placement = 'outside',
-    strip.background = element_blank(),
-    panel.spacing = unit(0, 'lines'),
-    legend.position = 'bottom',
-    panel.grid.minor.x = element_blank(),
-    panel.grid.major.x = element_blank(),
-    plot.subtitle = element_textbox_simple(size = 10)
-  )
-}
+
 
 
 comparison_plot <-

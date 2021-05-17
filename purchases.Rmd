@@ -1,0 +1,245 @@
+---
+title: "purchases"
+author: "Manuel Alcalá Kovalski"
+date: "5/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Packages
+
+```{r}
+librarian::shelf('tidyverse', 'tsibble', 'lubridate', 'kableExtra', 'magrittr')
+source('R/functions.R')
+
+
+```
+
+## Load data
+
+```{r data}
+cbo <-
+  readxl::read_xlsx('data/raw/cbo/cbo_econ_proj_quarterly.xlsx') %>% 
+  summarise(date  = as_date(date),
+        federal_purchases = gf,
+        state_purchases = gs,
+        real_potential_gdp = gdppothq, 
+        federal_purchases_deflator = gf / gfh,
+        state_purchases_deflator = gs / gsh,
+        gdp)  %>% 
+  mutate(across(-date,
+                ~ .x / lag(.x) - 1,
+                .names = "{.col}_growth")) %>% 
+  select(date, gdp, ends_with('growth')) %>% 
+  filter(date >= '2020-12-31')
+
+national_accounts <- readxl::read_xlsx('data/raw/haver/national_accounts.xlsx') %>% 
+  summarise(date = as_date(date),
+            federal_purchases = gf,
+            state_purchases = gs,
+            gdp) %>% 
+  filter(date >= '2020-12-31')
+  
+purchases <-
+  national_accounts %>% 
+  mutate(date= as_date(date)) %>% 
+  safejoin::safe_full_join(cbo %>% mutate(date= as_date(date)) , by =  'date',
+                           conflict =  coalesce) 
+
+purchases
+```
+
+## Create forecast
+
+```{r}
+for(i in 3:nrow(purchases)){
+   purchases[i, 'federal_purchases'] = purchases[i - 1, 'federal_purchases'] * (1 + purchases[i, 'federal_purchases_growth'])
+}
+
+for(i in 3:nrow(purchases)){
+   purchases[i, 'state_purchases'] = purchases[i - 1, 'state_purchases'] * (1 + purchases[i, 'state_purchases_growth'])
+}
+purchases %>% 
+  select(date, federal_purchases, federal_purchases_growth,
+         state_purchases) 
+```
+
+## Calculate contribution
+
+```{r}
+  
+purchases %<>% 
+  mutate(federal_purchases_contribution = 
+          400 * (federal_purchases - lag(federal_purchases) *  (1+federal_purchases_deflator_growth + real_potential_gdp_growth)) / lag(gdp), 
+         .after = date)
+```
+
+## Add factor
+
+Add factors for federal purchases reflect federal spending on covid testing for states, vaccine procurement, and vaccine distribution.
+
+| Date    | Funding to states for testing | Vaccine procurement | Vaccine distribution |
+|---------|-------------------------------|---------------------|----------------------|
+| Q1 2021 | 30.8                          | 28                  | 12.6                 |
+| Q2 2021 | 30.8                          | 28                  | 12.6                 |
+| Q3 2021 | 13.2                          | 12                  | 5.4                  |
+| Q4 2021 | 13.2                          | 12                  | 5.4                  |
+
+: Federal purchases add factor
+
+
+
+```{r}
+(add_factors <- readxl::read_xlsx('data/add-ons/add_factors.xlsx', sheet = 'FIM Add Factors') %>% 
+   filter(date > '2021-03-31') %>% 
+  select(date, add_federal_purchases)) 
+```
+```{r}
+purchases <-
+  purchases %>% 
+  left_join(add_factors, by = 'date') %>% 
+  mutate(federal_purchases_with_add_factor = federal_purchases + add_federal_purchases, .after = federal_purchases,
+         federal_purchases_with_add_factor = coalesce(federal_purchases_with_add_factor, federal_purchases)) 
+
+purchases
+  
+
+```
+```{r}
+ purchases %<>% 
+  mutate(federal_purchases_with_add_factor_contribution = 
+          400 * (federal_purchases_with_add_factor - lag(federal_purchases_with_add_factor) *  (1+federal_purchases_deflator_growth + real_potential_gdp_growth)) / lag(gdp), 
+         .after = date)
+```
+
+
+
+## March data
+```{r}
+march <- readxl::read_xlsx('results/3-2021/input-data/national_accounts_03_2021.xlsx')
+
+purchases_march <-
+  march %>% 
+   summarise(date = as_date(date) ,
+            federal_purchases = gf,
+            state_purchases = gs,
+            gdp) %>% 
+  filter(date >= '2020-12-31') %>% 
+  safejoin::safe_full_join(cbo %>% mutate(date= as_date(date)) , by =  'date',
+                           conflict =  coalesce) 
+```
+
+```{r march-forecast}
+for(i in 2:nrow(purchases_march)){
+   purchases_march[i, 'federal_purchases'] = purchases_march[i - 1, 'federal_purchases'] * (1 + purchases_march[i, 'federal_purchases_growth'])
+}
+
+for(i in 2:nrow(purchases_march)){
+   purchases_march[i, 'state_purchases'] = purchases_march[i - 1, 'state_purchases'] * (1 + purchases_march[i, 'state_purchases_growth'])
+}
+
+```
+
+```{r}
+purchases_march %>% 
+  filter(date < '2023-03-31') %>% 
+  select(date, federal_purchases, federal_purchases_growth) %>% 
+  ggplot(aes(x = date, y = federal_purchases)) +
+  geom_line() +
+  geom_point() +
+ 
+  labs(title = 'Federal purchases forecast from March 2021')
+
+purchases %>% 
+    filter(date < '2023-03-31') %>% 
+  mutate(date = yearquarter(date)) %>% 
+  select(date, federal_purchases, federal_purchases_growth) %>% 
+  ggplot(aes(x = date, y = federal_purchases)) +
+  geom_line() +
+  geom_point() +
+ 
+  labs(title = 'Federal purchases forecast from April 2021')
+```
+
+```{r}
+purchases %>% 
+  select(date, state_purchases) %>% 
+  left_join(purchases_march %>% select(date, state_purchases_march = state_purchases)) %>% 
+  filter(date < '2023-03-31') %>% 
+  mutate(date = yearquarter(date))
+```
+
+```{r}
+ purchases_march %<>% 
+  mutate(federal_purchases_contribution = 
+          400 * (federal_purchases - lag(federal_purchases) *  (1+federal_purchases_deflator_growth + real_potential_gdp_growth)) / lag(gdp), 
+         .after = date)
+
+purchases_march %>% 
+  select(date, federal_purchases, federal_purchases_growth, federal_purchases_contribution)
+```
+```{r}
+purchases_march %>% 
+  select(date, federal_purchases_contribution) %>% 
+  filter(date<'2023-03-31') %>% 
+  mutate(date = yearquarter(date)) %>% 
+  pivot_longer(-date) %>% 
+  ggplot(aes(x = date, y = value, fill= name)) +
+  geom_col()
+```
+
+```{r}
+fim_march <- 
+  readxl::read_xlsx('results/3-2021/fim-3-2021.xlsx') %>% 
+  filter(date >= '2020-12-30')
+
+purchases %<>% 
+  mutate(federal_purchases_with_add_factor_contribution = 
+          400 * (federal_purchases_with_add_factor - lag(federal_purchases_with_add_factor) *  (1+federal_purchases_deflator_growth + real_potential_gdp_growth)) / lag(gdp), 
+         .after = date)
+
+fim_march %<>% 
+  summarise(date,
+            federal_purchases = 
+              federal_nom - add_federal_purchases - non_health_grants,
+            federal_purchases_with_add_factor = 
+            federal_nom - non_health_grants,
+            gdp,
+            federal_purchases_deflator_growth  = federal_nom_pi,
+            real_potential_gdp_growth = gdppoth) %>% 
+   mutate(federal_purchases_with_add_factor_contribution = 
+          400 * (federal_purchases_with_add_factor - lag(federal_purchases_with_add_factor) *  (1+federal_purchases_deflator_growth + real_potential_gdp_growth)) / lag(gdp), 
+         .after = date) %>% 
+     mutate(federal_purchases_contribution = 
+          400 * (federal_purchases - lag(federal_purchases) *  (1+federal_purchases_deflator_growth + real_potential_gdp_growth)) / lag(gdp), 
+         .after = date) 
+
+fim_march %>% View()
+```
+
+```{r}
+fim_march %>% 
+  select(date, federal_purchases, federal_purchases_with_add_factor)
+```
+
+```{r}
+fim_march %>% 
+  select(date, ends_with('contribution')) %>% 
+  filter(date > '2020-12-31' & date < '2023-03-31') %>% 
+  pivot_longer(-date) %>% 
+  mutate(date = yearquarter(date)) %>% 
+  ggplot(aes(x = date,  y = value, fill = name)) +
+  geom_col(position = position_dodge2())  +
+  gghutchins::scale_fill_hutchins(name = '',
+                                  labels = c("Without add factor", "With add factor")) +
+  labs(title = 'Contribution of federal purchases, March 2021') +
+  scale_y_continuous(labels = scales::label_percent(scale = 1),
+                     breaks = seq(-6, 11, by = 1),
+                     name = 'Percentage points') +
+  scale_x_yearquarter(breaks = '3 months') +
+  theme(legend.position = 'top')
+```
+

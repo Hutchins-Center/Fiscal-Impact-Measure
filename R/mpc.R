@@ -12,7 +12,7 @@ mpc_rebate_checks <- function(x){
   mpc <- 0.67
   weights <- c(0.238, 0.145, 0.11, rep(0.079, 3), rep(0.084, 2), rep(0.039, 2), 0.023)
   mpc * roll::roll_sum(x, width = length(weights), weights = rev(weights), 
-                       online = FALSE)
+                       online = FALSE, min_obs = 1)
   
 }
 
