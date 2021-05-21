@@ -106,7 +106,7 @@ cbo_projections = load_cbo_projections() %>%
   health_outlays_growth_rates() %>%
   alternative_tax_scenario() %>%
   implicit_price_deflators() %>%
-  state_taxes() %>%
+  state_taxes() %>% 
   growth_rates()
 unemployment_insurance_override = load_unemployment_insurance_override()
 components = get_components_names()
@@ -162,7 +162,7 @@ fim =
   total_purchases() %>%
   # remove_social_benefit_components() %>%
   
-  mutate(rebate_checks = if_else(date == '2021-03-31', rebate_checks - 1348, rebate_checks), rebate_checks_arp = if_else(date == '2021-03-31', 1348, rebate_checks_arp), federal_subsidies = if_else(date == '2021-03-31', 753, federal_subsidies), subsidies = federal_subsidies + state_subsidies) %>% 
+  mutate(rebate_checks = if_else(date == '2021-03-31', rebate_checks - 1348, rebate_checks), federal_rebate_checks = rebate_checks, rebate_checks_arp = if_else(date == '2021-03-31', 1348, rebate_checks_arp), federal_subsidies = if_else(date == '2021-03-31', 753, federal_subsidies), subsidies = federal_subsidies + state_subsidies) %>% 
   taxes_transfers_minus_neutral() %>%
   mutate(across(where(is.numeric),
                 ~ coalesce(.x, 0))) %>% 
@@ -226,13 +226,11 @@ fim =
          arp_cont =  health_grants_arp_cont + non_health_grants_cont +
            federal_ui_arp_cont + rebate_checks_arp_cont + other_direct_aid_cont + other_vulnerable_cont + aid_to_small_businesses_cont) %>% 
   mutate(federal_unemployment_insurance = federal_unemployment_insurance + federal_ui_arp, federal_unemployment_insurance_cont = federal_unemployment_insurance_cont + federal_ui_arp_cont, state_unemployment_insurance = state_unemployment_insurance + state_ui_arp, state_unemployment_insurance_cont = state_unemployment_insurance_cont + state_ui_arp_cont, federal_purchases_with_grants = federal_nom + federal_cgrants + federal_igrants, state_purchases_with_grants = state_local_nom - federal_cgrants - federal_igrants) %>% 
-  
-  
   arrange(date, recession, fiscal_impact, fiscal_impact_moving_average,
           federal_cont, state_local_cont,
           taxes_transfers_cont, federal_taxes_transfers_cont, state_taxes_transfers_cont)
 
-fim <- fim %>% mutate(rebate_checks = rebate_checks + rebate_checks_arp) %>% mutate(rebate_checks_cont = rebate_checks_cont + rebate_checks_arp_cont)
+#fim <- fim %>% mutate(rebate_checks = rebate_checks + rebate_checks_arp) %>% mutate(rebate_checks_cont = rebate_checks_cont + rebate_checks_arp_cont)
 
 
 fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)  
