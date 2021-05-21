@@ -14,8 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 librarian::shelf('tidyverse', 'tsibble', 'lubridate', 'kableExtra', 'magrittr')
 source('R/functions.R')
-
-
 ```
 
 ## Load data
@@ -24,30 +22,46 @@ source('R/functions.R')
 cbo <-
   readxl::read_xlsx('data/raw/cbo/cbo_econ_proj_quarterly.xlsx') %>% 
   summarise(date  = as_date(date),
-        federal_purchases = gf,
+        federal_purchases = gf, 
         state_purchases = gs,
         real_potential_gdp = gdppothq, 
-        federal_purchases_deflator = gf / gfh,
         state_purchases_deflator = gs / gsh,
         gdp)  %>% 
   mutate(across(-date,
                 ~ .x / lag(.x) - 1,
                 .names = "{.col}_growth")) %>% 
-  select(date, gdp, ends_with('growth')) %>% 
-  filter(date >= '2020-12-31')
+  rename(state_purchases_cbo_growth = state_purchases_growth) %>% 
+  select(date, gdp, ends_with('growth'), state_purchases_deflator)  
+
+grants <- readxl::read_xlsx('data/add-ons/add_factors.xlsx', sheet = "FIM Add Factors") %>% 
+  select(date, consumption_grants, investment_grants)
 
 national_accounts <- readxl::read_xlsx('data/raw/haver/national_accounts.xlsx') %>% 
   summarise(date = as_date(date),
             federal_purchases = gf,
             state_purchases = gs,
+            investment_grants = gfeigx,
+            real_potential_gdp = gdppothq,
             gdp) %>% 
-  filter(date >= '2020-12-31')
-  
-purchases <-
+  filter(date >= '2020-09-30') 
+
+growth_rates <-
+  tibble(date = cbo %>%
+             filter(date >= '2021-06-30' & date <= '2023-06-30') %>%
+             pull(date),
+       state_purchases_growth = c(0.00625, rep(0.0075, 3), 0.00625, 0.005, rep(0.0025, 3)))
+
   national_accounts %>% 
   mutate(date= as_date(date)) %>% 
-  safejoin::safe_full_join(cbo %>% mutate(date= as_date(date)) , by =  'date',
-                           conflict =  coalesce) 
+  
+  safejoin::safe_full_join(cbo %>% mutate(date= as_date(date)) , by =  'date',conflict =  coalesce) %>% 
+    filter(date >= '2020-09-30' & date <= '2023-06-30') %>%   
+  left_join(grants) %>% 
+  create_override(
+    var = state_purchases_growth,
+    start = '2021-03-31',
+    end = '2023-06-30',
+   values = c(0.00625, rep(0.0075, 3), 0.00625, 0.005, rep(0.0025, 3))) 
 
 purchases
 ```
@@ -55,26 +69,31 @@ purchases
 ## Create forecast
 
 ```{r}
-for(i in 3:nrow(purchases)){
-   purchases[i, 'federal_purchases'] = purchases[i - 1, 'federal_purchases'] * (1 + purchases[i, 'federal_purchases_growth'])
+
+for(i in 4:nrow(purchases)){
+     purchases[i, 'investment_grants'] = purchases[i - 1, 'investment_grants'] * (1 + purchases[i, 'federal_purchases_growth'])
+   purchases[i, 'state_purchases_fim'] = purchases[i - 1, 'state_purchases_fim'] * (1 + purchases[i, 'state_purchases_growth'])
 }
 
-for(i in 3:nrow(purchases)){
-   purchases[i, 'state_purchases'] = purchases[i - 1, 'state_purchases'] * (1 + purchases[i, 'state_purchases_growth'])
-}
 purchases %>% 
-  select(date, federal_purchases, federal_purchases_growth,
-         state_purchases) 
+  select(date, state_purchases_growth,ends_with('fim'),contains('state')) 
 ```
 
 ## Calculate contribution
 
 ```{r}
-  
-purchases %<>% 
-  mutate(federal_purchases_contribution = 
-          400 * (federal_purchases - lag(federal_purchases) *  (1+federal_purchases_deflator_growth + real_potential_gdp_growth)) / lag(gdp), 
-         .after = date)
+  purchases %>% 
+  select(date, 
+         contains('state'),
+         gdp,
+         real_potential_gdp_growth) %>% 
+  mutate(state_purchases_fim_contribution = 
+           400 * (state_purchases_fim - lag(state_purchases_fim) * (1 + state_purchases_deflator_growth + real_potential_gdp_growth)) / lag(gdp),
+         .after = 'date')
+# purchases %<>% 
+#   mutate(federal_purchases_contribution = 
+#           400 * (federal_purchases - lag(federal_purchases) *  (1+federal_purchases_deflator_growth + real_potential_gdp_growth)) / lag(gdp), 
+#          .after = date)
 ```
 
 ## Add factor

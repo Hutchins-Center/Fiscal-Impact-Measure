@@ -65,7 +65,9 @@ comparison_plot <-
 
 #These are data for contributions, not levels
 
-
+new %>% 
+  select(date, federal, state_local,  federal_cgrants) %>% 
+  imap(comparison_plot)
 last_month <- get_previous_month()
 current_month <- get_current_month()
 #tar_load(last_hist_date)
@@ -109,6 +111,7 @@ new %>%
        subtitle = 'Includes unemployment insurance, rebate checks, aid to small businesses, health grants, grants to S&L governments, direct aid to households and aid to vulnerable individuals')  +
   scale_fill_hutchins()
 
+map(list("federal"), comparison_plot)
 (fiscal_impact <-
   comparison_plot(title = 'Quarterly Fiscal Impact'))
 # Purchases with Grants
