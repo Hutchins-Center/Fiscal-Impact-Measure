@@ -37,7 +37,7 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 ```{r source}
-source('reports/contribution-figures.R')
+source('contribution-figures-test-copy.R')
 ```
 
 ```{r fiscal_impact}
