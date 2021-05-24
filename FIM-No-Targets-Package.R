@@ -182,6 +182,7 @@ fim =
   calculate_mpc('corporate_taxes') %>% 
   taxes_contributions() %>%
   sum_taxes_contributions() %>% 
+  mutate(taxes_cont = state_taxes_cont + federal_taxes_cont) %>% 
   mpc_arp_non_health_grants() %>% 
   mutate(non_health_grants_cont = 400 * (non_health_grants_post_mpc  - lag(non_health_grants_post_mpc) * (1 + gdppoth + federal_cgrants_pi)) / lag(gdp)) %>% 
   mutate(federal_grants_cont = federal_grants_cont + non_health_grants_cont,
@@ -238,16 +239,16 @@ fim %>% filter(date > "2020-06-30") %>% select(date, fiscal_impact)
 
 
 
- # projections %>% fim_create()  %>%  select(date, state_health_outlays,
- #  state_social_benefits,
- #  state_noncorp_taxes,
- #  state_corporate_taxes,
- #  federal_health_outlays,
- #  federal_social_benefits,
- #  federal_subsidies,
- #  federal_cgrants) %>% filter(date > "2020-03-31") %>%
- #  write_xlsx('data/add-ons/fim_no_addons.xlsx')
-
+#  projections %>% fim_create()  %>%  select(date, state_health_outlays,
+#   state_social_benefits,
+#   state_noncorp_taxes,
+#   state_corporate_taxes,
+#   federal_health_outlays,
+#   federal_social_benefits,
+#   federal_subsidies,
+#   federal_cgrants) %>% filter(date > "2020-03-31") %>%
+#   write_xlsx('data/add-ons/fim_no_addons.xlsx')
+# 
 write_xlsx(fim, 'results/4-2021/fim-4-2021.xlsx')
 
 fim %>% prepare_interactive() %>% write_xlsx('results/4-2021/fim-interactive-2021-04.xlsx')
