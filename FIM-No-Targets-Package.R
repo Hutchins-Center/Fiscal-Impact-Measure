@@ -140,6 +140,7 @@ projections =
 
    ))  %>%
   components_growth_rates() %>%
+  mutate(gftfpe = coalesce(gftfpe, 0)) %>% 
   mutate(gftfp = gftfp - federal_unemployment_insurance_override - gftfpe, gtfp = gstfp + gftfp) %>%
   create_projections() %>%
   medicaid_reallocation() 
