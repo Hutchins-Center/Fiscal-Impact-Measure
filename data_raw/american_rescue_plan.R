@@ -1,16 +1,58 @@
-arp_annual <- read_xlsx('data/pandemic-legislation/american_rescue_plan.xlsx',
+library('readxl')
+
+arp_annual <- read_xlsx('data/american_rescue_plan.xlsx',
           range = 'A3:AV14') %>% 
   janitor::clean_names()
 
-arp_timing <- read_xlsx('data/pandemic-legislation/american_rescue_plan.xlsx', sheet = 'Timing Assumptions',
+arp_timing <- read_xlsx('data/american_rescue_plan.xlsx', sheet = 'Timing Assumptions',
                         range = 'A2:I22') %>% 
-  mutate(date = yearquarter(date)) %>% 
+  mutate(date = yearquarter(date, fiscal_start = 1)) %>% 
   as_tsibble(index = date)
 
+fy_annual_to_quarter  <- function(df){
+  year <-
+    df %>%
+    tsibble::index_var()
+  min <-
+    df %>%
+    select(rlang::enexpr(year)) %>%
+    min() 
+  
+  max <- 
+    df %>%
+    select(rlang::enexpr(year)) %>%
+    max()
+  start <- tsibble::yearquarter(glue::glue('{min} Q1'), fiscal_start = 1)
+  end <- tsibble::yearquarter(glue::glue('{max} Q4'), fiscal_start = 1)
+  x <- seq(start,  end, by = 1)
+  
+  df %>%
+    as_tibble() %>%
+    slice(rep(1:n(), each=4)) %>%
+    
+    mutate(date = tsibble::yearquarter(x)) %>%
+    relocate(date, .before =  everything()) %>%
+    tsibble::as_tsibble(index = date)
+}
+
+
+arp_annual %>% 
+  as_tsibble(index = date) %>% 
+  fy_annual_to_quarter() %>% 
+  mutate(across(-date,
+                ~ if_else(date > yearquarter('2021 Q3'),
+                          lead(.x), .x)))
+  
+  start <- tsibble::yearquarter(glue::glue('2021 Q2'), fiscal_start = 10)
+  end <- tsibble::yearquarter(glue::glue('2031 Q3'))
+  x <- seq(start,  end, by = 1)
 arp_quarterly <-
   arp_annual %>% 
   as_tsibble(index = date) %>% 
-  annual_to_quarter() %>% 
+  fy_annual_to_quarter() %>% 
+  mutate(across(-date,
+                ~ if_else(date > yearquarter('2021 Q3'),
+                          lead(.x), .x))) %>% 
   summarize(rebate_checks,
             other_direct_aid = child_tax_credit + eitc + child_care_for_workers + dependent_care_for_families,
             health_grants = medicaid + medicare + chip,
@@ -30,18 +72,20 @@ arp_quarterly <-
             state_ui_arp = 4 * state_ui * ui_timing,
             aid_to_small_businesses = 4 * aid_to_small_businesses * aid_to_small_businesses_timing)
 
-arp_quarterly %>% 
-  mpc_arp_non_health_grants() %>% 
-  mutate(across(.cols = all_of(c('federal_ui_arp', 'state_ui_arp', 'other_vulnerable')),
-                .fns = ~ mpc_vulnerable_arp(.x),
-                .names = '{.col}_post_mpc'),
-         across(.cols = all_of(c('rebate_checks_arp', 'other_direct_aid')),
-                .fns = ~ mpc_direct_aid_arp(.),
-                .names = '{.col}_post_mpc'),
-         aid_to_small_businesses_post_mpc = mpc_small_businesses_arp((aid_to_small_businesses))
-         ) %>% 
-  mutate(arp = rebate_checks_arp + other_direct_aid + health_grants + non_health_grants + other_vulnerable + federal_ui_arp + state_ui_arp + aid_to_small_businesses,
-         arp_post_mpc = rebate_checks_arp_post_mpc + other_direct_aid_post_mpc + federal_ui_arp_post_mpc + state_ui_arp_post_mpc + other_vulnerable_post_mpc + non_health_grants_post_mpc + aid_to_small_businesses_post_mpc )
+openxlsx::write.xlsx(arp_quarterly, 'data/arp_summary.xlsx')
+
+# arp_quarterly %>% 
+#   mpc_arp_non_health_grants() %>% 
+#   mutate(across(.cols = all_of(c('federal_ui_arp', 'state_ui_arp', 'other_vulnerable')),
+#                 .fns = ~ mpc_vulnerable_arp(.x),
+#                 .names = '{.col}_post_mpc'),
+#          across(.cols = all_of(c('rebate_checks_arp', 'other_direct_aid')),
+#                 .fns = ~ mpc_direct_aid_arp(.),
+#                 .names = '{.col}_post_mpc'),
+#          aid_to_small_businesses_post_mpc = mpc_small_businesses_arp((aid_to_small_businesses))
+#          ) %>% 
+#   mutate(arp = rebate_checks_arp + other_direct_aid + health_grants + non_health_grants + other_vulnerable + federal_ui_arp + state_ui_arp + aid_to_small_businesses,
+#          arp_post_mpc = rebate_checks_arp_post_mpc + other_direct_aid_post_mpc + federal_ui_arp_post_mpc + state_ui_arp_post_mpc + other_vulnerable_post_mpc + non_health_grants_post_mpc + aid_to_small_businesses_post_mpc )
 
 
 
